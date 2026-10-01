@@ -6,18 +6,17 @@
   var ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
   var ALT = {
     osm: [
-      { u: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', o: { subdomains: 'abcd', maxZoom: 20 }, a: '© OpenStreetMap contributors © CARTO' },
-      { u: ESRI + 'World_Street_Map/MapServer/tile/{z}/{y}/{x}', o: { maxZoom: 19 }, a: 'Tiles © Esri' },
-      { u: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', o: { subdomains: 'abcd', maxZoom: 20 }, a: '© OpenStreetMap contributors © CARTO' }
+      { u: ESRI + 'World_Street_Map/MapServer/tile/{z}/{y}/{x}', o: { maxZoom: 19 }, a: 'Tiles © Esri, HERE, Garmin, OpenStreetMap contributors' },
+      { u: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', o: { maxZoom: 19 }, a: '© OpenStreetMap contributors' },
+      { u: ESRI + 'World_Topo_Map/MapServer/tile/{z}/{y}/{x}', o: { maxZoom: 19 }, a: 'Tiles © Esri' }
     ],
     light: [
-      { u: 'https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png', o: { subdomains: 'abcd', maxZoom: 20 }, a: '© OpenStreetMap contributors © CARTO' },
-      { u: ESRI + 'Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', o: { maxZoom: 16 }, a: 'Tiles © Esri' },
-      { u: ESRI + 'World_Street_Map/MapServer/tile/{z}/{y}/{x}', o: { maxZoom: 19 }, a: 'Tiles © Esri' }
+      { u: ESRI + 'Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', o: { maxZoom: 16 }, a: 'Tiles © Esri, HERE, Garmin' },
+      { u: ESRI + 'World_Street_Map/MapServer/tile/{z}/{y}/{x}', o: { maxZoom: 19 }, a: 'Tiles © Esri' },
+      { u: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', o: { maxZoom: 19 }, a: '© OpenStreetMap contributors' }
     ],
     satellite: [
       { u: ESRI + 'World_Imagery/MapServer/tile/{z}/{y}/{x}', o: { maxZoom: 19 }, a: 'Tiles © Esri, Maxar, Earthstar Geographics' },
-      { u: 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', o: { maxZoom: 19 }, a: 'Tiles © Esri' },
       { u: 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/g/{z}/{y}/{x}.jpg', o: { maxZoom: 14 }, a: 'Sentinel-2 cloudless © EOX' }
     ],
     topographic: [
@@ -28,16 +27,20 @@
   };
 
   function centrar(map) {
-    try { map.invalidateSize(); map.fitBounds(CALDAS, { animate: false, padding: [8, 8] }); } catch (e) {}
+    try {
+      map.invalidateSize();
+      var z = map.getSize();
+      if (z.x < 120 || z.y < 120) return false; // contenedor aún sin tamaño real
+      map.fitBounds(CALDAS, { animate: false, padding: [8, 8], maxZoom: 10 });
+      return true;
+    } catch (e) { return false; }
   }
 
   window.__gcBase = function (L, prov, map) {
     var lista = ALT[prov.id] || [{ u: prov.url, o: { maxZoom: prov.maxZoom }, a: prov.attribution }];
     if (!map.__gcCentrado) { // solo la primera vez: encuadrar Caldas
       map.__gcCentrado = true;
-      centrar(map);
-      setTimeout(function () { centrar(map); }, 400);
-      setTimeout(function () { centrar(map); }, 1500);
+      var n = 0, t = setInterval(function () { n++; if (centrar(map) && n >= 4 || n > 40) clearInterval(t); }, 250);
     }
     var holder = { layer: null, idx: 0, dead: false };
     function poner(i) {
