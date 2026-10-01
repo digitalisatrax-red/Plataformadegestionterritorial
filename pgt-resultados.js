@@ -34,7 +34,11 @@
 
   /* ── Consultas ──────────────────────────────────────── */
   async function traer(c, o) {
-    var P = { f: 'json', outSR: '4326', geometryPrecision: '5', outFields: (o.fields || []).join(',') || '*', returnGeometry: o.geom === false ? 'false' : 'true', where: o.where || '1=1' };
+    try { return await traer1(c, o, false); }
+    catch (e) { if ((o.fields || []).length && /execute|operation|invalid|field/i.test(e.message)) return await traer1(c, o, true); throw e; }
+  }
+  async function traer1(c, o, todos) {
+    var P = { f: 'json', outSR: '4326', geometryPrecision: '5', outFields: (todos || !(o.fields || []).length) ? '*' : o.fields.join(','), returnGeometry: o.geom === false ? 'false' : 'true', where: o.where || '1=1' };
     if (o.offset) P.maxAllowableOffset = String(o.offset);
     if (o.rings) { P.geometry = JSON.stringify({ rings: o.rings, spatialReference: { wkid: 4326 } }); P.geometryType = 'esriGeometryPolygon'; P.inSR = '4326'; P.spatialRel = 'esriSpatialRelIntersects'; }
     var out = [], off = 0;
@@ -48,15 +52,22 @@
     }
     return out;
   }
+  function attr(f, nom) { var a = f.attributes || {}; if (!nom) return undefined; if (a[nom] !== undefined) return a[nom]; var k = Object.keys(a).filter(function (x) { return x.toLowerCase() === nom.toLowerCase(); })[0]; return k ? a[k] : undefined; }
 
   /* ── Geometría ──────────────────────────────────────── */
   function anilloArea(r) { var s = 0, rad = Math.PI / 180; for (var i = 0; i < r.length - 1; i++) s += (r[i + 1][0] - r[i][0]) * rad * (2 + Math.sin(r[i][1] * rad) + Math.sin(r[i + 1][1] * rad)); return s * 6378137 * 6378137 / 2; }
   function haEsri(rings) { var t = 0; rings.forEach(function (r) { t += anilloArea(r); }); return Math.abs(t) / 10000; }
   function kmSeg(a, b) { var R = 6371.0088, rad = Math.PI / 180, dl = (b[0] - a[0]) * rad, dp = (b[1] - a[1]) * rad; var h = Math.sin(dp / 2) * Math.sin(dp / 2) + Math.cos(a[1] * rad) * Math.cos(b[1] * rad) * Math.sin(dl / 2) * Math.sin(dl / 2); return 2 * R * Math.asin(Math.min(1, Math.sqrt(h))); }
   function kmEsri(paths) { var t = 0; paths.forEach(function (p) { for (var i = 0; i < p.length - 1; i++) t += kmSeg(p[i], p[i + 1]); }); return t; }
-  function aTurf(rings) {          // anillos Esri → MultiPolygon (exterior = horario)
-    var polys = [];
-    rings.forEach(function (r) { if (r.length < 4) return; if (anilloArea(r) < 0 || !polys.length) polys.push([r]); else polys[polys.length - 1].push(r); });
+  function pip(p, r) { var x = p[0], y = p[1], d = false; for (var i = 0, j = r.length - 1; i < r.length; j = i++) { if ((r[i][1] > y) !== (r[j][1] > y) && x < (r[j][0] - r[i][0]) * (y - r[i][1]) / (r[j][1] - r[i][1]) + r[i][0]) d = !d; } return d; }
+  function aTurf(rings) {          // anillos Esri → MultiPolygon; exterior/hueco se decide por contención (no por orientación)
+    var rs = rings.filter(function (r) { return r.length >= 4; }).map(function (r) { return { r: r, a: Math.abs(anilloArea(r)) }; }).sort(function (x, y) { return y.a - x.a; });
+    var polys = [], pol = [];
+    rs.forEach(function (o, i) {
+      var cont = []; for (var j = 0; j < i; j++) if (pip(o.r[0], rs[j].r)) cont.push(j);
+      if (cont.length % 2 === 0) { pol[i] = polys.length; polys.push([o.r]); }
+      else { pol[i] = pol[cont[cont.length - 1]]; polys[pol[i]].push(o.r); }
+    });
     return polys.length ? { type: 'Feature', properties: {}, geometry: { type: 'MultiPolygon', coordinates: polys } } : null;
   }
   function aEsri(f) {              // Feature → anillos Esri orientados
@@ -102,7 +113,7 @@
       } else if (g.x !== undefined) { v = 1; }
       if (terr && !(v > 0)) continue;
       n++; total += v;
-      var nombre = (f.attributes && nom && f.attributes[nom] != null && f.attributes[nom] !== '') ? String(f.attributes[nom]) : 'Sin nombre';
+      var nv = attr(f, nom), nombre = (nv != null && nv !== '') ? String(nv) : 'Sin nombre';
       items[nombre] = (items[nombre] || 0) + v;
       if (k % 40 === 39) await new Promise(function (r) { setTimeout(r, 0); });
     }
@@ -126,7 +137,7 @@
     var cm = capa(BASE_MUN), cv = capa(BASE_VER); if (!cm || !cv) throw new Error('No están disponibles las capas de municipios y veredas.');
     var nm = await campoNombre(cm);
     var ms = await traer(cm, { fields: [nm], geom: false });
-    S.lista = ms.map(function (f) { return f.attributes[nm]; }).filter(Boolean).sort(function (a, b) { return String(a).localeCompare(String(b), 'es'); });
+    S.lista = ms.map(function (f) { return attr(f, nm); }).filter(Boolean).sort(function (a, b) { return String(a).localeCompare(String(b), 'es'); });
     var vs = await traer(cv, { fields: ['ID_VEREDA', 'NOMBRE', 'MUNICIPIO'], geom: false });
     S.veredas = vs.map(function (f) { return f.attributes; });
   }
@@ -143,7 +154,7 @@
   }
   async function territorioVer(v, mun) {
     var cv = capa(BASE_VER);
-    var fs = await traer(cv, { where: "ID_VEREDA='" + String(v.id).replace(/'/g, "''") + "'", fields: ['ID_VEREDA', 'NOMBRE'] });
+    var fs = await traer(cv, { where: 'ID_VEREDA=' + (isFinite(Number(v.id)) ? Number(v.id) : "'" + String(v.id).replace(/'/g, "''") + "'"), fields: ['ID_VEREDA', 'NOMBRE'] });
     var rings = []; fs.forEach(function (f) { if (f.geometry && f.geometry.rings) rings = rings.concat(f.geometry.rings); });
     return crearTerritorio(rings, 'Vereda ' + v.nombre + ' (' + mun + ')');
   }
