@@ -14,3 +14,7 @@ Base: dashboard GeoAgosto / GeoCaldas (Corpocaldas). Sitio estático, funciona e
 ## Datos
 
 Las capas de Corpocaldas están catalogadas en `data/catalogo.json` (637 capas por tema y grupo). Ver `docs/ORGANIZACION_DATOS.md`.
+
+
+## Tablas de atributos
+`data/diccionario_campos.json` normaliza los campos de las 637 capas (etiquetas, campos técnicos ocultos, áreas en ha y longitudes en km). Ver `docs/DICCIONARIO_CAMPOS.md`.

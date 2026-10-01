@@ -22,19 +22,38 @@
     { name: '__area_ha', alias: 'Área calculada (ha)', virtual: true, num: true, geom: true },
     { name: '__long_km', alias: 'Longitud calculada (km)', virtual: true, num: true, geom: true }
   ];
+  var dic = null;
+  function diccionario() {
+    if (!dic) dic = fetch('data/diccionario_campos.json').then(function (r) { return r.ok ? r.json() : { capas: {} }; }).then(function (j) { return j.capas || {}; }).catch(function () { return {}; });
+    return dic;
+  }
+  function claveDic(c) { var m = /\/([^/]+)\/MapServer$/.exec(c.url || ''); return m ? m[1] + '/' + c.layerId : ''; }
+  function desdeDic(e) {
+    var cs = e.campos.map(function (f) {
+      return { name: f.n, alias: f.e, rol: f.r, unidad: f.u, virtual: !!f.c, fecha: !!f.d, num: !!f.c || f.r === 'numero' || f.r === 'area' && !!f.u || f.r === 'longitud' && !!f.u };
+    });
+    return { campos: cs, geom: e.g, def: e.def, aviso: e.aviso };
+  }
   function campos(c) {
     if (metas[c.id]) return metas[c.id];
-    metas[c.id] = fetch(base(c) + '?f=json').then(function (r) { return r.json(); }).then(function (j) {
+    metas[c.id] = diccionario().then(function (D) {
+      var e = D[claveDic(c)];
+      return e && e.campos && e.campos.length ? desdeDic(e) : campos2(c);
+    });
+    return metas[c.id];
+  }
+  function campos2(c) {
+    return fetch(base(c) + '?f=json').then(function (r) { return r.json(); }).then(function (j) {
       if (j.error) throw new Error(j.error.message || 'Error leyendo la capa.');
       var gt = j.geometryType || '';
       var cs = (j.fields || []).filter(function (f) { return f.type !== 'esriFieldTypeGeometry' && !/^shape/i.test(f.name) && f.type !== 'esriFieldTypeBlob'; })
         .map(function (f) { return { name: f.name, alias: f.alias || f.name, type: f.type, num: /Double|Integer|Single|SmallInteger/.test(f.type), fecha: f.type === 'esriFieldTypeDate' }; });
       if (/Polygon/.test(gt)) cs.push(VIRT[0]); else if (/Polyline/.test(gt)) cs.push(VIRT[1]);
       return { campos: cs, geom: gt };
-    }).catch(function (e) { delete metas[c.id]; throw e; });
-    return metas[c.id];
+    });
   }
-  function porDefecto(cs) {
+  function porDefecto(cs, meta) {
+    if (meta && meta.def && meta.def.length) return meta.def.filter(function (n) { return cs.some(function (f) { return f.name === n; }); });
     var nom = cs.filter(function (f) { return /^(nombre|name|nom_|nombre_)/i.test(f.name) || /nombre/i.test(f.alias); }).slice(0, 1);
     var ar = cs.filter(function (f) { return /area|hect|^ha$|shape_area/i.test(f.name + ' ' + f.alias) && !f.virtual; }).slice(0, 1);
     var v = cs.filter(function (f) { return f.virtual; }).slice(0, 1);
@@ -138,7 +157,7 @@
     await Promise.all(lista.map(async function (c) {
       try {
         var meta = await campos(c);
-        var sel = guardados[c.id] && guardados[c.id].length ? guardados[c.id] : porDefecto(meta.campos);
+        var sel = guardados[c.id] && guardados[c.id].length ? guardados[c.id] : porDefecto(meta.campos, meta);
         var r = await consultar(c, { punto: pos, tolM: res * 8, campos: sel, max: 5 });
         if (!r.filas.length) return;
         var cs = sel.map(function (n) { return meta.campos.filter(function (f) { return f.name === n; })[0]; }).filter(Boolean);
@@ -206,7 +225,7 @@
         var c = capa(d.getAttribute('data-c')), box = d.querySelector('.pgi-nota');
         try {
           var meta = await campos(c);
-          var sel = guardados[c.id] && guardados[c.id].length ? guardados[c.id] : porDefecto(meta.campos);
+          var sel = guardados[c.id] && guardados[c.id].length ? guardados[c.id] : porDefecto(meta.campos, meta);
           d.setAttribute('data-ok', '1');
           box.outerHTML = listaCampos(c, meta.campos, sel, 'c_' + c.id);
           Array.prototype.forEach.call(d.querySelectorAll('input'), function (i) {
@@ -258,7 +277,7 @@
       d.querySelector('.pgi-del').onclick = function () { estado.secciones.splice(idx, 1); guardarRep(); pintarSecs(); };
       var c = capa(s.capa);
       campos(c).then(function (meta) {
-        if (!s.campos) s.campos = porDefecto(meta.campos);
+        if (!s.campos) s.campos = porDefecto(meta.campos, meta);
         var box = d.querySelector('[data-r=cs]');
         box.className = ''; box.innerHTML = '<div class="pgi-sub">Campos de la tabla</div>' + listaCampos(c, meta.campos, s.campos, 's' + idx) +
           '<label class="pgi-bl">Ordenar por<select data-r="ord"><option value="">Sin orden</option>' + meta.campos.map(function (f) { return '<option value="' + esc(f.name) + '"' + (s.orden === f.name ? ' selected' : '') + '>' + esc(f.alias) + '</option>'; }).join('') + '</select></label>';
@@ -299,7 +318,7 @@
 
   function totales(it) {
     return it.campos.map(function (f, i) {
-      if (!f.num || /(^|_)(id|objectid|codigo|cod)/i.test(f.name) || !/area|ha|hect|km|long|virtual/i.test(f.name + (f.virtual ? 'virtual' : ''))) return i === 0 ? 'Total' : '';
+      if (!f.num || !(f.virtual || f.unidad || (f.rol === undefined && /area|hect|km|long/i.test(f.name)))) return i === 0 ? 'Total' : '';
       var t = 0; it.filas.forEach(function (r) { if (typeof r[f.name] === 'number') t += r[f.name]; });
       return t.toLocaleString('es-CO', { maximumFractionDigits: 2 });
     });
