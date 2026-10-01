@@ -7,8 +7,15 @@
 (function () {
   var CFG = window.PGT_CONFIG || {};
   var SB = String(CFG.supabaseUrl || '').trim().replace(/\/+$/, '');
-  var IDEAM = 'https://visualizador.ideam.gov.co/gisserver/rest/services/Alertas_ICV/MapServer';
-  var E = { firms: [], actualizado: '', tab: 'mapa', dias: 7, radio: 1, horas: 48, solo: 'todos', rep: [], det: [], csv: [], err: '', mapa: null, capas: {}, sel: null, ideam: false, hist: undefined, tim: null };
+  var IDEAM = 'https://visualizador.ideam.gov.co/gisserver/rest/services/StoryMaps_IDA/Alertas_ICV/MapServer';
+  function urlCapa(id) { var l = (window.__pgtCapas || []).filter(function (c) { return c.id === id; })[0]; return l ? { url: l.url, id: l.layerId, name: l.name } : null; }
+  var DIN = {
+    ideam: { op: .65, nom: 'Amenaza IDEAM', get: function () { return { url: IDEAM, id: 3 }; } },
+    sinap: { op: .6, nom: 'Áreas SINAP', get: function () { return urlCapa('eep-sinap'); } },
+    aica: { op: .6, nom: 'AICA', get: function () { return urlCapa('eep-aica'); } },
+    ver: { op: .85, nom: 'Veredas', get: function () { return urlCapa('caldas-veredas'); } }
+  };
+  var E = { firms: [], actualizado: '', tab: 'mapa', dias: 7, radio: 1, horas: 48, solo: 'todos', rep: [], det: [], csv: [], err: '', mapa: null, capas: {}, sel: null, sw: { mun: true, ideam: false, sinap: false, aica: false, ver: false }, fondo: 'sat', hist: undefined, tim: null };
   var el = null;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -85,15 +92,21 @@
         '<label>Estado<select data-k="solo"><option value="todos">Todos</option><option value="activos">Activos</option><option value="Controlado">Controlados</option><option value="Extinguido">Extinguidos</option></select></label>' +
         '<label>Radio cruce (km)<input type="number" data-k="radio" value="' + E.radio + '" min="0.1" step="0.5"></label>' +
         '<label>Ventana (± h)<input type="number" data-k="horas" value="' + E.horas + '" min="1" step="6"></label>' +
-        '<label class="fg-chk"><input type="checkbox" data-k="ideam"> Amenaza IDEAM</label>' +
+        '<label>Fondo<select data-k="fondo"><option value="sat">Imagen satelital</option><option value="osm">Calles</option><option value="claro">Claro</option></select></label>' +
+        '<label class="fg-chk"><input type="checkbox" data-k="sw:mun"> Municipios</label>' +
+        '<label class="fg-chk"><input type="checkbox" data-k="sw:ver"> Veredas</label>' +
+        '<label class="fg-chk"><input type="checkbox" data-k="sw:sinap"> Áreas SINAP</label>' +
+        '<label class="fg-chk"><input type="checkbox" data-k="sw:aica"> AICA</label>' +
+        '<label class="fg-chk"><input type="checkbox" data-k="sw:ideam"> Amenaza IDEAM</label>' +
         '<button class="fg-b" data-a="csv">Cargar CSV de puntos de calor</button><input type="file" accept=".csv,text/csv" data-r="file" hidden>' +
         '<button class="fg-b p" data-a="ref">Actualizar</button></div>' +
         '<div class="fg-cuerpo"><div class="fg-mapa"><div data-r="map"></div><div class="fg-leyenda"><div><i style="background:#dc2626;border-radius:50%"></i>Reporte activo</div><div><i style="background:#f59e0b;border-radius:50%"></i>Controlado</div><div><i style="background:#6b7280;border-radius:50%"></i>Extinguido</div><div><i style="background:#7c3aed"></i>Punto de calor</div></div></div><div class="fg-lado" data-r="lado"></div></div>';
-      c.querySelector('[data-k=dias]').value = String(E.dias); c.querySelector('[data-k=solo]').value = E.solo; c.querySelector('[data-k=ideam]').checked = E.ideam;
+      c.querySelector('[data-k=dias]').value = String(E.dias); c.querySelector('[data-k=solo]').value = E.solo; c.querySelector('[data-k=fondo]').value = E.fondo; Object.keys(E.sw).forEach(function (k) { c.querySelector('[data-k="sw:' + k + '"]').checked = E.sw[k]; });
       c.querySelectorAll('[data-k]').forEach(function (i) {
         i.onchange = function () {
           var k = i.dataset.k;
-          if (k === 'ideam') { E.ideam = i.checked; ideam(); return; }
+          if (k.indexOf('sw:') === 0) { var kk = k.slice(3); E.sw[kk] = i.checked; if (kk === 'mun') munCapa(); else din(kk); return; }
+          if (k === 'fondo') { E.fondo = i.value; fondo(); return; }
           E[k] = (k === 'solo') ? i.value : Number(i.value);
           if (k === 'dias') refrescar(); else pintarDatos();
         };
@@ -106,25 +119,64 @@
     else { c.innerHTML = '<div class="fg-pagina">' + fuentes() + '</div>'; }
   }
 
-  function iniciarMapa() {
-    var L = window.__pgtL, cont = el.querySelector('[data-r=map]'); if (!L || !cont) { if (cont) cont.innerHTML = '<div class="fg-vacio">El mapa no está disponible todavía.</div>'; return; }
-    E.mapa = L.map(cont, { zoomControl: true }).setView([5.28, -75.3], 9);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, attribution: 'Esri' }).addTo(E.mapa);
-    E.capas.rep = L.layerGroup().addTo(E.mapa); E.capas.det = L.layerGroup().addTo(E.mapa);
-    ideam();
-  }
-  function ideam() {
+  var FONDOS = {
+    sat: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', 'Esri'],
+    osm: ['https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', '© OpenStreetMap'],
+    claro: ['https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', '© OpenStreetMap, © CARTO']
+  };
+  function fondo() {
     var L = window.__pgtL; if (!E.mapa || !L) return;
-    if (E.capas.ideam) { E.mapa.removeLayer(E.capas.ideam); E.capas.ideam = null; E.mapa.off('moveend', E.capas._f); }
-    if (!E.ideam) return;
+    if (E.capas.fondo) E.mapa.removeLayer(E.capas.fondo);
+    var f = FONDOS[E.fondo] || FONDOS.sat;
+    E.capas.fondo = L.tileLayer(f[0], { maxZoom: 18, attribution: f[1] }).addTo(E.mapa); E.capas.fondo.bringToBack();
+  }
+  function iniciarMapa() {
+    var L = window.__pgtL, cont = el.querySelector('[data-r=map]'); if (!L || !cont) { if (cont) cont.innerHTML = '<div class="fg-vacio">El mapa no está disponible todavía. Cierre esta ventana, abra Territorio y vuelva a intentarlo.</div>'; return; }
+    E.mapa = L.map(cont, { zoomControl: true }).setView([5.28, -75.3], 9);
+    fondo();
+    E.capas.rep = L.layerGroup().addTo(E.mapa); E.capas.det = L.layerGroup().addTo(E.mapa);
+    munCapa(); Object.keys(DIN).forEach(din);
+    [100, 400, 1200].forEach(function (t) { setTimeout(function () { if (E.mapa) E.mapa.invalidateSize(); }, t); });
+  }
+  /* Contorno de los municipios de Caldas (CORPOCALDAS) */
+  var munGeo = null;
+  async function munCapa() {
+    var L = window.__pgtL; if (!E.mapa || !L) return;
+    if (E.capas.mun) { E.mapa.removeLayer(E.capas.mun); E.capas.mun = null; }
+    if (!E.sw.mun) return;
+    try {
+      if (!munGeo) {
+        var c = urlCapa('caldas-municipios'); if (!c) throw new Error('capa de municipios no disponible');
+        var r = await fetch(c.url + '/' + c.id + '/query', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body: new URLSearchParams({ where: '1=1', outFields: 'MpNombre', outSR: '4326', maxAllowableOffset: '0.001', geometryPrecision: '4', f: 'json' }) });
+        var j = await r.json(); if (j.error || !j.features) throw new Error('sin respuesta');
+        munGeo = j.features;
+      }
+      if (!E.mapa || !E.sw.mun) return;
+      var g = L.layerGroup();
+      munGeo.forEach(function (f) { if (!f.geometry || !f.geometry.rings) return; L.polygon(f.geometry.rings.map(function (rg) { return rg.map(function (p) { return [p[1], p[0]]; }); }), { color: '#fde047', weight: 1.6, fill: true, fillOpacity: 0, interactive: true }).bindTooltip(String(f.attributes.MpNombre || ''), { sticky: true }).addTo(g); });
+      E.capas.mun = g.addTo(E.mapa);
+    } catch (e) { fallo('mun', 'Municipios'); }
+  }
+  /* Capas dinámicas (imagen exportada del servicio ArcGIS para la vista actual) */
+  function fallo(k, nom) { E.fallas = E.fallas || {}; E.fallas[k] = nom; var l = el && el.querySelector('[data-r=lado]'); if (l && !l.querySelector('.fg-av-' + k)) l.insertAdjacentHTML('afterbegin', '<div class="fg-aviso fg-av-' + k + '">La capa «' + nom + '» no respondió desde este navegador.</div>'); }
+  function din(k) {
+    var L = window.__pgtL, m = E.mapa; if (!m || !L) return;
+    var o = E.capas['d_' + k];
+    if (o) { m.off('moveend', o.f); if (o.l) m.removeLayer(o.l); if (o.p) m.removeLayer(o.p); delete E.capas['d_' + k]; }
+    if (E.fallas) delete E.fallas[k];
+    var av = el && el.querySelector('.fg-av-' + k); if (av) av.remove();
+    if (!E.sw[k]) return;
+    var cfg = DIN[k], sv = cfg.get(); if (!sv) { fallo(k, cfg.nom); return; }
+    var st = {};
     var pon = function () {
-      var b = E.mapa.getBounds(), s = E.mapa.getSize();
-      var u = IDEAM + '/export?bbox=' + [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].join(',') + '&bboxSR=4326&imageSR=4326&size=' + s.x + ',' + s.y + '&format=png32&transparent=true&layers=show:3&f=image';
-      if (E.capas.ideam) E.mapa.removeLayer(E.capas.ideam);
-      E.capas.ideam = L.imageOverlay(u, b, { opacity: .6, interactive: false }).addTo(E.mapa);
-      E.capas.ideam.on('error', function () { var l = el && el.querySelector('[data-r=lado]'); if (l && !l.querySelector('.fg-av-ideam')) l.insertAdjacentHTML('afterbegin', '<div class="fg-aviso fg-av-ideam">La capa de amenaza del IDEAM no respondió desde este navegador.</div>'); });
+      var b = m.getBounds(), z = m.getSize();
+      var u = sv.url + '/export?bbox=' + [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].join(',') + '&bboxSR=4326&imageSR=4326&size=' + z.x + ',' + z.y + '&format=png32&transparent=true&layers=show:' + sv.id + '&f=image';
+      var l = L.imageOverlay(u, b, { opacity: cfg.op, interactive: false });
+      l.on('load', function () { if (st.l && st.l !== l && m.hasLayer(st.l)) m.removeLayer(st.l); st.l = l; if (E.fallas) delete E.fallas[k]; var a2 = el && el.querySelector('.fg-av-' + k); if (a2) a2.remove(); });
+      l.on('error', function () { if (m.hasLayer(l)) m.removeLayer(l); if (!st.l) fallo(k, cfg.nom); });
+      if (st.p && st.p !== st.l && m.hasLayer(st.p)) m.removeLayer(st.p); st.p = l; l.addTo(m);
     };
-    E.capas._f = pon; E.mapa.on('moveend', pon); pon();
+    st.f = pon; E.capas['d_' + k] = st; m.on('moveend', pon); pon();
   }
 
   function color(r) { return r.estado === 'Activo' ? '#dc2626' : r.estado === 'Controlado' ? '#f59e0b' : '#6b7280'; }
@@ -142,6 +194,7 @@
     }
     var conf = reps.filter(function (r) { return estadoCruce(r).k === 'ok'; }).length, sr = sinReporte().length, ha = reps.reduce(function (a, r) { return a + (Number(r.area_ha) || 0); }, 0);
     var h = '';
+    Object.keys(E.fallas || {}).forEach(function (k) { h += '<div class="fg-aviso fg-av-' + k + '">La capa «' + esc(E.fallas[k]) + '» no respondió desde este navegador.</div>'; });
     if (E.err) h += '<div class="fg-aviso">' + esc(E.err) + '</div>';
     if (!sesion()) h += '<div class="fg-aviso">Sin sesión: solo se muestran reportes validados. Planeación puede ver y validar todos.</div>';
     h += '<div class="fg-kpis"><div class="fg-kpi"><span>Reportes</span><b>' + reps.length + '</b></div><div class="fg-kpi"><span>Activos</span><b>' + reps.filter(function (r) { return r.estado === 'Activo'; }).length + '</b></div><div class="fg-kpi"><span>Área reportada (ha)</span><b>' + ha.toLocaleString('es-CO', { maximumFractionDigits: 1 }) + '</b></div><div class="fg-kpi"><span>Confirmados por satélite</span><b>' + conf + '</b></div><div class="fg-kpi"><span>Detecciones sin reporte</span><b>' + sr + '</b></div></div>';
