@@ -268,7 +268,40 @@
     var svg = '<svg viewBox="0 0 ' + w + ' ' + (h + 30) + '" style="width:100%;height:auto">' + tot.map(function (v, i) { var bh = v / mx * h; return '<rect x="' + (i * bw + 2) + '" y="' + (h - bh) + '" width="' + (bw - 4) + '" height="' + bh + '" fill="#c2410c"><title>' + anios[i] + ': ' + Math.round(v).toLocaleString('es-CO') + ' ha</title></rect>' + (i % 3 === 0 ? '<text x="' + (i * bw + bw / 2) + '" y="' + (h + 14) + '" font-size="10" text-anchor="middle" fill="#7c6a5d">' + anios[i] + '</text>' : ''); }).join('') + '</svg>';
     var tabla = '<table class="g-tab" style="border-collapse:collapse;width:100%"><tr><th align="left">Municipio</th><th align="right">Total ' + anios[0] + '–' + anios[anios.length - 1] + ' (ha)</th><th align="right">Último año (ha)</th></tr>' +
       filas.slice().sort(function (a, b) { return b.ha.reduce(function (s, v) { return s + v; }, 0) - a.ha.reduce(function (s, v) { return s + v; }, 0); }).map(function (f) { var s = f.ha.reduce(function (a, v) { return a + v; }, 0); return '<tr><td>' + esc(f.nombre) + '</td><td align="right">' + Math.round(s).toLocaleString('es-CO') + '</td><td align="right">' + Math.round(f.ha[f.ha.length - 1] || 0).toLocaleString('es-CO') + '</td></tr>'; }).join('') + '</table>';
-    box.innerHTML = '<h2>Área quemada anual en Caldas (ha)</h2>' + svg + '<p style="font-size:11.5px;color:#7c6a5d">Fuente: MapBiomas Fuego Colombia, Colección 1 (' + esc(H.generado || '') + '). Procesamiento: Plataforma de Gestión Territorial.</p>' + tabla;
+    var ult = anios[anios.length - 1];
+    box.innerHTML = '<h2>Mapa de área quemada · MapBiomas Fuego</h2>' +
+      '<div class="fg-hbar" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0"><select data-r="hmod"><option value="anio">Año específico</option><option value="freq">Frecuencia de fuego ' + anios[0] + '–' + ult + '</option></select>' +
+      '<input type="range" data-r="hanio" min="' + anios[0] + '" max="' + ult + '" value="' + ult + '" step="1" style="flex:1;min-width:160px"><b data-r="hlab">' + ult + '</b></div>' +
+      '<div data-r="hmap" style="height:460px;border-radius:8px;overflow:hidden;position:relative"></div>' +
+      '<div data-r="hleg" style="font-size:11.5px;color:#7c6a5d;margin:6px 0 14px"></div>' +
+      '<h2>Área quemada anual en Caldas (ha)</h2>' + svg + '<p style="font-size:11.5px;color:#7c6a5d">Fuente: MapBiomas Fuego Colombia, Colección 1 (' + esc(H.generado || '') + '). Procesamiento: Plataforma de Gestión Territorial.</p>' + tabla;
+    mapaHist(box);
+  }
+  async function mapaHist(box) {
+    var L = window.__pgtL, cont = box.querySelector('[data-r=hmap]'); if (!cont) return;
+    if (!L) { cont.innerHTML = '<div class="fg-vacio">El mapa no está disponible todavía. Abra Territorio una vez y vuelva a intentarlo.</div>'; return; }
+    var meta = null; try { var r = await fetch('data/mapbiomas/meta.json', { cache: 'no-cache' }); if (r.ok) meta = await r.json(); } catch (e) {}
+    if (!meta) { cont.innerHTML = '<div class="fg-vacio">Las imágenes del mapa histórico aún no están publicadas.</div>'; return; }
+    if (E.hmapa) { try { E.hmapa.remove(); } catch (e) {} }
+    var m = E.hmapa = L.map(cont).setView([5.28, -75.3], 9);
+    L.tileLayer(FONDOS.sat[0], { maxZoom: 18, attribution: FONDOS.sat[1] + ' · MapBiomas Fuego Colombia (CC BY 4.0)' }).addTo(m);
+    var cap = null, bounds = meta.bounds;
+    var sel = box.querySelector('[data-r=hmod]'), sl = box.querySelector('[data-r=hanio]'), lab = box.querySelector('[data-r=hlab]'), leg = box.querySelector('[data-r=hleg]');
+    function pinta() {
+      if (cap) m.removeLayer(cap);
+      var fr = sel.value === 'freq';
+      sl.disabled = fr; lab.textContent = fr ? meta.anios[0] + '–' + meta.anios[meta.anios.length - 1] : sl.value;
+      cap = L.imageOverlay('data/mapbiomas/' + (fr ? 'fuego_frecuencia' : 'fuego_' + sl.value) + '.png', bounds, { opacity: 0.9 }).addTo(m);
+      leg.innerHTML = fr ? '<span style="color:#facc15">■</span> 1 vez &nbsp;<span style="color:#f97316">■</span> 2–3 veces &nbsp;<span style="color:#dc2626">■</span> 4–6 veces &nbsp;<span style="color:#7f1d1d">■</span> 7 o más. ' : '<span style="color:#dc2626">■</span> Área quemada en ' + sl.value + '. ';
+      leg.innerHTML += 'Fuente: MapBiomas Fuego Colombia, Colección 1 (30 m); recorte a los municipios de Caldas.';
+    }
+    sel.onchange = pinta; sl.oninput = pinta; pinta();
+    m.fitBounds(bounds);
+    [100, 400, 1200].forEach(function (t) { setTimeout(function () { m.invalidateSize(); }, t); });
+    try {
+      if (!munGeo) { var c = urlCapa('caldas-municipios'); var rr = await fetch(c.url + '/' + c.id + '/query', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body: new URLSearchParams({ where: '1=1', outFields: 'MpNombre', outSR: '4326', maxAllowableOffset: '0.001', geometryPrecision: '4', f: 'json' }) }); var jj = await rr.json(); if (jj.features) munGeo = jj.features; }
+      if (munGeo && E.hmapa === m) munGeo.forEach(function (f) { if (!f.geometry || !f.geometry.rings) return; L.polygon(f.geometry.rings.map(function (rg) { return rg.map(function (p) { return [p[1], p[0]]; }); }), { color: '#fde047', weight: 1.2, fill: true, fillOpacity: 0 }).bindTooltip(String(f.attributes.MpNombre || ''), { sticky: true }).addTo(m); });
+    } catch (e) {}
   }
 
   function fuentes() {
