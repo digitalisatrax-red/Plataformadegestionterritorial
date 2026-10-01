@@ -15,7 +15,7 @@
     aica: { op: .6, nom: 'AICA', get: function () { return urlCapa('eep-aica'); } },
     ver: { op: .85, nom: 'Veredas', get: function () { return urlCapa('caldas-veredas'); } }
   };
-  var E = { firms: [], actualizado: '', tab: 'mapa', dias: 7, radio: 1, horas: 48, solo: 'todos', rep: [], det: [], csv: [], err: '', mapa: null, capas: {}, sel: null, sw: { mun: true, ideam: false, sinap: false, aica: false, ver: false }, fondo: 'sat', hist: undefined, tim: null };
+  var E = { firms: [], actualizado: '', tab: 'mapa', dias: 7, radio: 1, horas: 48, solo: 'todos', rep: [], det: [], csv: [], err: '', mapa: null, capas: {}, sel: null, sw: { mun: true, ideam: false, sinap: false, aica: false, ver: false }, fondo: 'sat', hist: undefined, tim: null, mun: '', vista: 'alertas', nivel: 'todos' };
   var el = null;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -70,10 +70,10 @@
   function abrir() {
     if (el || !permitido()) return;
     el = document.createElement('div'); el.className = 'fg-root';
-    el.innerHTML = '<div class="fg-cab"><div><span class="fg-ey">Módulo FIRE</span><h1>Incendios de la cobertura vegetal · Caldas</h1><div class="fg-sub">Reportes de campo + puntos de calor satelitales + histórico MapBiomas Fuego</div></div><button class="fg-x" aria-label="Cerrar">×</button></div>' +
-      '<div class="fg-tabs"><button data-t="mapa" class="on">Mapa y reportes</button><button data-t="hist">Histórico (MapBiomas Fuego)</button><button data-t="fuentes">Fuentes y créditos</button></div>' +
+    el.innerHTML = '<div class="fg-cab"><div><span class="fg-ey">Alerta temprana y monitoreo</span><h1>Incendios de la cobertura vegetal · Caldas</h1><div class="fg-sub">Puntos de calor satelitales + reportes comunitarios en una sola vista, para reducir el tiempo de reacción ante conatos</div></div><div class="fg-cab-d"><span class="fg-vivo" data-r="vivo"><i></i>En vivo</span><button class="fg-x" aria-label="Cerrar">×</button></div></div>' +
+      '<div class="fg-tabs"><button data-t="mapa" class="on">Alerta temprana</button><button data-t="hist">Histórico (MapBiomas Fuego)</button><button data-t="fuentes">Fuentes y créditos</button></div>' +
       '<div data-r="cont" style="display:flex;flex-direction:column;flex:1;min-height:0"></div>' +
-      '<div class="fg-pie">Histórico: MapBiomas Fuego Colombia · Puntos de calor: NASA FIRMS y IDEAM-SMByC · Amenaza: IDEAM. Los reportes de campo sin validar no son oficiales.</div>';
+      '<div class="fg-pie">Puntos de calor: NASA FIRMS y IDEAM-SMByC · Histórico: MapBiomas Fuego Colombia · Amenaza: IDEAM. Un punto de calor es una detección satelital que requiere verificación; los reportes sin validar no son oficiales.</div>';
     document.body.appendChild(el);
     el.querySelector('.fg-x').onclick = cerrar;
     el.querySelectorAll('.fg-tabs button').forEach(function (b) { b.onclick = function () { E.tab = b.dataset.t; el.querySelectorAll('.fg-tabs button').forEach(function (x) { x.classList.toggle('on', x === b); }); pintar(); }; });
@@ -87,36 +87,52 @@
     var c = el.querySelector('[data-r=cont]');
     if (E.mapa) { E.mapa.remove(); E.mapa = null; E.capas = {}; }
     if (E.tab === 'mapa') {
-      c.innerHTML = '<div class="fg-ctl">' +
-        '<label>Periodo<select data-k="dias"><option value="1">Últimas 24 h</option><option value="3">3 días</option><option value="7" selected>7 días</option><option value="30">30 días</option></select></label>' +
-        '<label>Estado<select data-k="solo"><option value="todos">Todos</option><option value="activos">Activos</option><option value="Controlado">Controlados</option><option value="Extinguido">Extinguidos</option></select></label>' +
-        '<label>Radio cruce (km)<input type="number" data-k="radio" value="' + E.radio + '" min="0.1" step="0.5"></label>' +
-        '<label>Ventana (± h)<input type="number" data-k="horas" value="' + E.horas + '" min="1" step="6"></label>' +
-        '<label>Fondo<select data-k="fondo"><option value="sat">Imagen satelital</option><option value="osm">Calles</option><option value="claro">Claro</option></select></label>' +
-        '<label class="fg-chk"><input type="checkbox" data-k="sw:mun"> Municipios</label>' +
-        '<label class="fg-chk"><input type="checkbox" data-k="sw:ver"> Veredas</label>' +
-        '<label class="fg-chk"><input type="checkbox" data-k="sw:sinap"> Áreas SINAP</label>' +
-        '<label class="fg-chk"><input type="checkbox" data-k="sw:aica"> AICA</label>' +
-        '<label class="fg-chk"><input type="checkbox" data-k="sw:ideam"> Amenaza IDEAM</label>' +
-        '<button class="fg-b" data-a="csv">Cargar CSV de puntos de calor</button><input type="file" accept=".csv,text/csv" data-r="file" hidden>' +
-        '<button class="fg-b p" data-a="ref">Actualizar</button></div>' +
-        '<div class="fg-cuerpo"><div class="fg-mapa"><div data-r="map"></div><div class="fg-leyenda"><div><i style="background:#dc2626;border-radius:50%"></i>Reporte activo</div><div><i style="background:#f59e0b;border-radius:50%"></i>Controlado</div><div><i style="background:#6b7280;border-radius:50%"></i>Extinguido</div><div><i style="background:#7c3aed"></i>Punto de calor</div></div></div><div class="fg-lado" data-r="lado"></div></div>';
-      c.querySelector('[data-k=dias]').value = String(E.dias); c.querySelector('[data-k=solo]').value = E.solo; c.querySelector('[data-k=fondo]').value = E.fondo; Object.keys(E.sw).forEach(function (k) { c.querySelector('[data-k="sw:' + k + '"]').checked = E.sw[k]; });
+      c.innerHTML = '<div class="fg-dash">' +
+        '<div class="fg-filtros">' +
+          '<div class="fg-grp"><span>Periodo</span><div class="fg-chips" data-g="dias"><button data-v="1">24 h</button><button data-v="3">3 días</button><button data-v="7">7 días</button><button data-v="30">30 días</button></div></div>' +
+          '<div class="fg-grp"><span>Municipio</span><select data-k="mun"><option value="">Todo Caldas</option></select></div>' +
+          '<div class="fg-grp"><span>Estado del reporte</span><div class="fg-chips" data-g="solo"><button data-v="todos">Todos</button><button data-v="activos">Activos</button><button data-v="Controlado">Controlados</button><button data-v="Extinguido">Extinguidos</button></div></div>' +
+          '<div class="fg-grp fg-grow"></div>' +
+          '<details class="fg-aj"><summary>Ajustes de cruce</summary><div class="fg-aj-p"><label>Radio para confirmar (km)<input type="number" data-k="radio" value="' + E.radio + '" min="0.1" step="0.5"></label><label>Ventana de tiempo (± h)<input type="number" data-k="horas" value="' + E.horas + '" min="1" step="6"></label><button class="fg-b" data-a="csv">Cargar CSV de puntos de calor</button><input type="file" accept=".csv,text/csv" data-r="file" hidden><p>Un reporte se «confirma» si hay un punto de calor a menos de ese radio y dentro de esa ventana.</p></div></details>' +
+          '<button class="fg-b p" data-a="ref">Actualizar</button>' +
+        '</div>' +
+        '<div class="fg-kpis" data-r="kpis"></div>' +
+        '<div class="fg-cuerpo"><div class="fg-mapa"><div data-r="map"></div>' +
+          '<details class="fg-capas" open><summary>Capas y fondo</summary><div class="fg-capas-p">' +
+            '<label>Fondo<select data-k="fondo"><option value="sat">Imagen satelital</option><option value="osm">Calles</option><option value="claro">Claro</option></select></label>' +
+            '<label class="fg-chk"><input type="checkbox" data-k="sw:mun"> Municipios</label><label class="fg-chk"><input type="checkbox" data-k="sw:ver"> Veredas</label><label class="fg-chk"><input type="checkbox" data-k="sw:sinap"> Áreas SINAP</label><label class="fg-chk"><input type="checkbox" data-k="sw:aica"> AICA</label><label class="fg-chk"><input type="checkbox" data-k="sw:ideam"> Amenaza IDEAM</label>' +
+          '</div></details>' +
+          '<div class="fg-leyenda"><div><i style="background:#dc2626;border-radius:50%"></i>Reporte activo</div><div><i style="background:#f59e0b;border-radius:50%"></i>Controlado</div><div><i style="background:#6b7280;border-radius:50%"></i>Extinguido</div><div><i style="background:#7c3aed;transform:rotate(45deg)"></i>Punto de calor ≤ 24 h</div><div><i style="background:#c4b5fd;transform:rotate(45deg)"></i>Punto de calor anterior</div></div></div>' +
+          '<div class="fg-lado-w"><div class="fg-stabs"><button data-vs="alertas">Alertas</button><button data-vs="analisis">Análisis</button><button data-vs="protocolo">Protocolo</button></div><div class="fg-lado" data-r="lado"></div></div>' +
+        '</div></div>';
+      c.querySelector('[data-k=fondo]').value = E.fondo; Object.keys(E.sw).forEach(function (k) { c.querySelector('[data-k="sw:' + k + '"]').checked = E.sw[k]; });
       c.querySelectorAll('[data-k]').forEach(function (i) {
         i.onchange = function () {
           var k = i.dataset.k;
           if (k.indexOf('sw:') === 0) { var kk = k.slice(3); E.sw[kk] = i.checked; if (kk === 'mun') munCapa(); else din(kk); return; }
           if (k === 'fondo') { E.fondo = i.value; fondo(); return; }
-          E[k] = (k === 'solo') ? i.value : Number(i.value);
-          if (k === 'dias') refrescar(); else pintarDatos();
+          if (k === 'mun') { E.mun = i.value; pintarDatos(); return; }
+          E[k] = Number(i.value); pintarDatos();
         };
       });
+      c.querySelectorAll('[data-g]').forEach(function (g) {
+        g.querySelectorAll('button').forEach(function (b) {
+          b.onclick = function () { if (g.dataset.g === 'dias') { E.dias = Number(b.dataset.v); refrescar(); } else { E.solo = b.dataset.v; pintarDatos(); } marcar(); };
+        });
+      });
+      c.querySelectorAll('[data-vs]').forEach(function (b) { b.onclick = function () { E.vista = b.dataset.vs; marcar(); pintarDatos(); }; });
       c.querySelector('[data-a=ref]').onclick = refrescar;
       var f = c.querySelector('[data-r=file]'); c.querySelector('[data-a=csv]').onclick = function () { f.click(); };
       f.onchange = function () { if (f.files[0]) leerCsv(f.files[0]); };
-      iniciarMapa(); pintarDatos();
+      marcar(); iniciarMapa(); pintarDatos(); ensureMun();
     } else if (E.tab === 'hist') { c.innerHTML = '<div class="fg-pagina" data-r="hist">Cargando…</div>'; historico(c.querySelector('[data-r=hist]')); }
     else { c.innerHTML = '<div class="fg-pagina">' + fuentes() + '</div>'; }
+  }
+  function marcar() {
+    if (!el) return;
+    el.querySelectorAll('[data-g=dias] button').forEach(function (b) { b.classList.toggle('on', Number(b.dataset.v) === E.dias); });
+    el.querySelectorAll('[data-g=solo] button').forEach(function (b) { b.classList.toggle('on', b.dataset.v === E.solo); });
+    el.querySelectorAll('[data-vs]').forEach(function (b) { b.classList.toggle('on', b.dataset.vs === E.vista); });
   }
 
   var FONDOS = {
@@ -139,18 +155,38 @@
     [100, 400, 1200].forEach(function (t) { setTimeout(function () { if (E.mapa) E.mapa.invalidateSize(); }, t); });
   }
   /* Contorno de los municipios de Caldas (CORPOCALDAS) */
-  var munGeo = null;
+  var munGeo = null, munProm = null;
+  function ensureMun() {
+    if (munGeo) return Promise.resolve(munGeo);
+    if (munProm) return munProm;
+    munProm = (async function () {
+      try {
+        var c = urlCapa('caldas-municipios'); if (!c) throw new Error('capa de municipios no disponible');
+        var r = await fetch(c.url + '/' + c.id + '/query', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body: new URLSearchParams({ where: '1=1', outFields: 'MpNombre', outSR: '4326', maxAllowableOffset: '0.001', geometryPrecision: '4', f: 'json' }) });
+        var j = await r.json(); if (j.error || !j.features) throw new Error('sin respuesta');
+        munGeo = j.features; munGeo.forEach(function (f) { var bb = [1e9, 1e9, -1e9, -1e9]; ((f.geometry && f.geometry.rings) || []).forEach(function (rg) { rg.forEach(function (q) { bb[0] = Math.min(bb[0], q[0]); bb[1] = Math.min(bb[1], q[1]); bb[2] = Math.max(bb[2], q[0]); bb[3] = Math.max(bb[3], q[1]); }); }); f._bb = bb; });
+        if (el && E.tab === 'mapa') pintarDatos();
+        return munGeo;
+      } catch (e) { munProm = null; return null; }
+    })();
+    return munProm;
+  }
+  function enRings(rings, x, y) {
+    var c = false;
+    rings.forEach(function (rg) { for (var i = 0, j = rg.length - 1; i < rg.length; j = i++) { var xi = rg[i][0], yi = rg[i][1], xj = rg[j][0], yj = rg[j][1]; if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) c = !c; } });
+    return c;
+  }
+  function munDe(lat, lon) {
+    if (!munGeo) return null;
+    for (var i = 0; i < munGeo.length; i++) { var f = munGeo[i], bb = f._bb; if (!bb || lon < bb[0] || lon > bb[2] || lat < bb[1] || lat > bb[3]) continue; if (f.geometry && enRings(f.geometry.rings, lon, lat)) return String(f.attributes.MpNombre || ''); }
+    return '';
+  }
   async function munCapa() {
     var L = window.__pgtL; if (!E.mapa || !L) return;
     if (E.capas.mun) { E.mapa.removeLayer(E.capas.mun); E.capas.mun = null; }
     if (!E.sw.mun) return;
     try {
-      if (!munGeo) {
-        var c = urlCapa('caldas-municipios'); if (!c) throw new Error('capa de municipios no disponible');
-        var r = await fetch(c.url + '/' + c.id + '/query', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body: new URLSearchParams({ where: '1=1', outFields: 'MpNombre', outSR: '4326', maxAllowableOffset: '0.001', geometryPrecision: '4', f: 'json' }) });
-        var j = await r.json(); if (j.error || !j.features) throw new Error('sin respuesta');
-        munGeo = j.features;
-      }
+      if (!(await ensureMun())) throw new Error('sin municipios');
       if (!E.mapa || !E.sw.mun) return;
       var g = L.layerGroup();
       munGeo.forEach(function (f) { if (!f.geometry || !f.geometry.rings) return; L.polygon(f.geometry.rings.map(function (rg) { return rg.map(function (p) { return [p[1], p[0]]; }); }), { color: '#fde047', weight: 1.6, fill: true, fillOpacity: 0, interactive: true }).bindTooltip(String(f.attributes.MpNombre || ''), { sticky: true }).addTo(g); });
@@ -180,45 +216,132 @@
   }
 
   function color(r) { return r.estado === 'Activo' ? '#dc2626' : r.estado === 'Controlado' ? '#f59e0b' : '#6b7280'; }
+  function norm(x) { return String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(); }
+  function tit(x) { x = String(x || ''); return x === x.toUpperCase() ? x.toLowerCase().replace(/(^|[\s-])([a-zñáéíóú])/g, function (m, a, b) { return a + b.toUpperCase(); }) : x; }
+  function hace(t) { var h = (Date.now() - new Date(t).getTime()) / 36e5; if (h < 1) return 'hace ' + Math.max(1, Math.round(h * 60)) + ' min'; if (h < 48) return 'hace ' + Math.round(h) + ' h'; return 'hace ' + Math.round(h / 24) + ' d'; }
+  function nombreMun(r) { return tit(r.municipio || (munDe(r.lat, r.lon)) || ''); }
+  var NIV = { crit: ['Crítica', 0], alta: ['Alta', 1], media: ['Media', 2], baja: ['Baja', 3] };
+  function mediana(a) { if (!a.length) return null; a = a.slice().sort(function (x, y) { return x - y; }); var m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; }
+  /* Calcula todo lo que muestra el tablero con los filtros actuales */
+  function calcular() {
+    var lim = Date.now() - E.dias * 864e5, sinM = !E.mun;
+    var okM = function (n) { return sinM || norm(n) === E.mun; };
+    var reps = reportesVisibles().filter(function (r) { return okM(nombreMun(r)); });
+    var dets = todasDet().filter(function (d) { if (new Date(d.fecha_hora).getTime() < lim) return false; if (munGeo && d._mun === undefined) d._mun = munDe(d.lat, d.lon); return sinM || (d._mun != null && norm(d._mun) === E.mun); });
+    var sinRep = dets.filter(function (d) { var t = new Date(d.fecha_hora).getTime(); return !E.rep.some(function (r) { return Math.abs(new Date(r.fecha_hora).getTime() - t) / 36e5 <= E.horas && km(r.lat, r.lon, d.lat, d.lon) <= E.radio; }); });
+    var al = [], lat = [];
+    reps.forEach(function (r) {
+      var c = estadoCruce(r), activo = r.estado === 'Activo', niv = activo ? (c.k === 'ok' ? 'crit' : 'alta') : 'baja';
+      var tit = activo ? (c.k === 'ok' ? 'Incendio activo confirmado por satélite' : 'Reporte comunitario activo · sin confirmación satelital') : ('Incendio ' + String(r.estado || '').toLowerCase());
+      al.push({ niv: niv, tipo: 'rep', r: r, t: r.fecha_hora, lat: r.lat, lon: r.lon, mun: nombreMun(r), ver: r.vereda || '', tit: tit, c: c });
+      if (c.c) { var dtl = (new Date(r.fecha_hora).getTime() - new Date(c.c.d.fecha_hora).getTime()) / 36e5; if (dtl >= 0) lat.push(dtl); }
+    });
+    sinRep.forEach(function (d) {
+      var h = (Date.now() - new Date(d.fecha_hora).getTime()) / 36e5;
+      al.push({ niv: h <= 24 ? 'alta' : 'media', tipo: 'det', d: d, t: d.fecha_hora, lat: d.lat, lon: d.lon, mun: tit(d._mun), ver: '', tit: 'Punto de calor sin reporte comunitario' });
+    });
+    al.sort(function (a, b) { return NIV[a.niv][1] - NIV[b.niv][1] || (a.t < b.t ? 1 : -1); });
+    return { reps: reps, dets: dets, sinRep: sinRep, al: al, lat: lat };
+  }
+  function kpi(c, v, t, sub, extra) { return '<div class="fg-kpi ' + (c || '') + '"><b>' + v + '</b><span>' + t + '</span>' + (sub ? '<em>' + sub + '</em>' : '') + '</div>'; }
   function pintarDatos() {
     var L = window.__pgtL, lado = el.querySelector('[data-r=lado]'); if (!lado) return;
-    var reps = reportesVisibles(), dets = todasDet();
+    var D = calcular(), reps = D.reps, dets = D.dets, al = D.al;
+    /* Municipios en el selector */
+    var sel = el.querySelector('[data-k=mun]');
+    if (sel) {
+      var nombres = {}; (munGeo || []).forEach(function (f) { nombres[norm(f.attributes.MpNombre)] = tit(f.attributes.MpNombre); }); E.rep.forEach(function (r) { if (r.municipio) nombres[norm(r.municipio)] = nombres[norm(r.municipio)] || tit(r.municipio); });
+      var ks = Object.keys(nombres).sort(); var sig = ks.join('|');
+      if (sel.dataset.sig !== sig) { sel.innerHTML = '<option value="">Todo Caldas</option>' + ks.map(function (k) { return '<option value="' + esc(k) + '">' + esc(nombres[k]) + '</option>'; }).join(''); sel.dataset.sig = sig; }
+      sel.value = E.mun;
+    }
+    /* Mapa */
     if (E.mapa && L) {
       E.capas.rep.clearLayers(); E.capas.det.clearLayers();
-      dets.forEach(function (d) { L.circleMarker([d.lat, d.lon], { radius: 6, color: '#fff', weight: 1.5, fillColor: '#7c3aed', fillOpacity: .9 }).bindPopup('<b>Punto de calor</b><br>' + esc(d.fuente || 'CSV') + '<br>' + fmt(d.fecha_hora) + (d.frp ? '<br>FRP ' + esc(d.frp) + ' MW' : '') + (d.confianza ? '<br>Confianza ' + esc(d.confianza) : '')).addTo(E.capas.det); });
+      dets.forEach(function (d) {
+        var rec = (Date.now() - new Date(d.fecha_hora).getTime()) <= 864e5;
+        var ic = L.divIcon({ className: 'fg-rombo' + (rec ? ' rec' : ''), iconSize: [14, 14], iconAnchor: [7, 7] });
+        d._m = L.marker([d.lat, d.lon], { icon: ic, zIndexOffset: rec ? 200 : 0 }).bindPopup(popupDet(d)); d._m.addTo(E.capas.det);
+      });
       reps.forEach(function (r) {
-        var m = L.circleMarker([r.lat, r.lon], { radius: 9, color: '#fff', weight: 2, fillColor: color(r), fillOpacity: .95 });
+        var m = L.circleMarker([r.lat, r.lon], { radius: 10, color: '#fff', weight: 2.5, fillColor: color(r), fillOpacity: .95 });
         m.bindPopup(popup(r)); m.addTo(E.capas.rep); r._m = m;
       });
       var pts = reps.map(function (r) { return [r.lat, r.lon]; }); if (pts.length && !E._enc) { E.mapa.fitBounds(pts, { maxZoom: 12, padding: [40, 40] }); E._enc = true; }
     }
-    var conf = reps.filter(function (r) { return estadoCruce(r).k === 'ok'; }).length, sr = sinReporte().length, ha = reps.reduce(function (a, r) { return a + (Number(r.area_ha) || 0); }, 0);
+    /* Indicadores */
+    var crit = al.filter(function (a) { return a.niv === 'crit' || a.niv === 'alta'; }).length;
+    var act = reps.filter(function (r) { return r.estado === 'Activo'; }).length;
+    var d24 = dets.filter(function (d) { return Date.now() - new Date(d.fecha_hora).getTime() <= 864e5; }).length;
+    var conf = reps.filter(function (r) { return estadoCruce(r).k === 'ok'; }).length, val = reps.filter(function (r) { return r.validado; }).length;
+    var md = mediana(D.lat);
+    el.querySelector('[data-r=kpis]').innerHTML =
+      kpi('k-rojo', crit, 'Alertas por atender', 'críticas y altas') + kpi('k-rojo', act, 'Incendios activos', 'reportados por la comunidad') + kpi('k-mor', d24, 'Puntos de calor', 'últimas 24 h') +
+      kpi('', reps.length, 'Reportes comunitarios', val + ' validados') + kpi('k-ver', reps.length ? Math.round(conf / reps.length * 100) + '%' : '—', 'Confirmados por satélite', conf + ' de ' + reps.length) +
+      kpi('k-mor', D.sinRep.length, 'Detecciones sin reporte', 'por verificar en campo') + kpi('', md == null ? '—' : (md < 1 ? Math.round(md * 60) + ' min' : md.toFixed(1) + ' h'), 'Satélite → reporte', md == null ? 'sin casos aún' : 'mediana entre detección y reporte');
+    var viv = el.querySelector('[data-r=vivo]'); if (viv) viv.innerHTML = '<i></i>' + (E.actualizado ? 'Satélite actualizado ' + hace(E.actualizado) : 'En vivo');
+    /* Panel lateral */
     var h = '';
     Object.keys(E.fallas || {}).forEach(function (k) { h += '<div class="fg-aviso fg-av-' + k + '">La capa «' + esc(E.fallas[k]) + '» no respondió desde este navegador.</div>'; });
     if (E.err) h += '<div class="fg-aviso">' + esc(E.err) + '</div>';
     if (!sesion()) h += '<div class="fg-aviso">Sin sesión: solo se muestran reportes validados. Planeación puede ver y validar todos.</div>';
-    h += '<div class="fg-kpis"><div class="fg-kpi"><span>Reportes</span><b>' + reps.length + '</b></div><div class="fg-kpi"><span>Activos</span><b>' + reps.filter(function (r) { return r.estado === 'Activo'; }).length + '</b></div><div class="fg-kpi"><span>Área reportada (ha)</span><b>' + ha.toLocaleString('es-CO', { maximumFractionDigits: 1 }) + '</b></div><div class="fg-kpi"><span>Confirmados por satélite</span><b>' + conf + '</b></div><div class="fg-kpi"><span>Detecciones sin reporte</span><b>' + sr + '</b></div></div>';
-    if (E.actualizado) h += '<div class="fg-nota" style="font-size:11.5px;color:#7c6a5d;margin:0 0 8px">Puntos de calor (NASA FIRMS) actualizados: ' + fmt(E.actualizado) + ' · ' + dets.length + ' detecciones en el periodo.</div>';
-    if (!dets.length) h += '<div class="fg-aviso">No hay puntos de calor en este periodo. Se actualizan solos cada 3 horas desde NASA FIRMS; también puede cargar un CSV de FIRMS o del IDEAM.</div>';
-    if (!reps.length) h += '<div class="fg-vacio">No hay reportes en este periodo.</div>';
-    if (dets.length) {
-      h += '<h4 style="margin:12px 0 6px;color:#6d28d9">Puntos de calor recientes</h4>';
-      dets.slice().sort(function (x, y) { return y.fecha_hora < x.fecha_hora ? -1 : 1; }).slice(0, 12).forEach(function (d, j) {
-        h += '<div class="fg-item" data-d="' + j + '"><h4>' + fmt(d.fecha_hora) + '</h4><p>' + esc(d.fuente || 'CSV') + (d.frp ? ' · FRP ' + esc(d.frp) + ' MW' : '') + ' · ' + d.lat.toFixed(3) + ', ' + d.lon.toFixed(3) + '</p></div>';
-      });
-    }
-    reps.forEach(function (r, i) {
-      var c = estadoCruce(r);
-      h += '<div class="fg-item" data-i="' + i + '"><h4>' + esc(r.municipio || 'Sin municipio') + (r.vereda ? ' · ' + esc(r.vereda) : '') + '<span class="fg-tag ' + c.k + '">' + c.t + '</span>' + (r.validado ? '' : '<span class="fg-tag nv">Sin validar</span>') + '</h4><p>' + fmt(r.fecha_hora) + ' · ' + esc(r.estado) + (r.area_ha != null ? ' · ' + r.area_ha + ' ha' : '') + (r.origen ? ' · ' + esc(r.origen) : '') + '</p>' +
-        (c.c ? '<p>Detección a ' + c.c.km.toFixed(2) + ' km y ' + c.c.h.toFixed(1) + ' h</p>' : '') +
-        (puedeValidar() && !r.validado ? '<p><button class="fg-b" data-v="' + i + '">Validar reporte</button></p>' : '') + '</div>';
-    });
+    if (E.vista === 'alertas') h += vistaAlertas(D);
+    else if (E.vista === 'analisis') h += vistaAnalisis(D);
+    else h += vistaProtocolo();
     lado.innerHTML = h;
-    lado.querySelectorAll('.fg-item').forEach(function (n) { n.onclick = function (ev) { if (ev.target.dataset.v) return; var r = reps[n.dataset.i]; if (E.mapa) { E.mapa.setView([r.lat, r.lon], 14); r._m && r._m.openPopup(); } }; });
-    var ord = dets.slice().sort(function (x, y) { return y.fecha_hora < x.fecha_hora ? -1 : 1; });
-    lado.querySelectorAll('[data-d]').forEach(function (n) { n.onclick = function () { var d = ord[n.dataset.d]; if (E.mapa) E.mapa.setView([d.lat, d.lon], 14); }; });
-    lado.querySelectorAll('[data-v]').forEach(function (b) { b.onclick = function () { validar(reps[b.dataset.v]); }; });
+    enlazarLado(lado, D);
   }
+  function vistaAlertas(D) {
+    var al = D.al, h = '<div class="fg-nivs">' + [['todos', 'Todas'], ['crit', 'Críticas'], ['alta', 'Altas'], ['media', 'Medias'], ['baja', 'Bajas']].map(function (n) { var k = n[0], c = k === 'todos' ? al.length : al.filter(function (a) { return a.niv === k; }).length; return '<button data-n="' + k + '" class="' + (E.nivel === k ? 'on' : '') + '">' + n[1] + ' <b>' + c + '</b></button>'; }).join('') + '</div>';
+    var lista = al.filter(function (a) { return E.nivel === 'todos' || a.niv === E.nivel; });
+    if (!lista.length) return h + '<div class="fg-vacio"><b>Sin alertas</b><br>No hay alertas con estos filtros. El satélite se revisa cada 3 horas.</div>';
+    lista.slice(0, 40).forEach(function (a, i) {
+      var r = a.r, extra = '';
+      if (a.tipo === 'rep') extra = (r.area_ha != null ? r.area_ha + ' ha · ' : '') + esc(r.origen || 'Reporte comunitario') + (a.c.c ? ' · satélite a ' + a.c.c.km.toFixed(1) + ' km' : '') + (r.validado ? '' : ' · sin validar');
+      else extra = esc(a.d.fuente || 'CSV') + (a.d.frp ? ' · FRP ' + esc(a.d.frp) + ' MW' : '') + (a.d.confianza ? ' · confianza ' + esc(a.d.confianza) : '');
+      h += '<div class="fg-al n-' + a.niv + '" data-al="' + i + '"><div class="fg-al-t"><span class="fg-niv">' + NIV[a.niv][0] + '</span><span class="fg-hace">' + hace(a.t) + '</span></div><h4>' + esc(a.tit) + '</h4><p>' + esc(a.mun || 'Municipio sin determinar') + (a.ver ? ' · ' + esc(a.ver) : '') + '</p><p class="fg-sm">' + extra + '</p>' +
+        '<div class="fg-acc"><button data-ver="' + i + '">Ver en mapa</button><a href="https://www.google.com/maps?q=' + a.lat + ',' + a.lon + '" target="_blank" rel="noopener">Cómo llegar</a><button data-cp="' + i + '">Copiar coordenadas</button>' + (a.tipo === 'rep' && puedeValidar() && !r.validado ? '<button class="v" data-v="' + i + '">Validar</button>' : '') + '</div></div>';
+    });
+    if (lista.length > 40) h += '<div class="fg-vacio">Se muestran las 40 más prioritarias de ' + lista.length + '.</div>';
+    D.lista = lista; return h;
+  }
+  function barras(filas, colores, max) {
+    return filas.map(function (f) { var tot = f.v.reduce(function (a, b) { return a + b; }, 0); return '<div class="fg-br" data-m="' + esc(norm(f.k)) + '"><span class="fg-br-n">' + esc(f.k) + '</span><div class="fg-br-b">' + f.v.map(function (v, i) { return v ? '<i style="width:' + (v / max * 100) + '%;background:' + colores[i] + '"></i>' : ''; }).join('') + '</div><b>' + tot + '</b></div>'; }).join('');
+  }
+  function vistaAnalisis(D) {
+    var por = {}, nom = {};
+    var suma = function (k0, i) { var k = norm(k0) || '_s'; nom[k] = nom[k] || tit(k0) || 'Sin municipio'; (por[k] = por[k] || [0, 0])[i]++; };
+    D.reps.forEach(function (r) { suma(nombreMun(r), 0); });
+    D.dets.forEach(function (d) { suma(d._mun || (munGeo ? 'Fuera de Caldas' : ''), 1); });
+    var filas = Object.keys(por).map(function (k) { return { k: nom[k], v: por[k] }; }).sort(function (a, b) { return (b.v[0] + b.v[1]) - (a.v[0] + a.v[1]); }).slice(0, 12);
+    var mx = Math.max.apply(null, filas.map(function (f) { return f.v[0] + f.v[1]; }).concat([1]));
+    var h = '<div class="fg-card"><h3>Dónde se concentra</h3><div class="fg-lg"><i style="background:#c2410c"></i>Reportes <i style="background:#7c3aed"></i>Puntos de calor</div>' + (filas.length ? barras(filas, ['#c2410c', '#7c3aed'], mx) : '<div class="fg-vacio">Sin datos en el periodo.</div>') + '<p class="fg-sm">Toque un municipio para filtrar todo el tablero.</p></div>';
+    /* línea de tiempo */
+    var horas = E.dias <= 1, n = horas ? 24 : Math.min(E.dias, 30), paso = horas ? 36e5 : 864e5, ahora = Date.now(), bins = []; for (var i = 0; i < n; i++) bins.push([0, 0]);
+    var idx = function (t) { var k = n - 1 - Math.floor((ahora - new Date(t).getTime()) / paso); return k >= 0 && k < n ? k : -1; };
+    D.reps.forEach(function (r) { var k = idx(r.fecha_hora); if (k >= 0) bins[k][0]++; }); D.dets.forEach(function (d) { var k = idx(d.fecha_hora); if (k >= 0) bins[k][1]++; });
+    var mt = Math.max.apply(null, bins.map(function (b) { return b[0] + b[1]; }).concat([1])), W = 340, Hh = 110, bw = W / n;
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + (Hh + 16) + '" class="fg-svg">' + bins.map(function (b, i) { var a = b[1] / mt * Hh, c = b[0] / mt * Hh, f = new Date(ahora - (n - 1 - i) * paso), et = horas ? f.getHours() + ' h' : f.getDate() + '/' + (f.getMonth() + 1); return '<rect x="' + (i * bw + 1) + '" y="' + (Hh - a) + '" width="' + Math.max(bw - 2, 1) + '" height="' + a + '" fill="#7c3aed"><title>' + et + ': ' + b[1] + ' puntos de calor</title></rect><rect x="' + (i * bw + 1) + '" y="' + (Hh - a - c) + '" width="' + Math.max(bw - 2, 1) + '" height="' + c + '" fill="#c2410c"><title>' + et + ': ' + b[0] + ' reportes</title></rect>' + (i % Math.ceil(n / 6) === 0 ? '<text x="' + (i * bw + bw / 2) + '" y="' + (Hh + 12) + '" font-size="9" text-anchor="middle" fill="#7c6a5d">' + et + '</text>' : ''); }).join('') + '</svg>';
+    h += '<div class="fg-card"><h3>' + (horas ? 'Por hora (últimas 24 h)' : 'Por día') + '</h3>' + svg + '</div>';
+    var est = { Activo: 0, Controlado: 0, Extinguido: 0 }; D.reps.forEach(function (r) { est[r.estado] = (est[r.estado] || 0) + 1; });
+    h += '<div class="fg-card"><h3>Estado de los reportes</h3>' + barras([{ k: 'Activos', v: [est.Activo] }, { k: 'Controlados', v: [est.Controlado] }, { k: 'Extinguidos', v: [est.Extinguido] }], ['#dc2626'], Math.max(est.Activo, est.Controlado, est.Extinguido, 1)) + '</div>';
+    return h;
+  }
+  function vistaProtocolo() {
+    return '<div class="fg-card"><h3>Cómo se genera una alerta</h3><ol class="fg-ol"><li><b>Detecta el satélite.</b> NASA FIRMS (VIIRS y MODIS) se revisa cada 3 horas y los puntos de calor aparecen como rombos violetas.</li><li><b>Reporta la comunidad.</b> Cualquier persona registra el incendio en la app móvil (ubicación, foto, estado). Aparece como círculo.</li><li><b>Se cruzan.</b> Si coinciden en distancia y tiempo, el incendio queda «confirmado por satélite».</li><li><b>Se prioriza.</b> Las alertas se ordenan por nivel para atender primero lo más urgente.</li></ol></div>' +
+      '<div class="fg-card"><h3>Niveles de alerta</h3><div class="fg-niv-l"><p><span class="fg-niv c">Crítica</span> Reporte activo y confirmado por satélite: movilizar de inmediato.</p><p><span class="fg-niv a">Alta</span> Reporte activo sin confirmar, o punto de calor de las últimas 24 h sin reporte: verificar y despachar.</p><p><span class="fg-niv m">Media</span> Punto de calor de más de 24 h sin reporte: verificar en campo.</p><p><span class="fg-niv b">Baja</span> Incendio controlado o extinguido: seguimiento.</p></div></div>' +
+      '<div class="fg-card"><h3>Para reportar un incendio</h3><ol class="fg-ol"><li>Llame primero a la línea de emergencias <b>123</b> o al cuerpo de bomberos local.</li><li>Registre en la app: ubicación, foto del frente de fuego y estado.</li><li>No se acerque al fuego ni intente controlarlo sin entrenamiento.</li><li>Planeación valida el reporte para que sea oficial en el tablero.</li></ol></div>' +
+      '<div class="fg-card"><h3>Parámetros actuales del cruce</h3><p class="fg-sm">Radio: ' + E.radio + ' km · Ventana: ± ' + E.horas + ' h. Cámbielos en «Ajustes de cruce».</p></div>';
+  }
+  function enlazarLado(lado, D) {
+    lado.querySelectorAll('[data-n]').forEach(function (b) { b.onclick = function () { E.nivel = b.dataset.n; pintarDatos(); }; });
+    lado.querySelectorAll('.fg-br').forEach(function (b) { b.onclick = function () { E.mun = (E.mun === b.dataset.m ? '' : b.dataset.m); pintarDatos(); }; });
+    var lista = D.lista || [];
+    lado.querySelectorAll('[data-ver]').forEach(function (b) { b.onclick = function () { var a = lista[b.dataset.ver]; if (!a || !E.mapa) return; E.mapa.setView([a.lat, a.lon], 14); var m = a.tipo === 'rep' ? a.r._m : a.d._m; if (m) m.openPopup(); }; });
+    lado.querySelectorAll('[data-cp]').forEach(function (b) { b.onclick = function () { var a = lista[b.dataset.cp]; var t = a.lat.toFixed(5) + ', ' + a.lon.toFixed(5); try { navigator.clipboard.writeText(t); b.textContent = 'Copiado'; } catch (e) { b.textContent = t; } }; });
+    lado.querySelectorAll('[data-v]').forEach(function (b) { b.onclick = function () { validar(lista[b.dataset.v].r); }; });
+  }
+  function popupDet(d) { return '<b>Punto de calor</b><br>' + esc(d.fuente || 'CSV') + (d._mun ? '<br>' + esc(d._mun) : '') + '<br>' + fmt(d.fecha_hora) + ' (' + hace(d.fecha_hora) + ')' + (d.frp ? '<br>FRP ' + esc(d.frp) + ' MW' : '') + (d.confianza ? '<br>Confianza ' + esc(d.confianza) : '') + '<br><i>Requiere verificación en campo</i>'; }
   function popup(r) {
     var c = estadoCruce(r);
     var f = (r.fotos && r.fotos.length) ? '<br>' + r.fotos.slice(0, 3).map(function (u) { return '<a href="' + esc(u) + '" target="_blank" rel="noopener">foto</a>'; }).join(' · ') : '';
@@ -321,7 +444,7 @@
     if (!permitido()) { if (ex) ex.remove(); if (el) cerrar(); return; }
     if (ex) return;
     var ref = document.querySelector('.pgi-btn'); if (!ref) return;
-    var b = document.createElement('button'); b.type = 'button'; b.className = 'pgi-btn fg-btn'; b.textContent = 'Incendios'; b.onclick = abrir;
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'pgi-btn fg-btn'; b.textContent = 'Alerta temprana'; b.onclick = abrir;
     ref.parentNode.insertBefore(b, ref);
   }
   new MutationObserver(montar).observe(document.documentElement, { childList: true, subtree: true });
