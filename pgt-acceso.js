@@ -28,7 +28,7 @@
     if (!p.ok) throw new Error('No se pudo leer el perfil (tabla «perfiles»). Revise supabase/acceso.sql.');
     var filas = await p.json();
     var roles = filas.map(function (f) { return f.rol; }).filter(function (x) { return VISTAS[x]; });
-    var s = { correo: correo, nombre: (filas[0] && filas[0].nombre) || correo, roles: roles, exp: Date.now() + Math.min(j.expires_in || 3600, 8 * 3600) * 1000 };
+    var s = { tk: j.access_token, correo: correo, nombre: (filas[0] && filas[0].nombre) || correo, roles: roles, exp: Date.now() + Math.min(j.expires_in || 3600, 8 * 3600) * 1000 };
     guardar(s); return s;
   }
 
