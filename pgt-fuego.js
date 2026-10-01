@@ -15,7 +15,7 @@
     aica: { op: .6, nom: 'AICA', get: function () { return urlCapa('eep-aica'); } },
     ver: { op: .85, nom: 'Veredas', get: function () { return urlCapa('caldas-veredas'); } }
   };
-  var E = { firms: [], actualizado: '', tab: 'mapa', dias: 7, radio: 1, horas: 48, solo: 'todos', rep: [], det: [], csv: [], err: '', mapa: null, capas: {}, sel: null, sw: { mun: true, ideam: false, sinap: false, aica: false, ver: false }, fondo: 'sat', hist: undefined, tim: null, mun: '', vista: 'alertas', nivel: 'todos' };
+  var E = { firms: [], actualizado: '', tab: 'mapa', dias: 7, radio: 1, horas: 48, solo: 'todos', rep: [], det: [], csv: [], err: '', mapa: null, capas: {}, sel: null, sw: { mun: true, ideam: false, sinap: false, aica: false, ver: false }, fondo: 'osc', hist: undefined, tim: null, mun: '', vista: 'alertas', nivel: 'todos' };
   var el = null;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -98,12 +98,12 @@
         '</div>' +
         '<div class="fg-kpis" data-r="kpis"></div>' +
         '<div class="fg-cuerpo"><div class="fg-mapa"><div data-r="map"></div>' +
-          '<details class="fg-capas" open><summary>Capas y fondo</summary><div class="fg-capas-p">' +
-            '<label>Fondo<select data-k="fondo"><option value="sat">Imagen satelital</option><option value="osm">Calles</option><option value="claro">Claro</option></select></label>' +
+          '<details class="fg-capas"><summary>Capas y fondo</summary><div class="fg-capas-p">' +
+            '<label>Fondo<select data-k="fondo"><option value="osc">Oscuro</option><option value="sat">Imagen satelital</option><option value="osm">Calles</option><option value="claro">Claro</option></select></label>' +
             '<label class="fg-chk"><input type="checkbox" data-k="sw:mun"> Municipios</label><label class="fg-chk"><input type="checkbox" data-k="sw:ver"> Veredas</label><label class="fg-chk"><input type="checkbox" data-k="sw:sinap"> Áreas SINAP</label><label class="fg-chk"><input type="checkbox" data-k="sw:aica"> AICA</label><label class="fg-chk"><input type="checkbox" data-k="sw:ideam"> Amenaza IDEAM</label>' +
           '</div></details>' +
           '<div class="fg-leyenda"><div><i style="background:#dc2626;border-radius:50%"></i>Reporte activo</div><div><i style="background:#f59e0b;border-radius:50%"></i>Controlado</div><div><i style="background:#6b7280;border-radius:50%"></i>Extinguido</div><div><i style="background:#7c3aed;transform:rotate(45deg)"></i>Punto de calor ≤ 24 h</div><div><i style="background:#c4b5fd;transform:rotate(45deg)"></i>Punto de calor anterior</div></div></div>' +
-          '<div class="fg-lado-w"><div class="fg-stabs"><button data-vs="alertas">Alertas</button><button data-vs="analisis">Análisis</button><button data-vs="protocolo">Protocolo</button></div><div class="fg-lado" data-r="lado"></div></div>' +
+          '<div class="fg-linea" data-r="linea"></div><div class="fg-lado-w"><div class="fg-stabs"><button data-vs="alertas">Alertas</button><button data-vs="analisis">Análisis</button><button data-vs="protocolo">Protocolo</button></div><div class="fg-lado" data-r="lado"></div></div>' +
         '</div></div>';
       c.querySelector('[data-k=fondo]').value = E.fondo; Object.keys(E.sw).forEach(function (k) { c.querySelector('[data-k="sw:' + k + '"]').checked = E.sw[k]; });
       c.querySelectorAll('[data-k]').forEach(function (i) {
@@ -136,6 +136,7 @@
   }
 
   var FONDOS = {
+    osc: ['https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', '© OpenStreetMap, © CARTO'],
     sat: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', 'Esri'],
     osm: ['https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', '© OpenStreetMap'],
     claro: ['https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', '© OpenStreetMap, © CARTO']
@@ -148,7 +149,7 @@
   }
   function iniciarMapa() {
     var L = window.__pgtL, cont = el.querySelector('[data-r=map]'); if (!L || !cont) { if (cont) cont.innerHTML = '<div class="fg-vacio">El mapa no está disponible todavía. Cierre esta ventana, abra Territorio y vuelva a intentarlo.</div>'; return; }
-    E.mapa = L.map(cont, { zoomControl: true }).setView([5.28, -75.3], 9);
+    E.mapa = L.map(cont, { zoomControl: true }).setView([5.28, -75.3], 9); medirZoom();
     fondo();
     E.capas.rep = L.layerGroup().addTo(E.mapa); E.capas.det = L.layerGroup().addTo(E.mapa);
     munCapa(); Object.keys(DIN).forEach(din);
@@ -260,11 +261,11 @@
       E.capas.rep.clearLayers(); E.capas.det.clearLayers();
       dets.forEach(function (d) {
         var rec = (Date.now() - new Date(d.fecha_hora).getTime()) <= 864e5;
-        var ic = L.divIcon({ className: 'fg-rombo' + (rec ? ' rec' : ''), iconSize: [14, 14], iconAnchor: [7, 7] });
+        var sz = Math.round(Math.min(26, Math.max(11, 9 + Math.sqrt(Number(d.frp) || 1) * 2.6))); var ic = L.divIcon({ className: 'fg-rombo' + (rec ? ' rec' : ''), iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2] });
         d._m = L.marker([d.lat, d.lon], { icon: ic, zIndexOffset: rec ? 200 : 0 }).bindPopup(popupDet(d)); d._m.addTo(E.capas.det);
       });
       reps.forEach(function (r) {
-        var m = L.circleMarker([r.lat, r.lon], { radius: 10, color: '#fff', weight: 2.5, fillColor: color(r), fillOpacity: .95 });
+        var m = L.circleMarker([r.lat, r.lon], { radius: Math.min(20, 8 + Math.sqrt(Number(r.area_ha) || 0) * 3), color: '#fff', weight: 2.5, fillColor: color(r), fillOpacity: .95 });
         m.bindPopup(popup(r)); m.addTo(E.capas.rep); r._m = m;
       });
       var pts = reps.map(function (r) { return [r.lat, r.lon]; }); if (pts.length && !E._enc) { E.mapa.fitBounds(pts, { maxZoom: 12, padding: [40, 40] }); E._enc = true; }
@@ -289,7 +290,7 @@
     else if (E.vista === 'analisis') h += vistaAnalisis(D);
     else h += vistaProtocolo();
     lado.innerHTML = h;
-    enlazarLado(lado, D);
+    enlazarLado(lado, D); pintaLinea(D); medirZoom();
   }
   function vistaAlertas(D) {
     var al = D.al, h = '<div class="fg-nivs">' + [['todos', 'Todas'], ['crit', 'Críticas'], ['alta', 'Altas'], ['media', 'Medias'], ['baja', 'Bajas']].map(function (n) { var k = n[0], c = k === 'todos' ? al.length : al.filter(function (a) { return a.niv === k; }).length; return '<button data-n="' + k + '" class="' + (E.nivel === k ? 'on' : '') + '">' + n[1] + ' <b>' + c + '</b></button>'; }).join('') + '</div>';
@@ -316,17 +317,32 @@
     var filas = Object.keys(por).map(function (k) { return { k: nom[k], v: por[k] }; }).sort(function (a, b) { return (b.v[0] + b.v[1]) - (a.v[0] + a.v[1]); }).slice(0, 12);
     var mx = Math.max.apply(null, filas.map(function (f) { return f.v[0] + f.v[1]; }).concat([1]));
     var h = '<div class="fg-card"><h3>Dónde se concentra</h3><div class="fg-lg"><i style="background:#c2410c"></i>Reportes <i style="background:#7c3aed"></i>Puntos de calor</div>' + (filas.length ? barras(filas, ['#c2410c', '#7c3aed'], mx) : '<div class="fg-vacio">Sin datos en el periodo.</div>') + '<p class="fg-sm">Toque un municipio para filtrar todo el tablero.</p></div>';
-    /* línea de tiempo */
-    var horas = E.dias <= 1, n = horas ? 24 : Math.min(E.dias, 30), paso = horas ? 36e5 : 864e5, ahora = Date.now(), bins = []; for (var i = 0; i < n; i++) bins.push([0, 0]);
-    var idx = function (t) { var k = n - 1 - Math.floor((ahora - new Date(t).getTime()) / paso); return k >= 0 && k < n ? k : -1; };
-    D.reps.forEach(function (r) { var k = idx(r.fecha_hora); if (k >= 0) bins[k][0]++; }); D.dets.forEach(function (d) { var k = idx(d.fecha_hora); if (k >= 0) bins[k][1]++; });
-    var mt = Math.max.apply(null, bins.map(function (b) { return b[0] + b[1]; }).concat([1])), W = 340, Hh = 110, bw = W / n;
-    var svg = '<svg viewBox="0 0 ' + W + ' ' + (Hh + 16) + '" class="fg-svg">' + bins.map(function (b, i) { var a = b[1] / mt * Hh, c = b[0] / mt * Hh, f = new Date(ahora - (n - 1 - i) * paso), et = horas ? f.getHours() + ' h' : f.getDate() + '/' + (f.getMonth() + 1); return '<rect x="' + (i * bw + 1) + '" y="' + (Hh - a) + '" width="' + Math.max(bw - 2, 1) + '" height="' + a + '" fill="#7c3aed"><title>' + et + ': ' + b[1] + ' puntos de calor</title></rect><rect x="' + (i * bw + 1) + '" y="' + (Hh - a - c) + '" width="' + Math.max(bw - 2, 1) + '" height="' + c + '" fill="#c2410c"><title>' + et + ': ' + b[0] + ' reportes</title></rect>' + (i % Math.ceil(n / 6) === 0 ? '<text x="' + (i * bw + bw / 2) + '" y="' + (Hh + 12) + '" font-size="9" text-anchor="middle" fill="#7c6a5d">' + et + '</text>' : ''); }).join('') + '</svg>';
-    h += '<div class="fg-card"><h3>' + (horas ? 'Por hora (últimas 24 h)' : 'Por día') + '</h3>' + svg + '</div>';
+    h += '<div class="fg-card"><h3>' + (E.dias <= 1 ? 'Por hora (últimas 24 h)' : 'Por día') + '</h3>' + serieHtml(D) + '</div>';
     var est = { Activo: 0, Controlado: 0, Extinguido: 0 }; D.reps.forEach(function (r) { est[r.estado] = (est[r.estado] || 0) + 1; });
     h += '<div class="fg-card"><h3>Estado de los reportes</h3>' + barras([{ k: 'Activos', v: [est.Activo] }, { k: 'Controlados', v: [est.Controlado] }, { k: 'Extinguidos', v: [est.Extinguido] }], ['#dc2626'], Math.max(est.Activo, est.Controlado, est.Extinguido, 1)) + '</div>';
     return h;
   }
+  function serieHtml(D) {
+    var horas = E.dias <= 1, n = horas ? 24 : Math.min(E.dias, 30), paso = horas ? 36e5 : 864e5, ahora = Date.now(), bins = [];
+    for (var i = 0; i < n; i++) bins.push([0, 0]);
+    var idx = function (t) { var k = n - 1 - Math.floor((ahora - new Date(t).getTime()) / paso); return k >= 0 && k < n ? k : -1; };
+    D.reps.forEach(function (r) { var k = idx(r.fecha_hora); if (k >= 0) bins[k][0]++; }); D.dets.forEach(function (d) { var k = idx(d.fecha_hora); if (k >= 0) bins[k][1]++; });
+    var mt = Math.max.apply(null, bins.map(function (b) { return b[0] + b[1]; }).concat([1]));
+    var col = bins.map(function (b, i) {
+      var f = new Date(ahora - (n - 1 - i) * paso), et = horas ? f.getHours() + ' h' : f.getDate() + '/' + (f.getMonth() + 1);
+      return '<div class="fg-col" title="' + et + ': ' + b[1] + ' puntos de calor, ' + b[0] + ' reportes"><div class="fg-col-b"><i style="height:' + (b[0] / mt * 100) + '%;background:#fb923c"></i><i style="height:' + (b[1] / mt * 100) + '%;background:#a78bfa"></i></div><span>' + (i % Math.ceil(n / 8) === 0 ? et : '&nbsp;') + '</span></div>';
+    }).join('');
+    return '<div class="fg-serie">' + col + '</div>';
+  }
+  function pintaLinea(D) {
+    var c = el && el.querySelector('[data-r=linea]'); if (!c) return;
+    c.innerHTML = '<div class="fg-linea-t"><b>' + (E.dias <= 1 ? 'Actividad por hora' : 'Actividad por día') + '</b><span><i style="background:#a78bfa"></i>Puntos de calor <i style="background:#fb923c"></i>Reportes</span></div>' + serieHtml(D);
+  }
+  function medirZoom() {
+    if (!el) return; var d = el.querySelector('.fg-dash'), k = el.querySelector('[data-r=kpis]'), m = el.querySelector('[data-r=map]'); if (!d || !k || !m) return;
+    m.style.setProperty('--zt', Math.round(k.getBoundingClientRect().bottom - d.getBoundingClientRect().top + 8) + 'px');
+  }
+  window.addEventListener('resize', function () { medirZoom(); });
   function vistaProtocolo() {
     return '<div class="fg-card"><h3>Cómo se genera una alerta</h3><ol class="fg-ol"><li><b>Detecta el satélite.</b> NASA FIRMS (VIIRS y MODIS) se revisa cada 3 horas y los puntos de calor aparecen como rombos violetas.</li><li><b>Reporta la comunidad.</b> Cualquier persona registra el incendio en la app móvil (ubicación, foto, estado). Aparece como círculo.</li><li><b>Se cruzan.</b> Si coinciden en distancia y tiempo, el incendio queda «confirmado por satélite».</li><li><b>Se prioriza.</b> Las alertas se ordenan por nivel para atender primero lo más urgente.</li></ol></div>' +
       '<div class="fg-card"><h3>Niveles de alerta</h3><div class="fg-niv-l"><p><span class="fg-niv c">Crítica</span> Reporte activo y confirmado por satélite: movilizar de inmediato.</p><p><span class="fg-niv a">Alta</span> Reporte activo sin confirmar, o punto de calor de las últimas 24 h sin reporte: verificar y despachar.</p><p><span class="fg-niv m">Media</span> Punto de calor de más de 24 h sin reporte: verificar en campo.</p><p><span class="fg-niv b">Baja</span> Incendio controlado o extinguido: seguimiento.</p></div></div>' +
