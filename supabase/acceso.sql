@@ -11,6 +11,7 @@ create table if not exists public.perfiles (
 );
 
 alter table public.perfiles enable row level security;
+grant select on public.perfiles to authenticated;
 
 drop policy if exists "ver_propio_perfil" on public.perfiles;
 create policy "ver_propio_perfil" on public.perfiles
