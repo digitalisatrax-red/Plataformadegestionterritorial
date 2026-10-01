@@ -8,7 +8,7 @@
   var CFG = window.PGT_CONFIG || {};
   var SB = String(CFG.supabaseUrl || '').trim().replace(/\/+$/, '');
   var IDEAM = 'https://visualizador.ideam.gov.co/gisserver/rest/services/Alertas_ICV/MapServer';
-  var E = { tab: 'mapa', dias: 7, radio: 1, horas: 48, solo: 'todos', rep: [], det: [], csv: [], err: '', mapa: null, capas: {}, sel: null, ideam: false, hist: undefined, tim: null };
+  var E = { firms: [], actualizado: '', tab: 'mapa', dias: 7, radio: 1, horas: 48, solo: 'todos', rep: [], det: [], csv: [], err: '', mapa: null, capas: {}, sel: null, ideam: false, hist: undefined, tim: null };
   var el = null;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -29,6 +29,10 @@
       var d = await fetch(SB + '/rest/v1/detecciones_calor?select=*&fecha_hora=gte.' + encodeURIComponent(new Date(Date.now() - (E.dias + 3) * 864e5).toISOString()) + '&order=fecha_hora.desc&limit=5000', { headers: hdr() });
       E.det = d.ok ? await d.json() : [];
     } catch (e) { E.err = e.message; }
+    try {
+      var fr = await fetch('data/firms_caldas.json?t=' + Math.floor(Date.now() / 600000), { cache: 'no-cache' });
+      if (fr.ok) { var fj = await fr.json(); var lim = Date.now() - (E.dias + 3) * 864e5; E.firms = (fj.puntos || []).filter(function (p) { return new Date(p.fecha_hora).getTime() >= lim; }); E.actualizado = fj.actualizado || ''; }
+    } catch (e) {}
   }
 
   function km(a, b, c, d) {
@@ -36,7 +40,7 @@
     var x = Math.sin(dl / 2) * Math.sin(dl / 2) + Math.cos(a * t) * Math.cos(c * t) * Math.sin(dg / 2) * Math.sin(dg / 2);
     return 2 * R * Math.asin(Math.sqrt(x));
   }
-  function todasDet() { return E.det.concat(E.csv); }
+  function todasDet() { var vistos = {}; return E.det.concat(E.firms, E.csv).filter(function (d) { var k = d.fuente + d.fecha_hora + d.lat + d.lon; if (vistos[k]) return false; vistos[k] = 1; return true; }); }
   function cruzar(r) {
     var t0 = new Date(r.fecha_hora).getTime(), mejor = null;
     todasDet().forEach(function (d) {
@@ -57,7 +61,7 @@
 
   /* ── Interfaz ───────────────────────────────────────── */
   function abrir() {
-    if (el) return;
+    if (el || !permitido()) return;
     el = document.createElement('div'); el.className = 'fg-root';
     el.innerHTML = '<div class="fg-cab"><div><span class="fg-ey">Módulo FIRE</span><h1>Incendios de la cobertura vegetal · Caldas</h1><div class="fg-sub">Reportes de campo + puntos de calor satelitales + histórico MapBiomas Fuego</div></div><button class="fg-x" aria-label="Cerrar">×</button></div>' +
       '<div class="fg-tabs"><button data-t="mapa" class="on">Mapa y reportes</button><button data-t="hist">Histórico (MapBiomas Fuego)</button><button data-t="fuentes">Fuentes y créditos</button></div>' +
@@ -129,7 +133,7 @@
     var reps = reportesVisibles(), dets = todasDet();
     if (E.mapa && L) {
       E.capas.rep.clearLayers(); E.capas.det.clearLayers();
-      dets.forEach(function (d) { L.rectangle([[d.lat - .004, d.lon - .004], [d.lat + .004, d.lon + .004]], { color: '#7c3aed', weight: 1, fillOpacity: .7 }).bindPopup('<b>Punto de calor</b><br>' + esc(d.fuente || 'CSV') + '<br>' + fmt(d.fecha_hora) + (d.frp ? '<br>FRP ' + esc(d.frp) + ' MW' : '') + (d.confianza ? '<br>Confianza ' + esc(d.confianza) : '')).addTo(E.capas.det); });
+      dets.forEach(function (d) { L.circleMarker([d.lat, d.lon], { radius: 6, color: '#fff', weight: 1.5, fillColor: '#7c3aed', fillOpacity: .9 }).bindPopup('<b>Punto de calor</b><br>' + esc(d.fuente || 'CSV') + '<br>' + fmt(d.fecha_hora) + (d.frp ? '<br>FRP ' + esc(d.frp) + ' MW' : '') + (d.confianza ? '<br>Confianza ' + esc(d.confianza) : '')).addTo(E.capas.det); });
       reps.forEach(function (r) {
         var m = L.circleMarker([r.lat, r.lon], { radius: 9, color: '#fff', weight: 2, fillColor: color(r), fillOpacity: .95 });
         m.bindPopup(popup(r)); m.addTo(E.capas.rep); r._m = m;
@@ -141,8 +145,15 @@
     if (E.err) h += '<div class="fg-aviso">' + esc(E.err) + '</div>';
     if (!sesion()) h += '<div class="fg-aviso">Sin sesión: solo se muestran reportes validados. Planeación puede ver y validar todos.</div>';
     h += '<div class="fg-kpis"><div class="fg-kpi"><span>Reportes</span><b>' + reps.length + '</b></div><div class="fg-kpi"><span>Activos</span><b>' + reps.filter(function (r) { return r.estado === 'Activo'; }).length + '</b></div><div class="fg-kpi"><span>Área reportada (ha)</span><b>' + ha.toLocaleString('es-CO', { maximumFractionDigits: 1 }) + '</b></div><div class="fg-kpi"><span>Confirmados por satélite</span><b>' + conf + '</b></div><div class="fg-kpi"><span>Detecciones sin reporte</span><b>' + sr + '</b></div></div>';
-    if (!dets.length) h += '<div class="fg-aviso">Aún no hay puntos de calor cargados. Puede cargar un CSV de FIRMS o del IDEAM con el botón de arriba; la carga automática se activa con la función de FIRMS.</div>';
+    if (E.actualizado) h += '<div class="fg-nota" style="font-size:11.5px;color:#7c6a5d;margin:0 0 8px">Puntos de calor (NASA FIRMS) actualizados: ' + fmt(E.actualizado) + ' · ' + dets.length + ' detecciones en el periodo.</div>';
+    if (!dets.length) h += '<div class="fg-aviso">No hay puntos de calor en este periodo. Se actualizan solos cada 3 horas desde NASA FIRMS; también puede cargar un CSV de FIRMS o del IDEAM.</div>';
     if (!reps.length) h += '<div class="fg-vacio">No hay reportes en este periodo.</div>';
+    if (dets.length) {
+      h += '<h4 style="margin:12px 0 6px;color:#6d28d9">Puntos de calor recientes</h4>';
+      dets.slice().sort(function (x, y) { return y.fecha_hora < x.fecha_hora ? -1 : 1; }).slice(0, 12).forEach(function (d, j) {
+        h += '<div class="fg-item" data-d="' + j + '"><h4>' + fmt(d.fecha_hora) + '</h4><p>' + esc(d.fuente || 'CSV') + (d.frp ? ' · FRP ' + esc(d.frp) + ' MW' : '') + ' · ' + d.lat.toFixed(3) + ', ' + d.lon.toFixed(3) + '</p></div>';
+      });
+    }
     reps.forEach(function (r, i) {
       var c = estadoCruce(r);
       h += '<div class="fg-item" data-i="' + i + '"><h4>' + esc(r.municipio || 'Sin municipio') + (r.vereda ? ' · ' + esc(r.vereda) : '') + '<span class="fg-tag ' + c.k + '">' + c.t + '</span>' + (r.validado ? '' : '<span class="fg-tag nv">Sin validar</span>') + '</h4><p>' + fmt(r.fecha_hora) + ' · ' + esc(r.estado) + (r.area_ha != null ? ' · ' + r.area_ha + ' ha' : '') + (r.origen ? ' · ' + esc(r.origen) : '') + '</p>' +
@@ -151,6 +162,8 @@
     });
     lado.innerHTML = h;
     lado.querySelectorAll('.fg-item').forEach(function (n) { n.onclick = function (ev) { if (ev.target.dataset.v) return; var r = reps[n.dataset.i]; if (E.mapa) { E.mapa.setView([r.lat, r.lon], 14); r._m && r._m.openPopup(); } }; });
+    var ord = dets.slice().sort(function (x, y) { return y.fecha_hora < x.fecha_hora ? -1 : 1; });
+    lado.querySelectorAll('[data-d]').forEach(function (n) { n.onclick = function () { var d = ord[n.dataset.d]; if (E.mapa) E.mapa.setView([d.lat, d.lon], 14); }; });
     lado.querySelectorAll('[data-v]').forEach(function (b) { b.onclick = function () { validar(reps[b.dataset.v]); }; });
   }
   function popup(r) {
@@ -208,7 +221,7 @@
   function fuentes() {
     return '<h2>Fuentes de datos del módulo</h2>' +
       '<p><b>Reportes de campo.</b> App móvil de registro de incendios y formulario QField (proyecto «Incendios Caldas»), almacenados en la base de datos Supabase. Solo se publican los validados.</p>' +
-      '<p><b>Puntos de calor.</b> NASA FIRMS (MODIS y VIIRS) y la página de puntos de calor del IDEAM – Sistema de Monitoreo de Bosques y Carbono (SMByC), que distribuye CSV diarios derivados de FIRMS. Son detecciones térmicas, no incendios confirmados.</p>' +
+      '<p><b>Puntos de calor.</b> Se descargan cada 3 horas de NASA FIRMS (archivos públicos de 7 días: VIIRS S-NPP, NOAA-20, NOAA-21 y MODIS), se recortan a Caldas y se acumulan 30 días. NASA FIRMS (MODIS y VIIRS) y la página de puntos de calor del IDEAM – Sistema de Monitoreo de Bosques y Carbono (SMByC), que distribuye CSV diarios derivados de FIRMS. Son detecciones térmicas, no incendios confirmados.</p>' +
       '<p><b>Amenaza.</b> Servicio de Alertas ICV del IDEAM (probabilidad de incendio de la cobertura vegetal).</p>' +
       '<p><b>Histórico.</b> MapBiomas Fuego Colombia (Colección 1, 2000–2026), iniciativa MapBiomas Colombia con la Universidad del Rosario. Los datos se consultan mediante Google Earth Engine (proyecto <code>projects/mapbiomas-public/assets/colombia/fire/collection1</code>) y se resumen por municipio.</p>' +
       '<p><b>Cruce.</b> Un reporte se marca «Confirmado por satélite» cuando existe una detección a menos del radio elegido (por defecto 1 km) y dentro de la ventana de tiempo (por defecto ±48 h). Una detección sin reporte cercano se cuenta como «Detección sin reporte».</p>' +
@@ -216,8 +229,11 @@
   }
 
   /* ── Botón ──────────────────────────────────────────── */
+  function permitido() { var s = sesion(); return !!(s && s.roles && s.roles.indexOf('planeacion') >= 0); }
   function montar() {
-    if (document.querySelector('.fg-btn')) return;
+    var ex = document.querySelector('.fg-btn');
+    if (!permitido()) { if (ex) ex.remove(); if (el) cerrar(); return; }
+    if (ex) return;
     var ref = document.querySelector('.pgi-btn'); if (!ref) return;
     var b = document.createElement('button'); b.type = 'button'; b.className = 'pgi-btn fg-btn'; b.textContent = 'Incendios'; b.onclick = abrir;
     ref.parentNode.insertBefore(b, ref);
