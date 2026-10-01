@@ -1,0 +1,2387 @@
+{
+ "ok": 476,
+ "fallos": 0,
+ "total_mb": 161.1,
+ "capas": [
+  {
+   "archivo": "data/agua/abacos/1_bocatomas-abacos-referencia.geojson",
+   "objetos": 60,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/agua/abacos/2_bocatomas-abacos-diagnostico.geojson",
+   "objetos": 646,
+   "kb": 243.9
+  },
+  {
+   "archivo": "data/agua/abacos/3_abacos-referencia-biodiversidad.geojson",
+   "objetos": 63,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/agua/abacos/4_abacos-diagnostico.geojson",
+   "objetos": 537,
+   "kb": 2244.4
+  },
+  {
+   "archivo": "data/agua/6_puntos-de-captacion-concesiones-de-agua.geojson",
+   "objetos": 8791,
+   "kb": 3938.3
+  },
+  {
+   "archivo": "data/agua/7_permisos-de-concesion-de-agua.geojson",
+   "objetos": 6531,
+   "kb": 1436.6
+  },
+  {
+   "archivo": "data/agua/8_vertimientos-reglamentacion.geojson",
+   "objetos": 1350,
+   "kb": 567.8
+  },
+  {
+   "archivo": "data/agua/9_vertimientos-puntos-descarga.geojson",
+   "objetos": 10044,
+   "kb": 4074.5
+  },
+  {
+   "archivo": "data/agua/11_estaciones-monitoreo-agua.geojson",
+   "objetos": 330,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/agua/12_ocupacion-cauce.geojson",
+   "objetos": 1169,
+   "kb": 527.3
+  },
+  {
+   "archivo": "data/agua/14_granjas-porcicolas.geojson",
+   "objetos": 833,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/agua/15_abastos-siasar.geojson",
+   "objetos": 303,
+   "kb": 465.0
+  },
+  {
+   "archivo": "data/agua/42_cuenca.geojson",
+   "objetos": 15,
+   "kb": 1729.9
+  },
+  {
+   "archivo": "data/agua-subterranea/0_puntos-monitoreo-agua-subterranea.geojson",
+   "objetos": 559,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/agua-subterranea/1_limite-acuiferos.geojson",
+   "objetos": 3,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/agua-subterranea/3_estacion-isotopica.geojson",
+   "objetos": 1,
+   "kb": 0.4
+  },
+  {
+   "archivo": "data/agua-subterranea/4_vulnerabilidad-contaminacion-rio-grandemagdalena.geojson",
+   "objetos": 27,
+   "kb": 100.5
+  },
+  {
+   "archivo": "data/agua-subterranea/5_vulnerabilidad-contaminacion-santagueda.geojson",
+   "objetos": 64,
+   "kb": 341.3
+  },
+  {
+   "archivo": "data/agua-subterranea/6_vulnerabilidad-contaminacion-risaralda.geojson",
+   "objetos": 10,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/agua-subterranea/7_aljibes.geojson",
+   "objetos": 348,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/agua-subterranea/8_manantial.geojson",
+   "objetos": 63,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/agua-subterranea/9_pozos.geojson",
+   "objetos": 122,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/agua-subterranea/10_puntos-de-agua-dorada.geojson",
+   "objetos": 355,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/agua-subterranea/11_puntos-agua-acuifero-risaralda.geojson",
+   "objetos": 61,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/agua-subterranea/12_puntos-agua-santagueda.geojson",
+   "objetos": 196,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/agua-subterranea/13_puntos-de-agua-quebrada-carminales.geojson",
+   "objetos": 132,
+   "kb": 127.3
+  },
+  {
+   "archivo": "data/agua-subterranea/14_hidrogeologia-acuifero-santagueda.geojson",
+   "objetos": 64,
+   "kb": 344.6
+  },
+  {
+   "archivo": "data/agua-subterranea/15_hidrogeologia-acuifero-risaralda.geojson",
+   "objetos": 70,
+   "kb": 202.4
+  },
+  {
+   "archivo": "data/agua-subterranea/16_hidrogeologia-acuifero-grande-del-rio-magdalena.geojson",
+   "objetos": 27,
+   "kb": 117.2
+  },
+  {
+   "archivo": "data/agua-subterranea/17_hidrogeologia-cuenca-baja-rio-la-miel.geojson",
+   "objetos": 37,
+   "kb": 157.5
+  },
+  {
+   "archivo": "data/agendas-sectoriales/agenda-ganadera/1_agenda-ganadera.geojson",
+   "objetos": 31,
+   "kb": 243.9
+  },
+  {
+   "archivo": "data/agendas-sectoriales/agenda-aguacatera/3_sancionatoriosaguacateros.geojson",
+   "objetos": 7,
+   "kb": 2.6
+  },
+  {
+   "archivo": "data/agendas-sectoriales/agenda-aguacatera/4_prediosaguacaterospunto.geojson",
+   "objetos": 867,
+   "kb": 973.7
+  },
+  {
+   "archivo": "data/agendas-sectoriales/agenda-aguacatera/5_predios-aguacateros.geojson",
+   "objetos": 868,
+   "kb": 2576.2
+  },
+  {
+   "archivo": "data/agendas-sectoriales/agenda-aguacatera/6_tramites-asociados-aguacate.geojson",
+   "objetos": 464,
+   "kb": 201.3
+  },
+  {
+   "archivo": "data/amenaza-y-riesgo/0_eventos-manizales.geojson",
+   "objetos": 868,
+   "kb": 1209.5
+  },
+  {
+   "archivo": "data/amenaza-y-riesgo/1_eventos-villamaria.geojson",
+   "objetos": 63,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/amenaza-y-riesgo/6_zonas-susceptibles-inundacion-ideam.geojson",
+   "objetos": 2,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/amenaza-y-riesgo/riesgo-inundacion/12_riesgo-por-inundacion-dorada-eot.geojson",
+   "objetos": 579,
+   "kb": 281.2
+  },
+  {
+   "archivo": "data/amenaza-y-riesgo/riesgo-inundacion/14_riesgo-inundacion-caldas-c-089.geojson",
+   "objetos": 7,
+   "kb": 153.9
+  },
+  {
+   "archivo": "data/amenaza-y-riesgo/riesgo-inundacion/15_riesgo-inundacion-dorada-c-089.geojson",
+   "objetos": 3,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/amenaza-y-riesgo/amenaza-inundacion/18_amenaza-inundacion-dorada-eot.geojson",
+   "objetos": 1148,
+   "kb": 910.8
+  },
+  {
+   "archivo": "data/amenaza-y-riesgo/amenaza-inundacion/21_amenaza-inundacion-miel.geojson",
+   "objetos": 99,
+   "kb": 646.8
+  },
+  {
+   "archivo": "data/amenaza-y-riesgo/amenaza-inundacion/23_amenaza-inundacion-chinchina.geojson",
+   "objetos": 5,
+   "kb": 1446.8
+  },
+  {
+   "archivo": "data/amenaza-y-riesgo/amenaza-inundacion/24_amenaza-inundacion-arma.geojson",
+   "objetos": 79,
+   "kb": 1129.3
+  },
+  {
+   "archivo": "data/amenaza-y-riesgo/amenaza-inundacion/25_amenaza-inundacion-supia-ideam.geojson",
+   "objetos": 8,
+   "kb": 62.0
+  },
+  {
+   "archivo": "data/amenaza-y-riesgo/riesgo-movimientos-en-masa/33_riesgo-remocion-dorada-c-089.geojson",
+   "objetos": 1,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/amenaza-y-riesgo/amenaza-movimientos-en-masa/35_amenaza-deslizamientos-chinchina.geojson",
+   "objetos": 1307,
+   "kb": 1025.2
+  },
+  {
+   "archivo": "data/amenaza-y-riesgo/amenaza-movimientos-en-masa/39_amenaza-deslizamiento-dorada-eot.geojson",
+   "objetos": 46,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/amenaza-y-riesgo/c-089/45_amenaza-volcanica-caldas-c-089.geojson",
+   "objetos": 3,
+   "kb": 63.8
+  },
+  {
+   "archivo": "data/amenaza-y-riesgo/c-089/46_amenaza-sismica-caldas-c-089.geojson",
+   "objetos": 10,
+   "kb": 959.0
+  },
+  {
+   "archivo": "data/amenaza-y-riesgo/c-089/47_riesgo-volcanico-caldas-c-089.geojson",
+   "objetos": 11,
+   "kb": 259.8
+  },
+  {
+   "archivo": "data/amenaza-y-riesgo/c-089/48_riesgo-sismico-vivienda-caldas-c-089.geojson",
+   "objetos": 42,
+   "kb": 1009.9
+  },
+  {
+   "archivo": "data/amenaza-y-riesgo/c-089/49_riesgo-sismico-dorada-c-089.geojson",
+   "objetos": 2,
+   "kb": 81.4
+  },
+  {
+   "archivo": "data/clima/0_estaciones-clima.geojson",
+   "objetos": 115,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/clima/1_estaciones-clima-otrasentidades.geojson",
+   "objetos": 40,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/cartografiabase/9_municipios.geojson",
+   "objetos": 27,
+   "kb": 2280.1
+  },
+  {
+   "archivo": "data/cartografiabase/11_sitios-de-interes.geojson",
+   "objetos": 717,
+   "kb": 189.7
+  },
+  {
+   "archivo": "data/cartografiabase/12_laguna.geojson",
+   "objetos": 4,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/cartografiabase/13_rios-principales.geojson",
+   "objetos": 2,
+   "kb": 232.7
+  },
+  {
+   "archivo": "data/cartografiabase/16_separador.geojson",
+   "objetos": 318,
+   "kb": 241.7
+  },
+  {
+   "archivo": "data/conflictos-ambientales-en-caldas/0_conflictos-ambientales.geojson",
+   "objetos": 42,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/conflictos-ambientales-en-caldas/1_municipio.geojson",
+   "objetos": 27,
+   "kb": 1035.8
+  },
+  {
+   "archivo": "data/desabastecimientoabastos-era-mil1/0_siasar-criticos-on.geojson",
+   "objetos": 54,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/desabastecimientoabastos-era-mil1/1_centros-poblados-rurales-2026.geojson",
+   "objetos": 90,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/desabastecimientoabastos-era-mil1/2_suelos-urbanos-2026.geojson",
+   "objetos": 40,
+   "kb": 1067.9
+  },
+  {
+   "archivo": "data/desabastecimientoabastos-era-mil1/4_municipio.geojson",
+   "objetos": 27,
+   "kb": 1035.8
+  },
+  {
+   "archivo": "data/ecosistemas/7_zonas-de-vida.geojson",
+   "objetos": 14,
+   "kb": 1688.2
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/1_areas-sinap.geojson",
+   "objetos": 19,
+   "kb": 896.8
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/3_puntos-rondas-hidricas.geojson",
+   "objetos": 1,
+   "kb": 0.3
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/4_puntos-modificaciones-cartograficas-manizales.geojson",
+   "objetos": 180,
+   "kb": 34.4
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/5_puntos-modificaciones-cartograficas.geojson",
+   "objetos": 214,
+   "kb": 48.4
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/7_componentes.geojson",
+   "objetos": 9,
+   "kb": 398.7
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/8_elementosconstituyentes.geojson",
+   "objetos": 6,
+   "kb": 241.4
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/9_zonificacionestrategiasdemanejo.geojson",
+   "objetos": 86,
+   "kb": 269.7
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/12_cauce-permanente.geojson",
+   "objetos": 1,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/13_area-forestal-protectora-nacimientos.geojson",
+   "objetos": 314,
+   "kb": 513.6
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/17_puntos-modificaciones-cartograficas.geojson",
+   "objetos": 180,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/23_drenaje-sencillo-aguadas.geojson",
+   "objetos": 147,
+   "kb": 273.4
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/24_retiro-pendientes-aguadas.geojson",
+   "objetos": 1,
+   "kb": 401.5
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/25_retiro-hidrologico-aguadas.geojson",
+   "objetos": 1,
+   "kb": 763.3
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/26_fpcauceurbanoaguadas.geojson",
+   "objetos": 1,
+   "kb": 460.3
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/28_drenaje-sencillo-anserma.geojson",
+   "objetos": 52,
+   "kb": 64.5
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/29_retiro-hidrologico-anserma.geojson",
+   "objetos": 50,
+   "kb": 205.5
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/30_retiro-pendientes-anserma.geojson",
+   "objetos": 25,
+   "kb": 147.1
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/31_fpcauceurbanoanserma.geojson",
+   "objetos": 26,
+   "kb": 186.2
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/33_drenaje-sencillo-aranzazu.geojson",
+   "objetos": 93,
+   "kb": 149.9
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/34_retiro-hidrologico-aranzazu.geojson",
+   "objetos": 1,
+   "kb": 1148.3
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/35_retiro-pendientes-aranzazu.geojson",
+   "objetos": 5,
+   "kb": 183.6
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/36_fpcauceurbanoaranzazu.geojson",
+   "objetos": 5,
+   "kb": 186.1
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/38_drenaje-sencillo-belalcazar.geojson",
+   "objetos": 62,
+   "kb": 49.9
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/39_retiro-hidrologico-belalcazar.geojson",
+   "objetos": 1,
+   "kb": 137.2
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/40_retiro-pendientes-belalcazar.geojson",
+   "objetos": 15,
+   "kb": 73.5
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/41_fpcauceurbanobelalcazar.geojson",
+   "objetos": 1,
+   "kb": 72.9
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/43_drenaje-sencillo-chinchina.geojson",
+   "objetos": 214,
+   "kb": 354.8
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/44_retiro-hidrologico-chinchina.geojson",
+   "objetos": 1,
+   "kb": 1963.6
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/45_retiro-pendientes-chinchina.geojson",
+   "objetos": 10,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/46_fpcauceurbanochinchina.geojson",
+   "objetos": 1,
+   "kb": 682.3
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/48_drenaje-sencillo-filadelfia.geojson",
+   "objetos": 43,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/49_retiro-hidrologico-filadelfia.geojson",
+   "objetos": 3,
+   "kb": 239.1
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/50_retiro-pendientes-filadelfia.geojson",
+   "objetos": 10,
+   "kb": 87.3
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/51_fpcauceurbanofiladelfia.geojson",
+   "objetos": 2,
+   "kb": 112.2
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/53_drenaje-sencillo-la-merced.geojson",
+   "objetos": 201,
+   "kb": 244.9
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/54_retiro-hidrologico-la-merced.geojson",
+   "objetos": 1,
+   "kb": 792.1
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/55_retiro-pendientes-la-merced.geojson",
+   "objetos": 20,
+   "kb": 171.7
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/56_fpcauceurbanolamerced.geojson",
+   "objetos": 1,
+   "kb": 180.3
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/58_fpcauceurbanomanzanaresladorada.geojson",
+   "objetos": 6,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/60_drenaje-sencillo-manzanares.geojson",
+   "objetos": 125,
+   "kb": 189.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/62_retiro-pendientes-manzanares.geojson",
+   "objetos": 1,
+   "kb": 189.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/63_fpcauceurbanomanzanares.geojson",
+   "objetos": 1,
+   "kb": 843.7
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/65_drenaje-sencillo-marquetalia.geojson",
+   "objetos": 112,
+   "kb": 191.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/66_retiro-hidrologico-marquetalia.geojson",
+   "objetos": 14,
+   "kb": 730.3
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/67_retiro-pendientes-marquetalia.geojson",
+   "objetos": 14,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/68_fpcauceurbanomarquetalia.geojson",
+   "objetos": 14,
+   "kb": 152.8
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/70_fpcauceurbanomarmatopbot.geojson",
+   "objetos": 6,
+   "kb": 8.3
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/72_drenaje-sencillo-marulanda.geojson",
+   "objetos": 40,
+   "kb": 67.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/73_retiro-hidrologico-marulanda.geojson",
+   "objetos": 1,
+   "kb": 229.8
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/74_retiro-pendientes-marulanda.geojson",
+   "objetos": 1,
+   "kb": 116.6
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/75_fpcauceurbanomarulanda.geojson",
+   "objetos": 1,
+   "kb": 130.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/77_drenaje-sencillo-neira.geojson",
+   "objetos": 129,
+   "kb": 174.8
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/78_retiro-hidrologico-neira.geojson",
+   "objetos": 129,
+   "kb": 715.2
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/79_retiro-pendientes-neira.geojson",
+   "objetos": 16,
+   "kb": 147.5
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/80_fpcauceurbanoneira.geojson",
+   "objetos": 1,
+   "kb": 164.4
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/82_drenaje-sencillo-norcasia.geojson",
+   "objetos": 5,
+   "kb": 5.9
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/83_retiro-hidrologico-norcasia.geojson",
+   "objetos": 1,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/84_retiro-pendientes-norcasia.geojson",
+   "objetos": 3,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/85_fpcauceurbanonorcasia.geojson",
+   "objetos": 1,
+   "kb": 73.5
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/87_drenaje-sencillo-pacora.geojson",
+   "objetos": 166,
+   "kb": 213.3
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/88_retiro-hidrologico-pacora.geojson",
+   "objetos": 1,
+   "kb": 2070.1
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/89_retiro-pendientes-pacora.geojson",
+   "objetos": 1,
+   "kb": 322.6
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/90_fpcauceurbanopacora.geojson",
+   "objetos": 1,
+   "kb": 543.9
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/92_drenaje-sencillo-palestina.geojson",
+   "objetos": 156,
+   "kb": 285.5
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/93_retiro-hidrologico-palestina.geojson",
+   "objetos": 1,
+   "kb": 2317.1
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/94_retiro-pendientes-palestina.geojson",
+   "objetos": 14,
+   "kb": 234.5
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/95_fpcauceurbanopalestina.geojson",
+   "objetos": 2,
+   "kb": 343.1
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/97_drenaje-sencillo-pensilvania.geojson",
+   "objetos": 128,
+   "kb": 216.2
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/98_retiro-hidrologico-pensilvania.geojson",
+   "objetos": 1,
+   "kb": 1463.6
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/99_retiro-pendientes-pensilvania.geojson",
+   "objetos": 1,
+   "kb": 241.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/100_fpcauceurbanopensilvania.geojson",
+   "objetos": 2,
+   "kb": 417.5
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/102_drenaje-sencillo-riosucio.geojson",
+   "objetos": 176,
+   "kb": 126.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/103_retiro-hidrologico-riosucio.geojson",
+   "objetos": 1,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/104_retiro-pendientes-riosucio.geojson",
+   "objetos": 11,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/105_fpcauceurbanoriosucio.geojson",
+   "objetos": 13,
+   "kb": 204.1
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/107_drenaje-sencillo-risaralda.geojson",
+   "objetos": 28,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/108_retiro-hidrologico-risaralda.geojson",
+   "objetos": 28,
+   "kb": 148.3
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/109_retiro-pendientes-risaralda.geojson",
+   "objetos": 1,
+   "kb": 44.7
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/110_fpcauceurbanorisaralda.geojson",
+   "objetos": 1,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/112_drenaje-sencillo-salamina.geojson",
+   "objetos": 186,
+   "kb": 425.7
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/113_retiro-hidrologico-salamina.geojson",
+   "objetos": 1,
+   "kb": 1718.2
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/114_retiro-pendientes-salamina.geojson",
+   "objetos": 30,
+   "kb": 623.9
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/115_fpcauceurbanosalamina.geojson",
+   "objetos": 30,
+   "kb": 631.7
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/117_drenaje-sencillo-samana.geojson",
+   "objetos": 13,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/118_retiro-hidrologico-samana.geojson",
+   "objetos": 1,
+   "kb": 1447.6
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/119_retiro-pendientes-samana.geojson",
+   "objetos": 3,
+   "kb": 43.5
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/120_fpcauceurbanosamana.geojson",
+   "objetos": 3,
+   "kb": 116.2
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/122_drenaje-sencillo-san-jose.geojson",
+   "objetos": 79,
+   "kb": 196.4
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/123_retiro-hidrologico-san-jose.geojson",
+   "objetos": 79,
+   "kb": 808.8
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/124_retiro-pendientes-san-jose.geojson",
+   "objetos": 1,
+   "kb": 233.9
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/125_fpcauceurbanosanjose.geojson",
+   "objetos": 1,
+   "kb": 234.3
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/127_drenaje-sencillo-supia.geojson",
+   "objetos": 72,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/128_retiro-hidrologico-supia.geojson",
+   "objetos": 1,
+   "kb": 65.5
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/129_retiro-pendientes-supia.geojson",
+   "objetos": 1,
+   "kb": 169.1
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/130_fpcauceurbanosupia.geojson",
+   "objetos": 1,
+   "kb": 154.5
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/132_drenaje-sencillo-victoria.geojson",
+   "objetos": 74,
+   "kb": 122.3
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/133_retiro-hidrologico-victoria.geojson",
+   "objetos": 1,
+   "kb": 752.4
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/134_retiro-pendientes-victoria.geojson",
+   "objetos": 9,
+   "kb": 109.4
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/135_fpcauceurbanovictoria.geojson",
+   "objetos": 7,
+   "kb": 182.9
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/137_drenaje-sencillo-villamaria.geojson",
+   "objetos": 186,
+   "kb": 413.1
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/139_retiro-pendientes-villamaria.geojson",
+   "objetos": 7,
+   "kb": 384.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/140_fpcauceurbanovillamaria.geojson",
+   "objetos": 9,
+   "kb": 1366.2
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/142_drenaje-sencillo.geojson",
+   "objetos": 31,
+   "kb": 104.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/143_retiro-hidrologico.geojson",
+   "objetos": 1,
+   "kb": 1708.6
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/144_retiro-pendientes.geojson",
+   "objetos": 1,
+   "kb": 253.4
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/areas-fajas-forestales-protector/145_fpcauceurbanoviterbo.geojson",
+   "objetos": 1,
+   "kb": 1012.2
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/zonificacion-areas-sinap/148_zonificacion-cerro-guadalupe.geojson",
+   "objetos": 142,
+   "kb": 463.8
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/zonificacion-areas-sinap/149_zonificacion-reserva-torre4.geojson",
+   "objetos": 19,
+   "kb": 69.9
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/zonificacion-areas-sinap/150_zonificacion-reserva-tarcara.geojson",
+   "objetos": 28,
+   "kb": 137.4
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/zonificacion-areas-sinap/151_zonificacion-reserva-sabinas.geojson",
+   "objetos": 41,
+   "kb": 93.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/zonificacion-areas-sinap/152_zonificacion-reserva-la-linda.geojson",
+   "objetos": 25,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/zonificacion-areas-sinap/153_zonificacion-reserva-forestal-chec.geojson",
+   "objetos": 174,
+   "kb": 1072.7
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/zonificacion-areas-sinap/154_zonificacion-reserva-el-popal.geojson",
+   "objetos": 18,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/zonificacion-areas-sinap/155_zonificacion-reserva-el-diamante.geojson",
+   "objetos": 42,
+   "kb": 98.6
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/zonificacion-areas-sinap/157_zonificacion-pnn-selva-fllorencia.geojson",
+   "objetos": 4,
+   "kb": 844.5
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/zonificacion-areas-sinap/158_zonificacion-el-gigante.geojson",
+   "objetos": 64,
+   "kb": 247.9
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/zonificacion-areas-sinap/159_zonificacion-dmi-laguna-de-san-diego.geojson",
+   "objetos": 198,
+   "kb": 395.1
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/zonificacion-areas-sinap/160_zonificacion-dmi-bellavista.geojson",
+   "objetos": 8,
+   "kb": 342.8
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/zonificacion-areas-sinap/161_zonificacion-dcs-guacas-elrosario.geojson",
+   "objetos": 8,
+   "kb": 723.4
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/zonificacion-areas-sinap/162_zonificacion-dmi-el-meandro-o-la-madrevieja-del.geojson",
+   "objetos": 5,
+   "kb": 162.9
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/paramos/165_paramos.geojson",
+   "objetos": 8,
+   "kb": 2121.9
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/abacos/169_abacos-micorcuencas-abastecedoras.geojson",
+   "objetos": 537,
+   "kb": 2244.4
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/abacos/170_abacos-referencia.geojson",
+   "objetos": 63,
+   "kb": 258.5
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/humedales/172_humedales-2026.geojson",
+   "objetos": 3,
+   "kb": 14.2
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/humedales/173_fajas-humedales-2026.geojson",
+   "objetos": 3,
+   "kb": 35.9
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/humedales/174_humedales-la-dorada.geojson",
+   "objetos": 93,
+   "kb": 253.9
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/humedales/175_faja-humedales-dorada.geojson",
+   "objetos": 93,
+   "kb": 697.4
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/humedales/176_humedales-pomca.geojson",
+   "objetos": 217,
+   "kb": 343.2
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/humedales/177_humedales-alto-andinos.geojson",
+   "objetos": 94,
+   "kb": 447.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/humedales/178_laguna-san-diego.geojson",
+   "objetos": 1,
+   "kb": 29.8
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/acuiferos/182_limite-acuiferos.geojson",
+   "objetos": 3,
+   "kb": 200.7
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/acuiferos/184_vulnerabilidad-contaminacion-risaralda.geojson",
+   "objetos": 10,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/acuiferos/185_vulnerabilidad-contaminacion-god-santagueda.geojson",
+   "objetos": 64,
+   "kb": 341.4
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/acuiferos/186_vulnerabilidad-contaminacion-riograndemagdalena.geojson",
+   "objetos": 27,
+   "kb": 100.5
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/187_reserva-naturales-sociedad-civil.geojson",
+   "objetos": 25,
+   "kb": 145.9
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/amenaza-pomcas/192_amenaza-inundacion-dorada-eot.geojson",
+   "objetos": 32,
+   "kb": 283.8
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/amenaza-pomcas/197_amenaza-inundacion-chinchina.geojson",
+   "objetos": 5,
+   "kb": 1451.9
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/amenaza-pomcas/199_amenaza-inundacion-supia-ideam.geojson",
+   "objetos": 8,
+   "kb": 62.0
+  },
+  {
+   "archivo": "data/eepjulio2026/estructura-ecologica-principal/amenaza-pomcas/204_amenaza-deslizamiento-dorada-eot.geojson",
+   "objetos": 46,
+   "kb": 278.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/3_abacos-corpocaldas.geojson",
+   "objetos": 17,
+   "kb": 88.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/4_abacos-propuestos.geojson",
+   "objetos": 27,
+   "kb": 32.6
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/5_abacos-referencia-biodiversidad.geojson",
+   "objetos": 2,
+   "kb": 4.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/6_area-proteccion-avt.geojson",
+   "objetos": 1,
+   "kb": 33.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/8_clase-agrologica-viii.geojson",
+   "objetos": 1,
+   "kb": 22.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/10_funcion-amortigu-pnn-nevados.geojson",
+   "objetos": 1,
+   "kb": 24.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/11_funcion-amortiguadora-rfp-diamante.geojson",
+   "objetos": 1,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/12_paramo-los-nevados.geojson",
+   "objetos": 3,
+   "kb": 60.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/13_predio-la-sonora.geojson",
+   "objetos": 1,
+   "kb": 1.6
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/14_reserva-dona-ana.geojson",
+   "objetos": 1,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/15_restauracion-ecologica-pomca.geojson",
+   "objetos": 665,
+   "kb": 1587.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/16_rfc.geojson",
+   "objetos": 2,
+   "kb": 227.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/17_rfp-el-diamante.geojson",
+   "objetos": 4,
+   "kb": 92.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/19_fajas-proteccion-cauces-cpu-eleden.geojson",
+   "objetos": 1,
+   "kb": 2.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/20_4-bosque-natural-cpu-eleden.geojson",
+   "objetos": 1,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/21_faja-proteccion-cauces-cpu-alto-ocampos.geojson",
+   "objetos": 1,
+   "kb": 1.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/22_3-bosque-natural-cpu-alto-ocampos.geojson",
+   "objetos": 1,
+   "kb": 20.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/24_fajas-proteccion-cauces-urbanos.geojson",
+   "objetos": 1,
+   "kb": 33.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/25_fajas-proteccion-cauces-expansion-urbana.geojson",
+   "objetos": 1,
+   "kb": 4.6
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/26_1-bosques-naturales-urbanos.geojson",
+   "objetos": 1,
+   "kb": 18.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/eep/27_2-bosque-natural-expansion-urbana.geojson",
+   "objetos": 1,
+   "kb": 6.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/30_c-3-am-inundacion-suelourb.geojson",
+   "objetos": 1,
+   "kb": 3.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/31_c-1-1am-movmasa-suelourb-expan.geojson",
+   "objetos": 6,
+   "kb": 262.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/32_c-1-2-am-movmasa-cpu-alto-ocampos.geojson",
+   "objetos": 3,
+   "kb": 684.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/33_c-1-2-am-movmasa-cpu-el-eden.geojson",
+   "objetos": 3,
+   "kb": 198.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/34_h-1-cond-amz-mov-masa-urb-exp.geojson",
+   "objetos": 2,
+   "kb": 158.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/35_i-1-cond-riesgo-mov-masa-urb-exp.geojson",
+   "objetos": 2,
+   "kb": 87.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/36_h-2-cond-amz-ind-urb-rep.geojson",
+   "objetos": 1,
+   "kb": 1.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/37_i-2-cond-riesgo-inundac-urb.geojson",
+   "objetos": 1,
+   "kb": 2.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/38_h-1a-cond-amz-movmasa-cpu-alto-ocampos.geojson",
+   "objetos": 1,
+   "kb": 170.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/39_h-1b-cond-amz-movmasa-cpu-el-eden.geojson",
+   "objetos": 1,
+   "kb": 46.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/41_f-3-am-avtorrencialrural.geojson",
+   "objetos": 3,
+   "kb": 129.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/42_f-2-am-inundacionrural.geojson",
+   "objetos": 2,
+   "kb": 676.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/44_d-1-cond-amz-mov-masa-rural.geojson",
+   "objetos": 9,
+   "kb": 66.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/45_e-1-cond-riesgo-movmasa-rural.geojson",
+   "objetos": 16,
+   "kb": 912.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/46_d-2-cond-amz-ind-rural.geojson",
+   "objetos": 4,
+   "kb": 6.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/47_e-2-cond-riesgo-inun-rural.geojson",
+   "objetos": 2,
+   "kb": 87.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/48_d-3-cond-amz-avt-rural.geojson",
+   "objetos": 2,
+   "kb": 4.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/49_e-3-cond-riesgo-avt-rural.geojson",
+   "objetos": 1,
+   "kb": 2.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/51_am-movmasa-cpr-varsovia.geojson",
+   "objetos": 3,
+   "kb": 45.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/52_am-avt-cpr-varsovia.geojson",
+   "objetos": 2,
+   "kb": 1.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/53_am-movmasa-cpr-san-rafael.geojson",
+   "objetos": 3,
+   "kb": 49.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/54_am-movmasa-cpr-muelas.geojson",
+   "objetos": 3,
+   "kb": 227.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/55_am-movmasa-cpr-la-milagrosa.geojson",
+   "objetos": 3,
+   "kb": 9.6
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/56_am-movmasa-cpr-camelia-grande.geojson",
+   "objetos": 3,
+   "kb": 56.6
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/57_am-movmasa-cpr-alegrias.geojson",
+   "objetos": 3,
+   "kb": 610.6
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/58_am-ind-cpr-la-honda.geojson",
+   "objetos": 2,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/59_am-movmasa-cpr-la-honda.geojson",
+   "objetos": 3,
+   "kb": 146.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/60_am-ind-ae-cpr-la-honda.geojson",
+   "objetos": 2,
+   "kb": 27.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/61_am-avt-cpr-la-honda.geojson",
+   "objetos": 3,
+   "kb": 11.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/62_condicion-amenaza-mm-cpr-san-rafael.geojson",
+   "objetos": 1,
+   "kb": 19.6
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/63_condicion-riesgo-mm-cpr-san-rafael.geojson",
+   "objetos": 1,
+   "kb": 1.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/64_condicion-amenaza-mm-cpr-la-milagrosa.geojson",
+   "objetos": 1,
+   "kb": 4.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/65_condicion-riesgo-mm-cpr-la-milagrosa.geojson",
+   "objetos": 1,
+   "kb": 3.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/66_condicion-amenaza-mm-cpr-la-honda.geojson",
+   "objetos": 1,
+   "kb": 34.6
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/67_condicion-riesgo-mm-cpr-la-honda.geojson",
+   "objetos": 1,
+   "kb": 5.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/68_condicion-amenaza-ind-cpr-la-honda.geojson",
+   "objetos": 6,
+   "kb": 6.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/69_condicion-riesgo-ind-cpr-la-honda.geojson",
+   "objetos": 3,
+   "kb": 1.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/70_condicion-amenaza-mm-cpr-camelia-grande.geojson",
+   "objetos": 1,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/71_condicion-riesgo-mm-cpr-camelia-grande.geojson",
+   "objetos": 1,
+   "kb": 4.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/72_condicion-amenaza-mm-cpr-alegrias.geojson",
+   "objetos": 1,
+   "kb": 161.6
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/73_condicion-riesgo-mm-cpr-alegrias.geojson",
+   "objetos": 1,
+   "kb": 7.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/74_condicion-amenaza-mm-cpr-varsovia.geojson",
+   "objetos": 1,
+   "kb": 19.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/75_condicion-amenaza-mm-cpr-muelas.geojson",
+   "objetos": 1,
+   "kb": 64.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-aranzazu/amenazas/76_condicion-riesgo-mm-cpr-muelas.geojson",
+   "objetos": 1,
+   "kb": 3.6
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/areas-de-manejo-especial/79_distrito-manejo-integrado.geojson",
+   "objetos": 2,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/urbano/81_drenajes.geojson",
+   "objetos": 6,
+   "kb": 21.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/urbano/82_ronda-proteccion-rio-magdalena.geojson",
+   "objetos": 1,
+   "kb": 196.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/urbano/83_ronda-drenaje-sencillo.geojson",
+   "objetos": 10,
+   "kb": 353.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/urbano/84_ronda-humedal.geojson",
+   "objetos": 11,
+   "kb": 83.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/urbano/85_cuerpos-de-agua.geojson",
+   "objetos": 11,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/urbano/86_playa-isla.geojson",
+   "objetos": 4,
+   "kb": 114.6
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/urbano/87_drenaje-doble.geojson",
+   "objetos": 12,
+   "kb": 586.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/ecosistemas-de-interes-ambiental/89_ronda-drenaje.geojson",
+   "objetos": 12,
+   "kb": 708.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/ecosistemas-de-interes-ambiental/90_ronda-humedal.geojson",
+   "objetos": 27,
+   "kb": 110.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/ecosistemas-de-interes-ambiental/91_relictos-guadua.geojson",
+   "objetos": 21,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/ecosistemas-de-interes-ambiental/92_relictos-bosque.geojson",
+   "objetos": 29,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/ecosistemas-de-interes-ambiental/93_cerros-tutelares.geojson",
+   "objetos": 7,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/ecosistemas-de-interes-ambiental/94_area-homogenea-tierra.geojson",
+   "objetos": 52,
+   "kb": 516.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/ecosistemas-de-interes-ambiental/95_ronda-nacimientos.geojson",
+   "objetos": 279,
+   "kb": 475.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/amenazas/98_amenaza-deslizamiento.geojson",
+   "objetos": 46,
+   "kb": 210.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/amenazas/99_amenaza-por-inundacion.geojson",
+   "objetos": 1148,
+   "kb": 910.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/amenazas/100_amenaza-socavacion.geojson",
+   "objetos": 16,
+   "kb": 223.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/amenazas/101_amenaza-torrencialidad.geojson",
+   "objetos": 4,
+   "kb": 119.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/amenazas/103_amenaza-deslizamiento.geojson",
+   "objetos": 46,
+   "kb": 278.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/amenazas/104_amenaza-torrencialidad.geojson",
+   "objetos": 4,
+   "kb": 54.6
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-la-dorada/amenazas/105_amenaza-inundacion.geojson",
+   "objetos": 32,
+   "kb": 283.6
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marmato/componente-rural/108_protec-bocatomas.geojson",
+   "objetos": 1,
+   "kb": 11.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marmato/componente-rural/109_fajas-hidricas-rural.geojson",
+   "objetos": 460,
+   "kb": 830.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marmato/componente-rural/110_buff-nacimientos.geojson",
+   "objetos": 1,
+   "kb": 75.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marmato/componente-rural/111_buff-nacimi-100.geojson",
+   "objetos": 1,
+   "kb": 65.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marmato/componente-rural/112_protec-ambiental-eot04.geojson",
+   "objetos": 116,
+   "kb": 238.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marmato/componente-urbano/114_zpha.geojson",
+   "objetos": 6,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marmato/componente-urbano/115_proteccion-total.geojson",
+   "objetos": 334,
+   "kb": 232.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marulanda/117_ees-urbano-montebonito.geojson",
+   "objetos": 45,
+   "kb": 58.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marulanda/estructura-ecologica-de-soporte/119_laderasperimetrales.geojson",
+   "objetos": 2,
+   "kb": 10.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marulanda/estructura-ecologica-de-soporte/121_reserva-natural-de-la-sociedad-civil.geojson",
+   "objetos": 1,
+   "kb": 4.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marulanda/estructura-ecologica-de-soporte/122_microcuencas-abastecedoras-de-acueductos.geojson",
+   "objetos": 9,
+   "kb": 94.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marulanda/estructura-ecologica-de-soporte/123_aia-ecosistemas-estrategicos-humedales.geojson",
+   "objetos": 13,
+   "kb": 40.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marulanda/estructura-ecologica-de-soporte/125_area-sinap-en-ruta-de-declaracion.geojson",
+   "objetos": 1,
+   "kb": 11.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marulanda/estructura-ecologica-de-soporte/126_reserva-forestal-central.geojson",
+   "objetos": 249,
+   "kb": 586.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marulanda/estructura-ecologica-de-soporte/130_unidad-de-ordenacion-forestal.geojson",
+   "objetos": 9,
+   "kb": 491.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marulanda/131_ees-suelo-urbano-cabecera-municipal.geojson",
+   "objetos": 112,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marulanda/amenazas/134_escenario-de-amenaza-por.geojson",
+   "objetos": 9,
+   "kb": 989.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marulanda/amenazas/135_escenario-decond-amenaza-por.geojson",
+   "objetos": 6,
+   "kb": 147.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marulanda/amenazas/136_areas-con-condicion-riesgo-cabecera.geojson",
+   "objetos": 8,
+   "kb": 26.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marulanda/amenazas/139_escenario-de-amenaza.geojson",
+   "objetos": 2970,
+   "kb": 2009.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marulanda/amenazas/141_areas-con-condicion-de-amenaza.geojson",
+   "objetos": 2970,
+   "kb": 2009.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-marulanda/amenazas/143_condicion-amenazamontebonito.geojson",
+   "objetos": 2,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/eep-urbana/146_drenaje-sencillo.geojson",
+   "objetos": 1384,
+   "kb": 760.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/eep-urbana/147_drenaje-doble.geojson",
+   "objetos": 193,
+   "kb": 767.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/eep-urbana/149_parques-urbanos.geojson",
+   "objetos": 29,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/eep-urbana/150_infraestructura-de-soporte.geojson",
+   "objetos": 43,
+   "kb": 49.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/eep-urbana/151_zona-hidrau-proteccion-ambiental.geojson",
+   "objetos": 1,
+   "kb": 470.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/epp/153_areas-sinap.geojson",
+   "objetos": 1,
+   "kb": 10.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/epp/154_paramo-sonson-25k.geojson",
+   "objetos": 4,
+   "kb": 40.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/epp/155_bosques-secos-tropicales.geojson",
+   "objetos": 1,
+   "kb": 159.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/epp/156_abastecimiento-agua.geojson",
+   "objetos": 34,
+   "kb": 127.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/epp/157_amenaza-recurrente.geojson",
+   "objetos": 1,
+   "kb": 3.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/epp/158_reserva-ley-2-1959.geojson",
+   "objetos": 9,
+   "kb": 54.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/epp/159_faja-forestal-protectora-minima.geojson",
+   "objetos": 1,
+   "kb": 1358.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/epp/160_aia-cob2010.geojson",
+   "objetos": 40,
+   "kb": 306.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/epp/161_eep-wcs.geojson",
+   "objetos": 457,
+   "kb": 1360.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/epp/162_eep-wcs-proyectada.geojson",
+   "objetos": 392,
+   "kb": 1344.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/amenazas/165_cond-ame-av-torr-urb.geojson",
+   "objetos": 28,
+   "kb": 370.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/amenazas/166_riesgo-av-torr-urb.geojson",
+   "objetos": 55,
+   "kb": 256.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/amenazas/167_cond-ame-inun-urb.geojson",
+   "objetos": 46,
+   "kb": 501.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/amenazas/168_riesgo-rm-urb.geojson",
+   "objetos": 14,
+   "kb": 252.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/amenazas/169_riesgo-rm-urbcond.geojson",
+   "objetos": 73,
+   "kb": 461.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/amenazas/170_riesgo-inun-urbcond.geojson",
+   "objetos": 56,
+   "kb": 263.6
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/amenazas/175_cond-ame-inun-rur.geojson",
+   "objetos": 75,
+   "kb": 33.6
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-pacora/amenazas/176_cond-ame-av-torr-rur.geojson",
+   "objetos": 50,
+   "kb": 29.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/componente-urbano/179_ecoparque.geojson",
+   "objetos": 1,
+   "kb": 1.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/componente-urbano/180_fajas-protectoras-drenajes-urbanos.geojson",
+   "objetos": 6,
+   "kb": 112.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/componente-urbano/181_abaco-urbano.geojson",
+   "objetos": 1,
+   "kb": 100.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/componente-rural/184_abacos.geojson",
+   "objetos": 7,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/componente-rural/185_clase-agrologica-ii-y-iii.geojson",
+   "objetos": 18,
+   "kb": 160.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/componente-rural/186_bosques.geojson",
+   "objetos": 161,
+   "kb": 1550.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/componente-rural/187_bosque-seco-tropical.geojson",
+   "objetos": 183,
+   "kb": 552.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/componente-rural/188_pomca-campoalegre.geojson",
+   "objetos": 8,
+   "kb": 32.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/componente-rural/189_recargaacuifero.geojson",
+   "objetos": 52,
+   "kb": 79.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/arauca/191_eep-faja-protectora-arauca.geojson",
+   "objetos": 1,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/arauca/192_retiro-condicionado-por-gr.geojson",
+   "objetos": 20,
+   "kb": 144.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/arauca/193_ecc-averdesarauca.geojson",
+   "objetos": 50,
+   "kb": 444.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/arauca/194_bosque-seco-tropical.geojson",
+   "objetos": 17,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/197_amenaza-mm-laplata.geojson",
+   "objetos": 595,
+   "kb": 357.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/198_amenaza-mm-hermella.geojson",
+   "objetos": 3,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/199_amenaza-mm-cartagena.geojson",
+   "objetos": 3,
+   "kb": 164.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/200_aca-mm-elreposo.geojson",
+   "objetos": 40,
+   "kb": 19.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/201_aca-mm-cartagena.geojson",
+   "objetos": 208,
+   "kb": 233.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/202_aca-mm-laplata.geojson",
+   "objetos": 2,
+   "kb": 181.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/203_aca-mm-lahermella.geojson",
+   "objetos": 18,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/204_acr-mm-cartagena.geojson",
+   "objetos": 98,
+   "kb": 43.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/205_acr-mm-elreposo.geojson",
+   "objetos": 13,
+   "kb": 7.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/206_acr-mm-laplata.geojson",
+   "objetos": 13,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/208_rural-acr-avt-transformadores.geojson",
+   "objetos": 1,
+   "kb": 0.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/209_rural-acr-avt-switch.geojson",
+   "objetos": 1,
+   "kb": 0.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/210_rural-acr-avt-captaciones.geojson",
+   "objetos": 2,
+   "kb": 0.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/211_rural-acr-avt-poliducto.geojson",
+   "objetos": 1,
+   "kb": 1.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/212_rural-acr-avt-media-tension.geojson",
+   "objetos": 11,
+   "kb": 2.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/213_rural-acr-avt-baja-tension.geojson",
+   "objetos": 1,
+   "kb": 0.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/215_amenaza-ind-arauca.geojson",
+   "objetos": 37,
+   "kb": 156.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/216_amenaza-at-arauca.geojson",
+   "objetos": 5,
+   "kb": 576.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/217_aca-mm-arauca.geojson",
+   "objetos": 259,
+   "kb": 513.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/218_acr-mm-arauca.geojson",
+   "objetos": 885,
+   "kb": 537.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/219_aca-at-arauca.geojson",
+   "objetos": 33,
+   "kb": 149.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/220_acr-at-arauca.geojson",
+   "objetos": 145,
+   "kb": 60.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/221_aca-ind-arauca.geojson",
+   "objetos": 197,
+   "kb": 171.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/222_acr-ind-arauca.geojson",
+   "objetos": 151,
+   "kb": 82.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/225_amenaza-ind-urbano.geojson",
+   "objetos": 8,
+   "kb": 623.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/226_aca-mm-urbano.geojson",
+   "objetos": 785,
+   "kb": 1578.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/227_acr-mm-urbano.geojson",
+   "objetos": 538,
+   "kb": 261.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/228_aca-ind-urbano.geojson",
+   "objetos": 1,
+   "kb": 7.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/230_aca-mm-rural.geojson",
+   "objetos": 24,
+   "kb": 1882.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/231_aca-ind-rural.geojson",
+   "objetos": 9,
+   "kb": 79.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-palestina/amenazas/232_aca-avt-rural.geojson",
+   "objetos": 14,
+   "kb": 21.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-risaralda/234_perimetrocabecera-y-areaexpansionurbana.geojson",
+   "objetos": 4,
+   "kb": 17.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-risaralda/eep/236_bocatomas-buf.geojson",
+   "objetos": 33,
+   "kb": 34.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-risaralda/eep/237_zonas-recarga-acuifero-risaralda.geojson",
+   "objetos": 1,
+   "kb": 4.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-risaralda/eep/238_retiro-de-nacimiento-u.geojson",
+   "objetos": 18,
+   "kb": 15.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-risaralda/eep/239_zona-protectora-de-servicios.geojson",
+   "objetos": 2,
+   "kb": 126.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-risaralda/eep/240_zona-protectora-hidraulica-y-ambiental-u.geojson",
+   "objetos": 2,
+   "kb": 45.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-risaralda/eep/241_usos-suelo-urbano.geojson",
+   "objetos": 951,
+   "kb": 473.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-risaralda/eep/244_clases-agrologicas-ii-iii-igac.geojson",
+   "objetos": 57,
+   "kb": 281.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-risaralda/amenaza/248_amenaza-inundaciones.geojson",
+   "objetos": 193,
+   "kb": 438.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-risaralda/amenaza/252_areascondiconesamenaza-mm-rural.geojson",
+   "objetos": 10,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/suelo-proteccion/256_manantiales-termales.geojson",
+   "objetos": 6,
+   "kb": 1.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/suelo-proteccion/257_funcion-amortiguadora.geojson",
+   "objetos": 2,
+   "kb": 169.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/suelo-proteccion/258_otras-estrategias-de-conservacion-oec.geojson",
+   "objetos": 98,
+   "kb": 376.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/suelo-proteccion/259_oecc-privadas.geojson",
+   "objetos": 68,
+   "kb": 283.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/suelo-proteccion/261_areas-verdes-centros-poblados.geojson",
+   "objetos": 75,
+   "kb": 55.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/suelo-proteccion/263_aica-del-parque-nacional-natural-selva-de-floren.geojson",
+   "objetos": 1,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/suelo-proteccion/265_parque-nacional-natural-selva-florencia.geojson",
+   "objetos": 1,
+   "kb": 120.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/suelo-proteccion/266_distrito-manejo-integrado-laguna-san-diego.geojson",
+   "objetos": 1,
+   "kb": 7.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/suelo-proteccion/267_zonificacion-dmi-laguna-de-san-diego.geojson",
+   "objetos": 198,
+   "kb": 395.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/suelo-proteccion/268_reserva-sociedad-civil.geojson",
+   "objetos": 2,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/suelo-proteccion/269_nacimientoriomanso.geojson",
+   "objetos": 1,
+   "kb": 5.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/suelo-proteccion/270_reserva-forestal-ley2.geojson",
+   "objetos": 5,
+   "kb": 12.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/suelo-proteccion/271_humedales.geojson",
+   "objetos": 3,
+   "kb": 1.6
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/suelo-proteccion/272_fajas-forestales-protectoras-de-humedales.geojson",
+   "objetos": 3,
+   "kb": 4.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/suelo-proteccion/274_microcuencas-abastecedoras-de-acueductos-para-co.geojson",
+   "objetos": 58,
+   "kb": 108.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/suelo-proteccion/275_areas-importancia-ambiental.geojson",
+   "objetos": 4,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/278_zonificacion-pnn-selva-de-florencia.geojson",
+   "objetos": 4,
+   "kb": 844.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/281_aca-mm-samana2.geojson",
+   "objetos": 2,
+   "kb": 160.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/282_areas-cond-riesgomm-samana.geojson",
+   "objetos": 1,
+   "kb": 10.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/283_acr-ind-samana.geojson",
+   "objetos": 2,
+   "kb": 22.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/284_aca-avenidas-torrenciales.geojson",
+   "objetos": 2,
+   "kb": 65.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/285_acr-avt-samana.geojson",
+   "objetos": 2,
+   "kb": 26.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/288_aca-mm-encimadas.geojson",
+   "objetos": 10,
+   "kb": 39.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/289_aca-mm-elcongal.geojson",
+   "objetos": 1,
+   "kb": 3.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/290_aca-mm-florencia.geojson",
+   "objetos": 1,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/291_aca-mm-sandiego.geojson",
+   "objetos": 64,
+   "kb": 98.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/292_condicion-amenazamm-berlin.geojson",
+   "objetos": 21,
+   "kb": 32.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/293_area-en-condicion-de-amenaza-por-movimiento-en-m.geojson",
+   "objetos": 14,
+   "kb": 22.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/294_acr-mm-sr.geojson",
+   "objetos": 2,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/295_areas-potencialmente-inundables.geojson",
+   "objetos": 579,
+   "kb": 447.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/296_areas-en-concidicion-de-amenaza-por-inundacion.geojson",
+   "objetos": 1,
+   "kb": 1.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/298_amenaza-mm.geojson",
+   "objetos": 3,
+   "kb": 2353.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/299_areas-en-condicion-de-amenaza-por-movimiento-en.geojson",
+   "objetos": 2,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/300_areas-en-condicion-de-riesgo-por-movimientos-en.geojson",
+   "objetos": 1,
+   "kb": 1632.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/301_areas-potencialmente-inundables.geojson",
+   "objetos": 579,
+   "kb": 453.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/302_areas-en-condicion-de-riesgo-por-inundacion.geojson",
+   "objetos": 50,
+   "kb": 74.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/pbot-samana/amenaza/304_area-en-condicion-de-riesgo-por-avenida-torrenci.geojson",
+   "objetos": 97,
+   "kb": 143.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/componente-urbano/307_drenajes-urbano.geojson",
+   "objetos": 256,
+   "kb": 508.6
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/componente-urbano/309_aia-urbano.geojson",
+   "objetos": 9,
+   "kb": 10.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/componente-urbano/310_zon-hidrau-prot-amb.geojson",
+   "objetos": 1,
+   "kb": 642.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/componente-urbano/311_parques-urbanos.geojson",
+   "objetos": 40,
+   "kb": 41.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/componente-rural/313_reserva-forestal-central.geojson",
+   "objetos": 2,
+   "kb": 129.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/componente-rural/314_abacos.geojson",
+   "objetos": 71,
+   "kb": 197.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/componente-rural/315_areas-sinap.geojson",
+   "objetos": 1,
+   "kb": 7.6
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/componente-rural/316_humedales-alto-andinos.geojson",
+   "objetos": 2,
+   "kb": 2.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/componente-rural/317_paramos.geojson",
+   "objetos": 5,
+   "kb": 292.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/componente-rural/319_bosque-seco-tropical.geojson",
+   "objetos": 2,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/componente-rural/320_eep-wcs-actual.geojson",
+   "objetos": 497,
+   "kb": 958.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/componente-rural/321_la-samaria.geojson",
+   "objetos": 17,
+   "kb": 89.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/componente-rural/322_aia-cob2010.geojson",
+   "objetos": 14,
+   "kb": 60.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/componente-rural/323_ees-proyectada.geojson",
+   "objetos": 1996,
+   "kb": 2565.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/amenazas/328_cond-riesgo-mm-urbano.geojson",
+   "objetos": 214,
+   "kb": 753.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/amenazas/333_cond-amenaza-av-trr-rural.geojson",
+   "objetos": 6,
+   "kb": 4.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/amenazas/334_cond-riesgo-av-trr-rural.geojson",
+   "objetos": 34,
+   "kb": 60.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/amenazas/335_cond-amenaza-inun-rural.geojson",
+   "objetos": 13,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/amenazas/336_cond-riesgo-inun-rural.geojson",
+   "objetos": 40,
+   "kb": 106.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/amenazas/337_aca-mm-rural.geojson",
+   "objetos": 38,
+   "kb": 332.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/amenazas/340_amenaza-mm-sintesis-sf.geojson",
+   "objetos": 21,
+   "kb": 1219.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/amenazas/341_amenaza-at-sf.geojson",
+   "objetos": 3,
+   "kb": 1054.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/amenazas/342_amenaza-inundacion-sf.geojson",
+   "objetos": 3,
+   "kb": 1248.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/amenazas/343_cond-amenaza-mm-sf.geojson",
+   "objetos": 56,
+   "kb": 995.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/amenazas/344_cond-riesgo-mm-sf.geojson",
+   "objetos": 174,
+   "kb": 146.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/amenazas/345_cond-amenaza-inun-sf.geojson",
+   "objetos": 8,
+   "kb": 441.7
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/amenazas/346_cond-riesgo-inun-sf.geojson",
+   "objetos": 54,
+   "kb": 44.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/amenazas/347_cond-amenaza-av-trr-sf.geojson",
+   "objetos": 8,
+   "kb": 337.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-salamina/amenazas/348_cond-riesgo-av-trr-sf.geojson",
+   "objetos": 49,
+   "kb": 37.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-viterbo/componente-urbano/351_b-conserv-proteccamb-suelourb-exp.geojson",
+   "objetos": 6,
+   "kb": 405.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-viterbo/centros-poblados/355_areas-conserv-proteccion-canaan.geojson",
+   "objetos": 3,
+   "kb": 2.5
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-viterbo/amenazas/358_c1-amenaza-movmasa.geojson",
+   "objetos": 48,
+   "kb": 538.8
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-viterbo/amenazas/359_c2-amenaza-inundacion.geojson",
+   "objetos": 3,
+   "kb": 232.3
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-viterbo/amenazas/360_c3-amenaza-avtorrencial.geojson",
+   "objetos": 3,
+   "kb": 209.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-viterbo/amenazas/361_h-1-cond-amenaza-movmasa.geojson",
+   "objetos": 2,
+   "kb": 77.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-viterbo/amenazas/362_h-2-cond-amenaza-inundacion.geojson",
+   "objetos": 2,
+   "kb": 60.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-viterbo/amenazas/363_h-8-condicion-riesgo-urbano.geojson",
+   "objetos": 7,
+   "kb": 62.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-viterbo/amenazas/365_f1-am-movmasarural.geojson",
+   "objetos": 3,
+   "kb": 1837.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-viterbo/amenazas/366_f2-am-inundacion-rural.geojson",
+   "objetos": 3,
+   "kb": 1058.1
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-viterbo/amenazas/368_d1-cond-amenmovmas.geojson",
+   "objetos": 3,
+   "kb": 104.2
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-viterbo/amenazas/369_d2-cond-ameninudacion.geojson",
+   "objetos": 3,
+   "kb": 136.4
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-viterbo/amenazas/370_d3-cond-amenaventorren.geojson",
+   "objetos": 3,
+   "kb": 81.6
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-viterbo/amenazas/371_d5-condicion-riesgo-rural.geojson",
+   "objetos": 2,
+   "kb": 8.9
+  },
+  {
+   "archivo": "data/ee-pot-2da-generacion2026/eot-viterbo/amenazas/373_d5-condicion-riesgo-rural.geojson",
+   "objetos": 4,
+   "kb": 8.0
+  },
+  {
+   "archivo": "data/editable/0_geo-sde-puntocaptacion1.geojson",
+   "objetos": 5,
+   "kb": 1.8
+  },
+  {
+   "archivo": "data/editable/0_geo-sde-puntocaptacion1.geojson",
+   "objetos": 5,
+   "kb": 1.8
+  }
+ ]
+}

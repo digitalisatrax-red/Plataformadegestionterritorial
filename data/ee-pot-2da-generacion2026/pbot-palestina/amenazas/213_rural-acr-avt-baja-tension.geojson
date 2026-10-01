@@ -1,0 +1,1 @@
+{"type":"FeatureCollection","name":"Rural_ACR_AVT_Baja_Tension","crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC:1.3:CRS84"}},"features":[{"type":"Feature","id":0,"geometry":{"type":"LineString","coordinates":[[-75.68811,5.07161],[-75.68831,5.07132]]},"properties":{"FID":0,"OBJECTID":1,"POBLACION":"R","Amenaza_po":"Alta","Shape_Leng":39.5260788137}}]}

@@ -1,0 +1,178 @@
+[
+ {
+  "tema": "Agua",
+  "servicio": "AGUA",
+  "capas": 36,
+  "locales": 13,
+  "en_vivo": 23,
+  "peso_local_mb": 21.88
+ },
+ {
+  "tema": "Agua subterránea",
+  "servicio": "AGUA_SUBTERRANEA",
+  "capas": 18,
+  "locales": 17,
+  "en_vivo": 1,
+  "peso_local_mb": 4.4
+ },
+ {
+  "tema": "Agendas sectoriales",
+  "servicio": "Agendas_sectoriales",
+  "capas": 5,
+  "locales": 5,
+  "en_vivo": 0,
+  "peso_local_mb": 6.28
+ },
+ {
+  "tema": "Amenaza y riesgo",
+  "servicio": "Amenaza_y_Riesgo",
+  "capas": 45,
+  "locales": 19,
+  "en_vivo": 26,
+  "peso_local_mb": 18.23
+ },
+ {
+  "tema": "Clima",
+  "servicio": "CLIMA",
+  "capas": 9,
+  "locales": 2,
+  "en_vivo": 7,
+  "peso_local_mb": 0.07
+ },
+ {
+  "tema": "Cartografía base",
+  "servicio": "CartografiaBase",
+  "capas": 19,
+  "locales": 5,
+  "en_vivo": 14,
+  "peso_local_mb": 6.13
+ },
+ {
+  "tema": "Conflictos ambientales",
+  "servicio": "Conflictos_Ambientales_en_Caldas",
+  "capas": 3,
+  "locales": 2,
+  "en_vivo": 1,
+  "peso_local_mb": 2.27
+ },
+ {
+  "tema": "Desabastecimiento y abastos (ERA)",
+  "servicio": "DesabastecimientoAbastos_ERA_MIL1",
+  "capas": 7,
+  "locales": 4,
+  "en_vivo": 3,
+  "peso_local_mb": 5.18
+ },
+ {
+  "tema": "Ecosistemas",
+  "servicio": "ECOSISTEMAS",
+  "capas": 8,
+  "locales": 1,
+  "en_vivo": 7,
+  "peso_local_mb": 3.57
+ },
+ {
+  "tema": "Estructura Ecológica Principal",
+  "servicio": "EEPJulio2026",
+  "capas": 180,
+  "locales": 139,
+  "en_vivo": 41,
+  "peso_local_mb": 112.74
+ },
+ {
+  "tema": "Estructura Ecológica Complementaria",
+  "servicio": "EEPJulio2026",
+  "capas": 2,
+  "locales": 0,
+  "en_vivo": 2,
+  "peso_local_mb": 0
+ },
+ {
+  "tema": "EOT Aranzazu",
+  "servicio": "EE_POT_2da_generacion2026",
+  "capas": 68,
+  "locales": 65,
+  "en_vivo": 3,
+  "peso_local_mb": 15.32
+ },
+ {
+  "tema": "EOT La Dorada",
+  "servicio": "EE_POT_2da_generacion2026",
+  "capas": 22,
+  "locales": 22,
+  "en_vivo": 0,
+  "peso_local_mb": 10.77
+ },
+ {
+  "tema": "EOT Marmato",
+  "servicio": "EE_POT_2da_generacion2026",
+  "capas": 7,
+  "locales": 7,
+  "en_vivo": 0,
+  "peso_local_mb": 2.84
+ },
+ {
+  "tema": "EOT Marulanda",
+  "servicio": "EE_POT_2da_generacion2026",
+  "capas": 22,
+  "locales": 15,
+  "en_vivo": 7,
+  "peso_local_mb": 11.2
+ },
+ {
+  "tema": "EOT Pácora",
+  "servicio": "EE_POT_2da_generacion2026",
+  "capas": 26,
+  "locales": 23,
+  "en_vivo": 3,
+  "peso_local_mb": 17.88
+ },
+ {
+  "tema": "PBOT Palestina",
+  "servicio": "EE_POT_2da_generacion2026",
+  "capas": 46,
+  "locales": 44,
+  "en_vivo": 2,
+  "peso_local_mb": 21.91
+ },
+ {
+  "tema": "EOT Risaralda",
+  "servicio": "EE_POT_2da_generacion2026",
+  "capas": 14,
+  "locales": 10,
+  "en_vivo": 4,
+  "peso_local_mb": 2.75
+ },
+ {
+  "tema": "PBOT Samaná",
+  "servicio": "EE_POT_2da_generacion2026",
+  "capas": 44,
+  "locales": 37,
+  "en_vivo": 7,
+  "peso_local_mb": 16.45
+ },
+ {
+  "tema": "EOT Salamina",
+  "servicio": "EE_POT_2da_generacion2026",
+  "capas": 37,
+  "locales": 29,
+  "en_vivo": 8,
+  "peso_local_mb": 24.76
+ },
+ {
+  "tema": "EOT Viterbo",
+  "servicio": "EE_POT_2da_generacion2026",
+  "capas": 17,
+  "locales": 15,
+  "en_vivo": 2,
+  "peso_local_mb": 10.17
+ },
+ {
+  "tema": "Capas editables",
+  "servicio": "editable",
+  "capas": 2,
+  "locales": 2,
+  "en_vivo": 0,
+  "peso_local_mb": 0.0
+ }
+]

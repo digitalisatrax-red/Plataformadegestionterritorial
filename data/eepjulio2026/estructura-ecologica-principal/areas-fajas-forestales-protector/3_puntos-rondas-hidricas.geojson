@@ -1,0 +1,1 @@
+{"type":"FeatureCollection","name":"Puntos Rondas Hídricas","crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC:1.3:CRS84"}},"features":[{"type":"Feature","id":1,"geometry":{"type":"Point","coordinates":[-75.86551,5.05852]},"properties":{"OBJECTID":1,"Resolución":"2025-1740","Municipio":"Viterbo"}}]}
