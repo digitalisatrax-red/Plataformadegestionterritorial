@@ -6,7 +6,7 @@ Base: dashboard GeoAgosto / GeoCaldas (Corpocaldas). Sitio estático, funciona e
 
 | Apartado | Estado | Notas |
 |---|---|---|
-| Territorio | Base original | Mapas base corregidos (`fix-mapas-base.js`), encuadre en Caldas |
+| Territorio | Listo (v1) | 9 capas de Corpocaldas, análisis por municipio o vereda, archivo y dibujo, solo WMS, acceso por rol a Planeación/Organizaciones (ver `docs/ACCESO.md`) |
 | Analizar | Base original | Por definir |
 | Resultados | Base original | Por definir |
 | Campo | Base original | Por definir |
