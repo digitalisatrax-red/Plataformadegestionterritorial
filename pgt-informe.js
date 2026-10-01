@@ -69,6 +69,14 @@
     }
     return s * R * R / 2;
   }
+  function ligera(g) {      // copia reducida de la geometría para dibujar (máx. ~300 vértices por anillo)
+    function red(l) { var k = Math.max(1, Math.ceil(l.length / 300)); if (k === 1) return l; var o = []; for (var i = 0; i < l.length; i += k) o.push(l[i]); o.push(l[l.length - 1]); return o; }
+    if (g.rings) return { rings: g.rings.map(red) };
+    if (g.paths) return { paths: g.paths.map(red) };
+    if (g.x !== undefined) return { x: g.x, y: g.y };
+    if (g.points) return { points: g.points.slice(0, 50) };
+    return null;
+  }
   function areaHa(g) {
     var t = 0; (g.rings || []).forEach(function (r) { t += anilloArea(r); });
     return Math.abs(t) / 10000;
@@ -103,7 +111,7 @@
     var cs = meta.campos, sel = opt.campos || [];
     var virt = cs.filter(function (f) { return f.virtual && sel.indexOf(f.name) !== -1; });
     var out = cs.filter(function (f) { return !f.virtual && sel.indexOf(f.name) !== -1; }).map(function (f) { return f.name; });
-    var P = { f: 'json', outSR: '4326', geometryPrecision: '5', outFields: out.length ? out.join(',') : '*', returnGeometry: virt.length ? 'true' : 'false' };
+    var P = { f: 'json', outSR: '4326', geometryPrecision: '5', outFields: out.length ? out.join(',') : '*', returnGeometry: (virt.length || opt.geom) ? 'true' : 'false' };
     if (opt.punto) {
       P.geometry = JSON.stringify({ x: opt.punto.lng, y: opt.punto.lat, spatialReference: { wkid: 4326 } });
       P.geometryType = 'esriGeometryPoint'; P.inSR = '4326'; P.spatialRel = 'esriSpatialRelIntersects';
@@ -121,7 +129,7 @@
       var fs = j.features || [];
       fs.forEach(function (f) {
         var a = Object.assign({}, f.attributes || {});
-        if (f.geometry) { a.__area_ha = areaHa(f.geometry); a.__long_km = longKm(f.geometry); }
+        if (f.geometry) { a.__area_ha = areaHa(f.geometry); a.__long_km = longKm(f.geometry); if (opt.geom) a._g = ligera(f.geometry); }
         filas.push(a);
       });
       if (opt.max && filas.length >= opt.max) { truncado = filas.length > opt.max || !!j.exceededTransferLimit; filas.length = Math.min(filas.length, opt.max); break; }
@@ -300,7 +308,7 @@
     try {
       for (var i = 0; i < validas.length; i++) {
         var s = validas[i], c = capa(s.capa); msg.textContent = 'Consultando ' + c.name + '…';
-        var r = await consultar(c, { aoi: estado.alcance === 'aoi' ? aoiF.geometry : null, campos: s.campos });
+        var r = await consultar(c, { aoi: estado.alcance === 'aoi' ? aoiF.geometry : null, campos: s.campos, geom: true });
         var cs = s.campos.map(function (n) { return r.campos.filter(function (f) { return f.name === n; })[0]; }).filter(Boolean);
         var ord = s.orden && r.campos.filter(function (f) { return f.name === s.orden; })[0];
         if (ord) r.filas.sort(function (a, b) {
@@ -312,6 +320,7 @@
       estado.datos = { items: datos, fecha: new Date(), aoi: estado.alcance === 'aoi' ? (document.querySelector('.area-card strong, .aoi-card strong') || {}).textContent : 'Todo Caldas' };
       msg.textContent = '';
       mostrarVista();
+      if (window.__pgtTablero) window.__pgtTablero.abrir(estado.datos, estado);
     } catch (e) { msg.textContent = 'No fue posible generar el reporte: ' + e.message; }
     btn.disabled = false; btn.textContent = 'Generar reporte';
   }
@@ -331,7 +340,7 @@
   }
   function mostrarVista() {
     var v = modal.querySelector('[data-r=vista]'), D = estado.datos; if (!D) return;
-    v.innerHTML = '<div class="pgi-pie"><button type="button" class="pgi-pri" data-a="pdf">Descargar PDF</button><button type="button" class="pgi-sec" data-a="csv">Descargar CSV</button></div>' +
+    v.innerHTML = '<div class="pgi-pie"><button type="button" class="pgi-pri" data-a="tab">Abrir tablero</button><button type="button" class="pgi-sec" data-a="pdf">PDF de la tabla</button><button type="button" class="pgi-sec" data-a="csv">Descargar CSV</button></div>' +
       D.items.map(function (it, n) {
         return '<div class="pgi-res-bl" data-n="' + n + '"><h3>' + esc(it.capa.name) + ' <small>' + it.filas.length + ' registros' + (it.truncado ? ' (límite de ' + MAX_FILAS + ')' : '') + '</small></h3><div class="pgi-scroll">' + tablaHtml(it, true) + '</div></div>';
       }).join('') + '<div class="pgi-nota">Puedes renombrar los encabezados (clic sobre ellos) y quitar filas con × antes de descargar.</div>';
@@ -342,6 +351,7 @@
         b.onclick = function () { it.filas.splice(+b.getAttribute('data-k'), 1); mostrarVista(); };
       });
     });
+    v.querySelector('[data-a=tab]').onclick = function () { window.__pgtTablero && window.__pgtTablero.abrir(estado.datos, estado); };
     v.querySelector('[data-a=pdf]').onclick = descargarPdf;
     v.querySelector('[data-a=csv]').onclick = descargarCsv;
   }

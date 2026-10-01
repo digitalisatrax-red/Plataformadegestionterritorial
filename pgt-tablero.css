@@ -1,0 +1,46 @@
+/* Tablero del reporte */
+.tb-root{position:fixed;inset:0;z-index:100002;background:#eef2f0;overflow:auto;color:#16302a;font-size:13px;display:flex;flex-direction:column}
+.tb-cab{display:flex;justify-content:space-between;align-items:center;gap:16px;background:#fff;border-bottom:1px solid #d6e0dc;padding:12px 22px}
+.tb-cab h1{margin:0;font-size:22px;color:#0e5235}
+.tb-ey{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#18724a}
+.tb-sub{color:#62736d;font-size:12px;margin-top:2px}
+.tb-acc{display:flex;gap:10px;align-items:center}
+.tb-pri{height:38px;padding:0 18px;border-radius:6px;border:0;background:#18724a;color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.tb-x{border:0;background:none;font-size:30px;line-height:1;cursor:pointer;color:#62736d}
+.tb-tabs{display:flex;gap:4px;background:#fff;padding:0 22px;border-bottom:1px solid #d6e0dc;overflow-x:auto}
+.tb-tabs button{border:0;background:none;padding:10px 14px;font:inherit;font-weight:700;color:#62736d;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+.tb-tabs button.on{color:#0e5235;border-bottom-color:#18724a}
+.tb-ctl{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;padding:12px 22px}
+.tb-ctl label{display:flex;flex-direction:column;font-size:10.5px;font-weight:700;color:#62736d;gap:3px}
+.tb-ctl select,.tb-ctl input{height:34px;padding:0 8px;border:1px solid #d6e0dc;border-radius:6px;background:#fff;font:inherit;font-size:12.5px;min-width:170px}
+.tb-bus input{min-width:220px}
+.tb-lim{height:34px;padding:0 12px;border:1px solid #d6e0dc;border-radius:6px;background:#fff;font:inherit;font-weight:700;cursor:pointer}
+.tb-main{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;padding:0 22px 12px;flex:1}
+.tb-kpis{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.tb-kpi{background:#fff;border:1px solid #d6e0dc;border-radius:8px;padding:10px 14px;border-top:3px solid #4e79a7}
+.tb-kpi span{display:block;font-size:10.5px;font-weight:700;color:#62736d}
+.tb-kpi b{display:block;font-size:26px;line-height:1.15;margin-top:2px}
+.tb-kpi em{font-style:normal;font-size:11px;color:#62736d}
+.tb-card{background:#fff;border:1px solid #d6e0dc;border-radius:8px;padding:12px 14px;grid-column:span 4;min-height:260px;min-width:0}
+.tb-card h3{margin:0 0 8px;font-size:13px}.tb-card h3 small{font-weight:500;color:#62736d}
+.tb-mapa{padding:12px 14px}.tb-mapa-in{height:230px;border-radius:6px;overflow:hidden;background:#dfe7e3}
+.tb-tabla{grid-column:1/-1}
+.tb-scroll{overflow:auto;max-height:340px;border:1px solid #e3ebe7;border-radius:6px}
+.tb-bar{display:grid;grid-template-columns:minmax(80px,38%) 1fr 62px;gap:8px;align-items:center;padding:3px 4px;border-radius:5px;cursor:pointer;font-size:12px}
+.tb-bar:hover,.tb-bar.sel{background:#eaf5ef}
+.tb-bt{background:#eef2f0;border-radius:3px;height:11px;display:block}.tb-bt i{display:block;height:100%;border-radius:3px}
+.tb-bv{text-align:right;font-weight:700}
+.tb-bl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb-anillo{display:grid;grid-template-columns:150px 1fr;gap:10px;align-items:center}
+.tb-anillo svg{width:150px;height:150px;transform:rotate(0)}
+.tb-arco{cursor:pointer}.tb-arco:hover{stroke-width:8}
+.tb-c{font-size:5px;font-weight:700;fill:#16302a}
+.tb-ley{display:flex;gap:6px;align-items:center;font-size:12px;padding:3px 4px;border-radius:5px;cursor:pointer}
+.tb-ley:hover,.tb-ley.sel{background:#eaf5ef}.tb-ley i{width:10px;height:10px;border-radius:2px;display:inline-block;flex:none}.tb-ley b{margin-left:auto}
+.tb-tab{border-collapse:collapse;width:100%;font-size:12px}
+.tb-tab th{position:sticky;top:0;background:#e8f1ec;text-align:left;padding:7px 9px;cursor:pointer;white-space:nowrap}
+.tb-tab td{padding:5px 9px;border-bottom:1px solid #eef2f0}.tb-tab td.n{text-align:right}
+.tb-tab tbody tr{cursor:pointer}.tb-tab tbody tr:hover,.tb-tab tr.sel{background:#eaf5ef}
+.tb-vacio{color:#62736d;font-size:12px;padding:10px}
+.tb-pie{padding:8px 22px 14px;color:#62736d;font-size:11px}
+@media(max-width:1000px){.tb-card{grid-column:1/-1}.tb-anillo{grid-template-columns:1fr}}
