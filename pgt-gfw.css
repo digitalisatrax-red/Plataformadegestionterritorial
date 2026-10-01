@@ -1,0 +1,43 @@
+/* Resultados · reporte narrativo estilo Global Forest Watch */
+main.pgt-res>*:not(.g-root){display:none!important}
+.g-root{max-width:1060px;margin:0 auto;padding:0 18px 40px;color:#16302a;font-size:15px;line-height:1.55;background:#fff}
+.g-cab{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap;padding:26px 0 14px;border-bottom:1px solid #d6e0dc}
+.g-bread{font-size:12px;color:#62736d;font-weight:700;letter-spacing:.03em}
+.g-cab h1{margin:4px 0 2px;font-size:30px;line-height:1.15;color:#0e5235;font-weight:800}
+.g-sub{color:#62736d;font-size:13px}
+.g-ctl{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.g-ctl label{display:flex;flex-direction:column;font-size:10.5px;font-weight:800;color:#62736d;gap:3px}
+.g-ctl select{height:36px;padding:0 8px;border:1px solid #d6e0dc;border-radius:6px;background:#fff;font:inherit;font-size:13px}
+.g-ctl button{height:36px;padding:0 16px;border:0;border-radius:6px;background:#18724a;color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.g-nav{position:sticky;top:0;z-index:5;background:#fff;display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid #e3ebe7;padding:6px 0}
+.g-nav a{padding:6px 12px;border-radius:99px;font-size:12.5px;font-weight:700;color:#0e5235;text-decoration:none;white-space:nowrap;background:#eef5f1}
+.g-nav a:hover{background:#dcece3}
+.g-resumen{background:linear-gradient(180deg,#f2f8f4,#fff);border:1px solid #d6e0dc;border-radius:10px;padding:22px 24px;margin:22px 0}
+.g-lead{font-size:19px;line-height:1.5;margin:0 0 16px}
+.g-lead b{color:#0e5235}
+.g-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:14px 0}
+.g-kpi{background:#fff;border:1px solid #d6e0dc;border-top:4px solid #6a9c2f;border-radius:8px;padding:10px 14px}
+.g-kpi span{display:block;font-size:11px;font-weight:700;color:#62736d}
+.g-kpi b{display:block;font-size:24px;line-height:1.2;margin-top:2px}
+.g-kpi em{font-style:normal;font-size:11.5px;color:#62736d}
+.g-sec{padding:26px 0 8px;border-bottom:1px solid #eef2f0}
+.g-kick{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#18724a}
+.g-sec h2{margin:2px 0 10px;font-size:23px;color:#0e5235}
+.g-sec h3{font-size:14px;margin:16px 0 4px}
+.g-sec p{margin:0 0 12px}
+.g-svg{width:100%;height:auto;display:block}
+.g-grid{stroke:#e3ebe7;stroke-width:1}.g-ax{font-size:10.5px;fill:#62736d}.g-prom{stroke:#16302a;stroke-width:1;stroke-dasharray:4 4}.g-pt{font-weight:700}
+.g-hb{margin:8px 0 12px}
+.g-hbr{display:grid;grid-template-columns:minmax(120px,26%) 1fr 110px;gap:10px;align-items:center;margin:5px 0;font-size:13.5px}
+.g-hbt{background:#eef2f0;border-radius:4px;height:16px;display:block}.g-hbt i{display:block;height:100%;border-radius:4px}
+.g-hbr b{text-align:right}
+.g-fuente{font-size:11.5px;color:#62736d;margin:6px 0 14px;font-style:italic}
+.g-aviso{background:#fff8e1;border:1px solid #ecd58b;color:#5b4300;border-radius:8px;padding:10px 14px;margin:16px 0 0;font-size:13.5px}
+.g-vacio{padding:60px 10px;text-align:center}.g-vacio h2{color:#0e5235}.g-vacio p{max-width:560px;margin:8px auto;color:#62736d}
+.g-tab{border-collapse:collapse;width:100%;font-size:13.5px;margin:6px 0 10px}
+.g-tab th{background:#e8f1ec;text-align:left;padding:7px 10px}.g-tab td{padding:6px 10px;border-bottom:1px solid #eef2f0}.g-tab td.n{text-align:right}
+.g-tab td i{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:8px}
+.g-nota{font-size:12.5px;color:#62736d}
+.g-refs .g-ref{font-size:12.5px;padding-left:2em;text-indent:-2em;margin:0 0 8px}
+@media(max-width:700px){.g-cab h1{font-size:23px}.g-lead{font-size:16.5px}.g-hbr{grid-template-columns:1fr 1fr 80px}}
+@media print{.g-sec{break-inside:avoid}.g-resumen{break-inside:avoid}}
