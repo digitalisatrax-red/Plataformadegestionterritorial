@@ -3,8 +3,8 @@
 // Datos: MapBiomas Fuego Colombia, Colección 1 (MapBiomas Colombia). Cite la fuente al usarlos.
 
 var BASE = 'projects/mapbiomas-public/assets/colombia/fire/collection1/';
-// Si el nombre del asset difiere, cópielo desde el catálogo de Earth Engine (Assets → mapbiomas-public).
-var ANUAL = ee.Image(BASE + 'annual_burned_v1');
+// Nombre del asset verificado en https://colombia.mapbiomas.org/iniciativas-y-productos/fuego/ (CC BY 4.0, citar a MapBiomas).
+var ANUAL = ee.Image(BASE + 'mapbiomas_colombia_fire_collection1_annual_burned_v1');
 
 // Municipios de Caldas (FAO GAUL 2015, nivel 2). Si prefiere los de Corpocaldas, suba su capa como asset y cámbiela aquí.
 var mun = ee.FeatureCollection('FAO/GAUL/2015/level2')
