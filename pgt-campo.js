@@ -238,7 +238,7 @@
   function mapa() {
     var L = window.__pgtL, cont = el.querySelector('[data-r=map]');
     if (!L) { cont.innerHTML = '<div class="fg-vacio">El mapa no está disponible todavía. Cierre esta ventana, abra Territorio y vuelva a intentarlo.</div>'; return; }
-    S.mapa = L.map(cont).setView([5.28, -75.3], 9); S.base = null; fondo();
+    S.mapa = L.map(cont).setView([5.28, -75.3], 9); S.base = null; S.catL = {}; fondo(); catTodas();
     S.capa = L.layerGroup().addTo(S.mapa);
     [100, 400, 1200].forEach(function (t) { setTimeout(function () { if (S.mapa) S.mapa.invalidateSize(); }, t); });
   }
@@ -286,6 +286,30 @@
     lado.querySelectorAll('.pc-it').forEach(function (d) { d.onclick = function () { var p = lista[Number(d.dataset.i)]; if (p && p._m && S.mapa) { S.mapa.setView([p.lat, p.lon], Math.max(S.mapa.getZoom(), 14)); p._m.openPopup(); } }; });
   }
 
+  /* ── Catálogo de capas del geoportal (como en el geovisor) ── */
+  var LSC = 'pgt.campo.cat';
+  function catLista() { return (window.__pgtCapas || []).filter(function (c) { return c.kind === 'arcgis-dynamic' && c.url; }); }
+  try { S.cat = JSON.parse(localStorage.getItem(LSC) || '{}') || {}; } catch (e) { S.cat = {}; }
+  S.catL = {};
+  function guardarCat() { try { localStorage.setItem(LSC, JSON.stringify(S.cat)); } catch (e) {} }
+  function catQuitar(id) { var o = S.catL[id]; if (o && S.mapa) { S.mapa.off('moveend', o.f); if (o.l && S.mapa.hasLayer(o.l)) S.mapa.removeLayer(o.l); } delete S.catL[id]; }
+  function catPoner(id) {
+    var L = window.__pgtL, m = S.mapa, c = catLista().filter(function (x) { return x.id === id; })[0]; catQuitar(id);
+    if (!m || !L || !c || !(S.cat[id] && S.cat[id].on)) return;
+    var st = {}, op = S.cat[id].op != null ? S.cat[id].op : 0.7;
+    var pon = function () {
+      var b = m.getBounds(), z = m.getSize();
+      var u = c.url + '/export?bbox=' + [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].join(',') + '&bboxSR=4326&imageSR=4326&size=' + z.x + ',' + z.y + '&format=png32&transparent=true&layers=show:' + c.layerId + '&f=image';
+      var l = L.imageOverlay(u, b, { opacity: op, interactive: false });
+      l.on('load', function () { if (st.l && st.l !== l && m.hasLayer(st.l)) m.removeLayer(st.l); st.l = l; });
+      l.on('error', function () { if (m.hasLayer(l)) m.removeLayer(l); });
+      l.addTo(m); if (l.bringToBack) l.bringToBack(); if (S.base) S.base.bringToBack();
+    };
+    st.f = function () { clearTimeout(st.t); st.t = setTimeout(pon, 250); }; S.catL[id] = st; m.on('moveend', st.f); pon();
+  }
+  function catTodas() { Object.keys(S.cat).forEach(catPoner); }
+  function catSetOp(id, v) { var o = S.catL[id]; S.cat[id].op = v; if (o && o.l) o.l.setOpacity(v); guardarCat(); }
+
   /* ── Capas propias (archivo o enlace) ─────────────────── */
   var LS = 'pgt.campo.capas';
   function guardarCapas() { try { localStorage.setItem(LS, JSON.stringify(S.ext.filter(function (x) { return x.url; }).map(function (x) { return { k: x.k, n: x.n, c: x.c, url: x.url }; }))); } catch (e) {} }
@@ -332,12 +356,28 @@
   function quitar(k) { S.ext = S.ext.filter(function (x) { return x.k !== k; }); S.extPts = S.extPts.filter(function (p) { return p.mod !== k; }); delete MOD[k]; delete S.mod[k]; guardarCapas(); pintar(); }
   function dialogo() {
     var d = document.createElement('div'); d.className = 'pc-dlg';
-    d.innerHTML = '<div class="pc-box"><h3>Añadir una capa al visor</h3><p>Suba un archivo o pegue un enlace. Se dibuja sobre el mapa junto con los registros de campo.</p>' +
+    var cl = catLista(), temas = {}; cl.forEach(function (c) { (temas[c.theme || 'Otras'] = temas[c.theme || 'Otras'] || []).push(c); });
+    var ch = Object.keys(temas).sort().map(function (t) {
+      return '<div class="pc-tema">' + esc(t) + '</div>' + temas[t].map(function (c) {
+        var on = S.cat[c.id] && S.cat[c.id].on, op = S.cat[c.id] && S.cat[c.id].op != null ? S.cat[c.id].op : 0.7;
+        return '<div class="pc-cl"><label><input type="checkbox" data-cat="' + esc(c.id) + '"' + (on ? ' checked' : '') + '><span><b>' + esc(c.name) + '</b><small>' + esc((c.source || '') + (c.description ? ' · ' + c.description : '')) + '</small></span></label><input type="range" min="0.1" max="1" step="0.05" value="' + op + '" data-op="' + esc(c.id) + '" title="Transparencia"' + (on ? '' : ' disabled') + '></div>';
+      }).join('');
+    }).join('') || '<div class="pc-note">El catálogo del geoportal aún no está disponible. Abra primero la pestaña Territorio.</div>';
+    d.innerHTML = '<div class="pc-box pc-ancha"><h3>Añadir capas</h3><div class="pc-tabs"><button type="button" class="on" data-t="cat">Catálogo del geoportal</button><button type="button" data-t="mia">Mi archivo o enlace</button></div>' +
+      '<div data-p="cat"><p>Marque las capas del geoportal que quiera ver detrás de los registros de campo. Se guardan para la próxima vez.</p><div class="pc-cats">' + ch + '</div><div class="pc-acc"><button type="button" class="pc-go" data-r="listo">Listo</button></div></div><div data-p="mia" hidden></div></div>';
+    el.appendChild(d);
+    d.querySelectorAll('[data-t]').forEach(function (b) { b.onclick = function () { d.querySelectorAll('[data-t]').forEach(function (x) { x.classList.toggle('on', x === b); }); d.querySelector('[data-p=cat]').hidden = b.dataset.t !== 'cat'; d.querySelector('[data-p=mia]').hidden = b.dataset.t !== 'mia'; }; });
+    d.querySelectorAll('[data-cat]').forEach(function (i) { i.onchange = function () { var id = i.dataset.cat; S.cat[id] = S.cat[id] || {}; S.cat[id].on = i.checked; var r = d.querySelector('[data-op="' + id + '"]'); if (r) r.disabled = !i.checked; guardarCat(); catPoner(id); }; });
+    d.querySelectorAll('[data-op]').forEach(function (r) { r.oninput = function () { catSetOp(r.dataset.op, Number(r.value)); }; });
+    d.querySelector('[data-r=listo]').onclick = function () { d.remove(); };
+    propio(d.querySelector('[data-p=mia]'), d);
+  }
+  function propio(host, d) {
+    host.innerHTML = '<div class="pc-box-in"><p>Suba un archivo o pegue un enlace. Se dibuja sobre el mapa junto con los registros de campo.</p>' +
       '<label>Nombre de la capa<input data-r="n" placeholder="Ej.: Nacimientos de agua"></label><label>Color<input data-r="c" type="color" value="#9333ea"></label>' +
       '<label>Archivo <small>(GeoJSON o CSV con latitud y longitud)</small><input data-r="f" type="file" accept=".geojson,.json,.csv,.txt"></label>' +
       '<label>… o enlace <small>(GeoJSON, CSV o capa de ArcGIS REST: …/FeatureServer/0)</small><input data-r="u" placeholder="https://…"></label>' +
       '<div class="pc-err" data-r="e"></div><div class="pc-acc"><button type="button" class="pgi-btn" data-r="x">Cancelar</button><button type="button" class="pc-go" data-r="ok">Añadir capa</button></div></div>';
-    el.appendChild(d);
     d.querySelector('[data-r=x]').onclick = function () { d.remove(); };
     d.querySelector('[data-r=ok]').onclick = async function () {
       var b = this, e = d.querySelector('[data-r=e]'), nom = d.querySelector('[data-r=n]').value.trim(), col = d.querySelector('[data-r=c]').value, f = d.querySelector('[data-r=f]').files[0], u = d.querySelector('[data-r=u]').value.trim();
