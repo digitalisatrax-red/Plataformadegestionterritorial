@@ -1,0 +1,46 @@
+/* Plataforma de Gestión Territorial · tema general (estilo tablero tipo Tableau, fondo blanco) */
+:root{--canvas:#f3f4f6;--line:#e5e7eb;--soft-line:#eef0f2;--shadow:0 4px 14px rgba(0,0,0,.08)}
+body{font-family:Inter,"Segoe UI",system-ui,-apple-system,Arial,sans-serif;background:#f3f4f6}
+.geocaldas-shell{grid-template-rows:72px auto minmax(0,1fr) 44px;background:#f3f4f6}
+/* Encabezado: logo de la Gobernación + nombre + pestañas */
+.institutional-header{height:72px;padding:0 22px;gap:22px;border-bottom:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.brand-lockup{min-width:0;gap:16px}
+.corp-logo{width:auto;height:46px;max-width:230px;object-fit:contain}
+.product-name{border-left:1px solid #e5e7eb;padding-left:16px}
+.product-name strong{font-size:18px;font-weight:800;color:#111827;letter-spacing:-.01em}
+.product-name span{font-size:11.5px;color:#6b7280;margin-top:2px}
+.main-nav{margin-left:8px;gap:4px}
+.nav-item{font-size:13px;font-weight:700;color:#6b7280;border-radius:0;padding:0 14px;border-bottom:3px solid transparent;border-top:3px solid transparent}
+.nav-item:hover{color:#111827;background:#f9fafb}
+.nav-item.active{background:none;color:#0e5235;border-bottom-color:#18724a}
+/* Barra de indicadores (como la fila de KPIs de un tablero) */
+.notice-bar{height:auto;min-height:0;padding:10px 22px;background:#fff;border-bottom:1px solid #e5e7eb;color:#6b7280;font-size:11px;gap:16px;flex-wrap:wrap}
+.pgt-kpis{display:flex;gap:10px;flex-wrap:wrap;flex:1}
+.pgt-kpi{display:flex;flex-direction:column;justify-content:center;background:#fff;border:1px solid #e5e7eb;border-left:4px solid #18724a;border-radius:8px;padding:6px 14px;min-width:132px}
+.pgt-kpi b{font-size:22px;line-height:1.1;color:#111827;font-weight:800}
+.pgt-kpi span{font-size:11px;font-weight:700;color:#4b5563;margin-top:1px}
+.pgt-kpi.r{border-left-color:#dc2626}.pgt-kpi.r b{color:#b91c1c}.pgt-kpi.m{border-left-color:#7c3aed}.pgt-kpi.m b{color:#6d28d9}.pgt-kpi.a{border-left-color:#0ea5e9}
+.pgt-kpi.l{cursor:pointer}.pgt-kpi.l:hover{background:#f9fafb}
+.notice-bar>span,.notice-bar>svg{max-width:340px}
+/* Paneles como tarjetas */
+.workspace-grid{gap:10px;padding:10px}
+.workspace-grid>.left-workspace-panel,.workspace-grid>.right-workspace-panel,.workspace-grid>.map-stage{border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.workspace-grid>.map-stage{background:#e5e7eb}
+.panel-heading{background:#fff}
+.dashboard-page,.field-page{background:#f3f4f6}
+/* Pie: fuente de los datos */
+.institutional-footer{padding:0 22px;border-top:1px solid #e5e7eb;gap:20px}
+.pgt-fuente{display:flex;align-items:center;gap:10px;font-size:11.5px;color:#4b5563}
+.pgt-fuente b{color:#111827}.pgt-fuente a{color:#0e5235;font-weight:700;text-decoration:none}
+.institutional-footer img{height:30px;width:auto;max-width:150px;object-fit:contain}
+@media(max-width:920px){.pgt-kpi{min-width:110px}.corp-logo{height:36px;max-width:150px}.geocaldas-shell{grid-template-rows:none}}
+.brand-lockup{flex:0 1 auto;min-width:0}
+.product-name{min-width:0}.product-name strong{font-size:16px;white-space:nowrap}.product-name span{white-space:nowrap;font-size:11px}
+.main-nav{margin-left:auto}
+.header-actions{margin-left:0}
+.notice-bar>span,.notice-bar>svg{display:none}
+.notice-bar{padding:8px 22px}
+.pgt-kpis{flex-wrap:nowrap}
+.pgt-kpi{flex:1 1 0;min-width:0;padding:5px 12px}.pgt-kpi b{font-size:20px}.pgt-kpi span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:1180px){.pgt-kpis{flex-wrap:wrap}.pgt-kpi{flex:1 1 140px}.product-name span{display:none}}
+.pgt-res2 .r-root{max-width:none}.r-root{max-width:none!important}
