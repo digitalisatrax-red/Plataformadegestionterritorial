@@ -7,8 +7,9 @@
   'use strict';
   var IDS = ['caldas-municipios', 'caldas-veredas', 'rios-principales', 'drenajes-sencillos', 'red-vial', 'eep-sinap', 'eep-aica', 'cuencas', 'subcuencas'];
   var BASE_MUN = 'caldas-municipios', BASE_VER = 'caldas-veredas';
-  var S = { mun: '', ver: '', lista: null, veredas: null, res: null, cruce: null, busy: false, cancel: false, msg: '', terr: null, seq: 0 };
+  var S = { mun: '', ver: '', lista: null, veredas: null, res: null, cruce: null, busy: false, cancel: false, msg: '', terr: null, seq: 0, off: {}, visSig: '', map: null, mapEl: null, mapKey: '' };
   var turfP = null;
+  (function () { if (document.getElementById('pgt-res-x')) return; var st = document.createElement('style'); st.id = 'pgt-res-x'; st.textContent = '.r-chk{display:flex;flex-wrap:wrap;gap:8px 18px;margin:8px 0}.r-chk label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer}.r-chk i{width:10px;height:10px;border-radius:2px;display:inline-block}.r-chk em{color:#0b5cab;font-style:normal;font-size:11.5px}.r-capasel{margin-bottom:12px}'; document.head.appendChild(st); })();
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function nf(v, d) { return (v == null || !isFinite(v)) ? '—' : Number(v).toLocaleString('es-CO', { maximumFractionDigits: d == null ? 1 : d }); }
@@ -16,6 +17,20 @@
   function capas() { var all = window.__pgtCapas || []; return IDS.map(function (id) { return all.filter(function (c) { return c.id === id; })[0]; }).filter(Boolean); }
   function capa(id) { return capas().filter(function (c) { return c.id === id; })[0]; }
   function base(c) { return c.url + '/' + c.layerId; }
+  /* Capas que entran al análisis: las 7 de Ciudadanía + cualquier capa vectorial (ArcGIS) que esté encendida en Territorio. */
+  function visibles() { return window.__pgtVisibles || {}; }
+  function visSig() { return Object.keys(visibles()).sort().join(',') + '|' + (window.__pgtCapas || []).length; }
+  function medibles() {
+    var all = window.__pgtCapas || [], vis = visibles();
+    return all.filter(function (c) {
+      if (c.id === BASE_MUN || c.id === BASE_VER) return false;
+      if (c.kind === 'wms' || !c.url) return false;
+      return CRUCE_IDS.indexOf(c.id) !== -1 || (vis[c.id] != null);
+    }).sort(function (a, b) { return CRUCE_IDS.indexOf(a.id) === -1 ? 1 : CRUCE_IDS.indexOf(b.id) === -1 ? -1 : 0; });
+  }
+  function elegidas() { return medibles().filter(function (c) { return !S.off[c.id]; }); }
+  function wmsVisibles() { var vis = visibles(); return (window.__pgtCapas || []).filter(function (c) { return c.kind === 'wms' && vis[c.id] != null; }); }
+  function esExtra(c) { return CRUCE_IDS.indexOf(c.id) === -1; }
   function esPoli(c, meta) { return /pol/i.test(meta && meta.geom || ''); }
 
   function cargarTurf() {
@@ -96,40 +111,48 @@
   async function medir(c, terr) {
     var m = await meta(c), poli = esPoli(c, m), nom = await campoNombre(c);
     var feats = await traer(c, terr ? { rings: terr.rings, fields: nom ? [nom] : [], offset: 0.0002 } : { fields: nom ? [nom] : [], offset: 0.0008 });
-    var items = {}, total = 0, n = 0, aprox = false;
+    var items = {}, total = 0, n = 0, aprox = false, geo = [];
     for (var k = 0; k < feats.length; k++) {
       var f = feats[k], g = f.geometry; if (!g) continue;
-      var v = 0;
+      var v = 0, gj = null;
       if (poli && g.rings) {
-        if (terr) { var ft = aTurf(g.rings); if (ft) { try { var it = window.turf.intersect(terr.simple, ft); v = it ? window.turf.area(it) / 10000 : 0; } catch (e) { aprox = true; v = 0; } } }
+        if (terr) { var ft = aTurf(g.rings); if (ft) { try { var it = window.turf.intersect(terr.simple, ft); v = it ? window.turf.area(it) / 10000 : 0; if (it && v > 0) { try { it = window.turf.truncate(it, { precision: 5, mutate: true }); } catch (e3) {} gj = it.geometry; } } catch (e) { aprox = true; v = 0; } } }
         else v = haEsri(g.rings);
       } else if (g.paths) {
         if (terr) {
-          v = 0; var bb = terr.bb;
+          v = 0; var bb = terr.bb, runs = [];
           g.paths.forEach(function (p) {
+            var cur = [], flush = function () { if (cur.length >= 2) runs.push(cur); cur = []; };
             for (var i = 0; i < p.length - 1; i++) {
               var a = p[i], b = p[i + 1], d = kmSeg(a, b), nn = Math.max(1, Math.ceil(d / 0.05));
               for (var s = 0; s < nn; s++) {
-                var x = a[0] + (b[0] - a[0]) * (s + .5) / nn, y = a[1] + (b[1] - a[1]) * (s + .5) / nn;
-                if (x < bb[0] || x > bb[2] || y < bb[1] || y > bb[3]) continue;
-                if (window.turf.booleanPointInPolygon([x, y], terr.simple)) v += d / nn;
+                var x = a[0] + (b[0] - a[0]) * (s + .5) / nn, y = a[1] + (b[1] - a[1]) * (s + .5) / nn, dentro = false;
+                if (!(x < bb[0] || x > bb[2] || y < bb[1] || y > bb[3])) dentro = window.turf.booleanPointInPolygon([x, y], terr.simple);
+                if (dentro) {
+                  v += d / nn;
+                  if (!cur.length) cur.push([+(a[0] + (b[0] - a[0]) * s / nn).toFixed(5), +(a[1] + (b[1] - a[1]) * s / nn).toFixed(5)]);
+                  cur.push([+(a[0] + (b[0] - a[0]) * (s + 1) / nn).toFixed(5), +(a[1] + (b[1] - a[1]) * (s + 1) / nn).toFixed(5)]);
+                } else flush();
               }
             }
+            flush();
           });
+          if (runs.length) gj = { type: 'MultiLineString', coordinates: runs };
         } else v = kmEsri(g.paths);
-      } else if (g.x !== undefined) { v = 1; }
+      } else if (g.x !== undefined) { v = 1; if (terr) gj = { type: 'Point', coordinates: [+(+g.x).toFixed(5), +(+g.y).toFixed(5)] }; }
       if (terr && !(v > 0)) continue;
       n++; total += v;
       var nv = attr(f, nom), nombre = (nv != null && nv !== '') ? String(nv) : 'Sin nombre';
       items[nombre] = (items[nombre] || 0) + v;
+      if (terr && gj) geo.push({ type: 'Feature', properties: { capa: c.name, nombre: nombre, medida: +v.toFixed(3), unidad: poli ? 'ha' : (g.x !== undefined ? 'punto' : 'km'), territorio: terr.nombre }, geometry: gj });
       if (k % 40 === 39) await new Promise(function (r) { setTimeout(r, 0); });
     }
     var lista = Object.keys(items).map(function (k2) { return { n: k2, v: items[k2] }; }).sort(function (a, b) { return b.v - a.v; });
-    return { c: c, poli: poli, u: poli ? 'ha' : 'km', n: n, v: total, items: lista, aprox: aprox || feats.length >= 20000 };
+    return { c: c, poli: poli, u: poli ? 'ha' : 'km', n: n, v: total, items: lista, geo: geo, aprox: aprox || feats.length >= 20000 };
   }
   var CRUCE_IDS = ['rios-principales', 'drenajes-sencillos', 'red-vial', 'eep-sinap', 'eep-aica', 'cuencas', 'subcuencas'];
   async function analizar(terr, onP, mi) {
-    var out = [], cs = capas().filter(function (c) { return CRUCE_IDS.indexOf(c.id) !== -1; });
+    var out = [], cs = elegidas();
     for (var i = 0; i < cs.length; i++) {
       if (S.cancel || (mi && mi !== S.seq)) throw new Error('cancelado');
       if (onP) onP(cs[i].name, i, cs.length);
@@ -183,7 +206,7 @@
       if (mi !== S.seq) return; S.terr = terr;
       var rs = await analizar(terr.caldas ? null : terr, function (n, i, t) { if (mi === S.seq) { S.msg = 'Analizando ' + n + ' (' + (i + 1) + ' de ' + t + ')…'; pintar(root); } }, mi);
       if (mi !== S.seq) return;
-      S.res = rs; S.msg = '';
+      S.res = rs; S.msg = ''; S.mapKey = ''; S.mapTs = Date.now(); S.visSig = visSig();
     } catch (e) { if (mi !== S.seq) return; S.msg = e.message === 'cancelado' ? 'Cálculo cancelado.' : 'No se pudo completar: ' + e.message; }
     if (mi === S.seq) { S.busy = false; pintar(root); }
   }
@@ -230,6 +253,7 @@
       else if (ha) ex = nf(x.v / (ha / 100), 2) + ' km/km²';
       h += '<tr><td><i style="background:' + esc(x.c.color) + '"></i>' + esc(x.c.name) + '</td><td class="n">' + nf(x.n, 0) + '</td><td class="n">' + nf(x.v, 1) + ' ' + x.u + (x.aprox ? ' *' : '') + '</td><td>' + ex + '</td></tr>';
     });
+    wmsVisibles().forEach(function (c) { h += '<tr><td><i style="background:' + esc(c.color || '#64748b') + '"></i>' + esc(c.name) + ' <em>(WMS)</em></td><td colspan="3" class="r-nota">Capa de imagen encendida en el mapa: se incluye como referencia, no se mide.</td></tr>'; });
     return h + '</tbody></table>' + (ok.some(function (x) { return x.aprox; }) ? '<p class="r-nota">* Cifra aproximada: algunos elementos no pudieron recortarse o la capa superó el límite de 20.000 elementos consultados.</p>' : '');
   }
   function detalle() {
@@ -239,7 +263,7 @@
     }).join('');
   }
   function cruceHtml() {
-    var tipo = S.mun ? 'veredas' : 'municipios', Cs = capas().filter(function (c) { return CRUCE_IDS.indexOf(c.id) !== -1; });
+    var tipo = S.mun ? 'veredas' : 'municipios', Cs = elegidas();
     var h = '<div class="r-cruce"><div class="r-ctl2">';
     if (S.busy && S.cruce) h += '<button type="button" data-r="cancel">Detener</button>'; else h += '<button type="button" data-r="cruce"' + (S.busy || !S.terr ? ' disabled' : '') + '>Calcular cruce por ' + tipo + '</button>';
     h += '<span class="r-nota">Mide cada capa dentro de cada unidad; puede tardar varios minutos.</span></div>';
@@ -265,6 +289,63 @@
       (sub ? k('Subcuencas', nf(sub.n, 0), 'que tocan el territorio', '#0284c7') : '') + '</div>';
   }
 
+
+  /* ── Capas del reporte (encendidas en Territorio + WMS) ── */
+  function panelCapas() {
+    var ms = medibles(), w = wmsVisibles();
+    var h = '<section class="r-sec r-capasel"><div class="r-kick">Capas del reporte</div><h2>¿Qué capas entran en el análisis?</h2><div class="r-chk">';
+    ms.forEach(function (c) {
+      h += '<label><input type="checkbox" data-r="sel" data-id="' + esc(c.id) + '"' + (S.off[c.id] ? '' : ' checked') + '> <i style="background:' + esc(c.color || '#64748b') + '"></i>' + esc(c.name) + (esExtra(c) ? ' <em>(encendida en Territorio)</em>' : '') + '</label>';
+    });
+    h += '</div>';
+    if (w.length) h += '<p class="r-nota">Capas WMS encendidas (se muestran en el mapa y se listan en el informe, pero al ser imagen no se pueden medir): ' + w.map(function (c) { return '<b>' + esc(c.name) + '</b>'; }).join(', ') + '.</p>';
+    h += '<p class="r-nota">Para sumar otra capa, enciéndala en Territorio o conecte un servicio ArcGIS/WMS y vuelva aquí: aparece sola en esta lista. Luego pulse «Calcular».</p></section>';
+    return h;
+  }
+  function geoTodo() {
+    var fc = { type: 'FeatureCollection', features: [] };
+    if (S.terr && S.terr.full) fc.features.push({ type: 'Feature', properties: { capa: 'Territorio', nombre: S.terr.nombre, medida: +(S.terr.ha || 0).toFixed(2), unidad: 'ha' }, geometry: S.terr.full.geometry });
+    (S.res || []).forEach(function (x) { if (!x.error && x.geo) fc.features = fc.features.concat(x.geo); });
+    return fc;
+  }
+  function bajarGeo(fc, nombre) {
+    var b = new Blob([JSON.stringify(fc)], { type: 'application/geo+json' }), a = document.createElement('a');
+    a.href = URL.createObjectURL(b); a.download = nombre + '.geojson'; document.body.appendChild(a); a.click(); setTimeout(function () { a.remove(); URL.revokeObjectURL(a.href); }, 1500);
+  }
+  function slug(t) { return String(t || 'territorio').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w]+/g, '_'); }
+  function seccionMapa() {
+    if (!S.res || !S.terr) return '';
+    if (S.terr.caldas) return '<section class="r-sec r-mapsec"><div class="r-kick">Mapa</div><h2>Capas recortadas al territorio</h2><p class="r-nota">Elige un municipio o una vereda para ver en el mapa las capas recortadas y descargarlas en GeoJSON.</p></section>';
+    var con = S.res.filter(function (x) { return !x.error && x.geo && x.geo.length; });
+    return '<section class="r-sec r-mapsec"><div class="r-kick">Mapa</div><h2>Capas recortadas al territorio</h2><div id="r-map" style="height:540px;border:1px solid #e5e7eb;border-radius:10px;background:#eef2f7"></div>' +
+      '<div class="r-geo" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center"><button type="button" data-r="geo" style="border:0;background:#166534;color:#fff;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer">Descargar GeoJSON (todas las capas)</button>' +
+      con.map(function (x) { return '<button type="button" data-r="geo1" data-id="' + esc(x.c.id) + '" style="border:1px solid #166534;background:#fff;color:#166534;border-radius:8px;padding:6px 10px;font-weight:600;cursor:pointer">' + esc(x.c.name) + '</button>'; }).join('') + '</div>' +
+      '<div class="r-fuente">Fuente: servicios de CORPOCALDAS (y capas encendidas en Territorio), recortados al límite oficial de ' + esc(S.terr.nombre) + '. Coordenadas WGS84 (EPSG:4326).</div></section>';
+  }
+  function mapaRes(root) {
+    var el = root.querySelector('#r-map'); if (!el || !S.res || !S.terr || S.terr.caldas) return;
+    var L = window.L || window.__pgtL; if (!L) { el.innerHTML = '<p class="r-nota" style="padding:14px">No se pudo cargar el visor de mapa.</p>'; return; }
+    var key = S.mapKey || (S.mapKey = S.terr.nombre + '|' + S.mapTs);
+    if (S.map && S.mapEl && S.mapEl.__key === key) { el.replaceWith(S.mapEl); try { S.map.invalidateSize(); } catch (e) {} return; }
+    if (S.map) { try { S.map.remove(); } catch (e) {} S.map = null; }
+    var m = L.map(el, { preferCanvas: true }); S.map = m; S.mapEl = el; el.__key = key;
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Esri' }).addTo(m);
+    var ov = {}, tl = L.geoJSON(S.terr.full, { style: { color: '#111827', weight: 3, fill: false } }).addTo(m); ov['Límite: ' + S.terr.nombre] = tl;
+    S.res.forEach(function (x) {
+      if (x.error || !x.geo || !x.geo.length) return; var col = x.c.color || '#18724a';
+      var lyr = L.geoJSON({ type: 'FeatureCollection', features: x.geo }, {
+        style: function () { return { color: col, weight: x.poli ? 1.5 : 3, fillColor: col, fillOpacity: x.poli ? 0.3 : 0 }; },
+        pointToLayer: function (f, ll) { return L.circleMarker(ll, { radius: 5, color: '#fff', weight: 1, fillColor: col, fillOpacity: 0.9 }); },
+        onEachFeature: function (f, l) { var p = f.properties; l.bindPopup('<b>' + esc(p.capa) + '</b><br>' + esc(p.nombre) + '<br>' + nf(p.medida, 2) + ' ' + esc(p.unidad)); }
+      }).addTo(m);
+      ov[x.c.name] = lyr;
+    });
+    wmsVisibles().forEach(function (c) { try { ov[c.name + ' (WMS)'] = L.tileLayer.wms(c.url, { layers: c.wmsLayers || '0', format: 'image/png', transparent: true, opacity: 0.7 }).addTo(m); } catch (e) {} });
+    L.control.layers(null, ov, { collapsed: false }).addTo(m);
+    try { m.fitBounds(tl.getBounds(), { padding: [20, 20] }); } catch (e) { m.setView([5.28, -75.25], 9); }
+    setTimeout(function () { try { m.invalidateSize(); } catch (e) {} }, 150);
+  }
+
   function pintar(root) {
     var activo = document.activeElement && root.contains(document.activeElement) ? document.activeElement.getAttribute('data-r') : null;
     var munOpts = '<option value="">Todos los municipios</option>' + (S.lista || []).map(function (m) { return '<option' + (m === S.mun ? ' selected' : '') + '>' + esc(m) + '</option>'; }).join('');
@@ -276,19 +357,19 @@
       '<label>Municipio<select data-r="mun">' + munOpts + '</select></label>' +
       '<label>Vereda<select data-r="ver"' + (S.mun ? '' : ' disabled') + '>' + verOpts + '</select></label>' +
       '<button type="button" data-r="calc"' + (S.busy ? ' disabled' : '') + '>Calcular</button></div></header>';
-    var cuerpo;
+    var cuerpo, panel = panelCapas(); S.visSig = visSig();
     if (S.busy && !S.res) cuerpo = '<section class="r-vacio"><h2>' + esc(S.msg || 'Calculando…') + '</h2><p>Se están cruzando las capas con el territorio. Esto puede tardar de unos segundos a un par de minutos.</p><button type="button" data-r="cancel">Cancelar</button></section>';
     else if (!S.res) cuerpo = '<section class="r-vacio"><h2>' + (S.msg ? esc(S.msg) : 'Elige el territorio y pulsa «Calcular»') + '</h2><p>Los niveles están ligados: al elegir un municipio se habilitan sus veredas. Solo se evalúan las 9 capas de Ciudadanía.</p></section>';
     else {
-      cuerpo = (S.msg ? '<div class="r-aviso">' + esc(S.msg) + '</div>' : '') + kpis() +
+      cuerpo = (S.msg ? '<div class="r-aviso">' + esc(S.msg) + '</div>' : '') + kpis() + seccionMapa() +
         '<section class="r-sec"><div class="r-kick">Capas en el territorio</div><h2>Resumen por capa</h2>' + tablaCapas() + '<div class="r-fuente">Fuente: servicios ArcGIS REST de CORPOCALDAS (capas de Ciudadanía), consulta del ' + new Date().toLocaleDateString('es-CO') + '. Cálculo en el navegador sobre geometrías simplificadas (≈ 30 m); error esperado menor al 1 % en área.</div></section>' +
         '<section class="r-sec"><div class="r-kick">Detalle</div><h2>Por nombre dentro de cada capa</h2>' + detalle() + '</section>' +
         '<section class="r-sec"><div class="r-kick">Cruce ligado</div><h2>Cruce por ' + (S.terr && S.terr.caldas ? 'municipios' : S.mun && !S.ver ? 'veredas' : 'unidades') + '</h2>' + (S.ver ? '<p class="r-nota">Una vereda es el nivel más bajo; no tiene unidades por debajo.</p>' : cruceHtml()) + '</section>' +
         '<section class="r-sec"><p class="r-nota">Las medidas corresponden a la porción de cada capa dentro del territorio. Las líneas se miden por tramos dentro del límite; los polígonos se recortan al límite. Las capas de municipios y veredas definen los niveles y no se miden entre sí.</p></section>';
     }
-    root.innerHTML = cab + '<div class="r-body">' + cuerpo + '</div>' +
+    root.innerHTML = cab + '<div class="r-body">' + panel + cuerpo + '</div>' +
       (S.res ? '<div class="r-pie"><button type="button" data-r="aoi">Usar como área de interés en el mapa</button><button type="button" data-r="csv">Descargar CSV</button><button type="button" data-r="pdf">Descargar PDF</button></div>' : '');
-    enlazar(root);
+    enlazar(root); mapaRes(root);
     if (activo) { var el = root.querySelector('[data-r=' + activo + ']'); if (el && !el.disabled) try { el.focus(); } catch (e) {} }
   }
 
@@ -304,6 +385,9 @@
       if (!S.terr || S.terr.caldas) { alert('Elige un municipio o una vereda para enviarlo al mapa.'); return; }
       if (window.__pgtAoi) { try { window.__pgtAoi(S.terr.full, S.terr.nombre); S.msg = 'Área enviada al mapa de Territorio.'; pintar(root); } catch (e) { S.msg = 'No se pudo enviar el área: ' + e.message; pintar(root); } }
     };
+    root.querySelectorAll('[data-r=sel]').forEach(function (cb) { cb.onchange = function () { S.off[cb.getAttribute('data-id')] = !cb.checked; }; });
+    if (q('geo')) q('geo').onclick = function () { bajarGeo(geoTodo(), 'resultados_' + slug(S.terr.nombre)); };
+    root.querySelectorAll('[data-r=geo1]').forEach(function (b) { b.onclick = function () { var x = (S.res || []).filter(function (r) { return r.c.id === b.getAttribute('data-id'); })[0]; if (x) bajarGeo({ type: 'FeatureCollection', features: x.geo || [] }, slug(x.c.name) + '_' + slug(S.terr.nombre)); }; });
     if (q('csv')) q('csv').onclick = csv;
     if (q('pdf')) q('pdf').onclick = function () { pdf(root); };
   }
@@ -312,7 +396,7 @@
     var out = [['Territorio', 'Capa', 'Elementos', 'Medida', 'Unidad'].join(';')];
     (S.res || []).forEach(function (x) { if (!x.error) out.push([S.terr.nombre, x.c.name, x.n, String(x.v.toFixed(2)).replace('.', ','), x.u].map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(';')); });
     if (S.cruce && S.cruce.filas.length) {
-      var Cs = capas().filter(function (c) { return CRUCE_IDS.indexOf(c.id) !== -1; });
+      var Cs = elegidas();
       out.push(''); out.push([S.mun ? 'Vereda' : 'Municipio', 'Area_ha'].concat(Cs.map(function (c) { return c.name; })).join(';'));
       S.cruce.filas.forEach(function (f) { if (!f.error) out.push(['"' + f.etq + '"', String((f.ha || 0).toFixed(1)).replace('.', ',')].concat(Cs.map(function (c) { return f.v[c.id] == null ? '' : String(f.v[c.id].toFixed(2)).replace('.', ','); })).join(';')); });
     }
@@ -321,7 +405,7 @@
   }
   function pdf(root) {
     var f = document.createElement('iframe'); f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'; document.body.appendChild(f);
-    var clon = root.cloneNode(true); ['.r-ctl', '.r-pie', '.r-ctl2'].forEach(function (s) { clon.querySelectorAll(s).forEach(function (n) { n.remove(); }); });
+    var clon = root.cloneNode(true); ['.r-ctl', '.r-pie', '.r-ctl2', '.r-mapsec', '.r-capasel'].forEach(function (s) { clon.querySelectorAll(s).forEach(function (n) { n.remove(); }); });
     var css = new URL('pgt-resultados.css', location.href).href, d = f.contentWindow.document;
     d.open(); d.write('<!doctype html><html><head><meta charset="utf-8"><title>Resultados territoriales</title><link rel="stylesheet" href="' + css + '"><style>body{background:#fff;margin:0}.r-root{max-width:none}.r-det{open:true}@page{margin:12mm}</style></head><body>' + clon.outerHTML.replace(/<details/g, '<details open') + '</body></html>'); d.close();
     var go = function () { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) {} setTimeout(function () { f.remove(); }, 4000); };
@@ -338,6 +422,7 @@
       root = document.createElement('div'); root.className = 'r-root'; main.appendChild(root); main.classList.add('pgt-res2');
       arrancado = false;
     }
+    if (arrancado && !S.busy && root && visSig() !== S.visSig) { S.visSig = visSig(); pintar(root); }
     if (arrancado || pend) return; pend = true;
     setTimeout(function () {
       pend = false; arrancado = true;
