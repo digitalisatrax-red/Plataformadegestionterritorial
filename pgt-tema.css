@@ -62,3 +62,5 @@ body{font-family:Inter,"Segoe UI",system-ui,-apple-system,Arial,sans-serif;backg
 .field-page section button{box-sizing:border-box;max-width:100%}
 .field-page{padding-top:18px}
 @media(max-width:1250px){.product-name{display:none}}
+
+button[title="Directorio REST"]{display:none!important}

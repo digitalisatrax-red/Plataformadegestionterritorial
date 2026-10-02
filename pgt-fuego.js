@@ -38,7 +38,7 @@
     } catch (e) { E.err = e.message; }
     try {
       var fr = await fetch('data/firms_caldas.json?t=' + Math.floor(Date.now() / 600000), { cache: 'no-cache' });
-      if (fr.ok) { var fj = await fr.json(); var lim = Date.now() - (E.dias + 3) * 864e5; E.firms = (fj.puntos || []).filter(function (p) { return new Date(p.fecha_hora).getTime() >= lim; }); E.actualizado = fj.actualizado || ''; }
+      if (fr.ok) { var fj = await fr.json(); var lim = Date.now() - (E.dias + 3) * 864e5; E.firms = (fj.puntos || []).filter(function (p) { return new Date(p.fecha_hora).getTime() >= lim; }); E.actualizado = fj.actualizado || ''; var ts = (fj.puntos || []).map(function (p) { return new Date(p.fecha_hora).getTime(); }).filter(isFinite); E.desde = ts.length ? Math.min.apply(null, ts) : null; }
     } catch (e) {}
   }
 
@@ -345,6 +345,7 @@
     Object.keys(E.fallas || {}).forEach(function (k) { h += '<div class="fg-aviso fg-av-' + k + '">La capa «' + esc(E.fallas[k]) + '» no respondió desde este navegador.</div>'; });
     if (E.err) h += '<div class="fg-aviso">' + esc(E.err) + '</div>';
     if (!sesion()) h += '<div class="fg-aviso">Sin sesión: solo se muestran reportes validados. Planeación puede ver y validar todos.</div>';
+    if (E.desde && E.dias * 864e5 > Date.now() - E.desde + 864e5) h += '<div class="fg-aviso">El historial satelital disponible empieza el ' + new Date(E.desde).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' }) + ': NASA solo publica los últimos 7 días y aquí se acumulan cada 3 horas. Por eso «' + E.dias + ' días» aún muestra menos de ese periodo.</div>';
     if (E.vista === 'alertas') h += vistaAlertas(D);
     else if (E.vista === 'analisis') h += vistaAnalisis(D);
     else h += vistaProtocolo();
