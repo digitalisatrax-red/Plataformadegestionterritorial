@@ -40,7 +40,7 @@
     if (S.busy || !sesion()) return; S.busy = true;
     try {
       var a = await Promise.all([q('reportes_incendio', 'fecha_hora', 500), q('alertas', 'created_at', 300), q('mensajes', 'created_at', 800), q('posiciones_guardabosque', 'updated_at', 100), q('novedades_guardabosque', 'created_at', 100)]);
-      S.rep = a[0]; S.al = a[1]; S.msg = a[2].slice().reverse(); S.pos = a[3]; S.nov = a[4]; try { S.per = (await q('perfiles', 'nombre', 300)).filter(function (x) { return x.rol !== 'ciudadano' && (x.user_id || x.id); }); } catch (e) { S.per = S.per || []; } S.ok = true; S.err = ''; S.t = Date.now();
+      var prev = S.ok ? snap() : null; S.rep = a[0]; S.al = a[1]; S.msg = a[2].slice().reverse(); S.pos = a[3]; S.nov = a[4]; try { S.per = (await q('perfiles', 'nombre', 300)).filter(function (x) { return x.rol !== 'ciudadano' && (x.user_id || x.id); }); } catch (e) { S.per = S.per || []; } S.ok = true; S.err = ''; S.t = Date.now(); try { detectar(prev); } catch (e2) {}
     } catch (e) { S.err = e.message; }
     S.busy = false; pintar();
   }
@@ -67,10 +67,52 @@
       var v = b.dataset.v === 'vivo'; vivo.style.display = v ? '' : 'none'; cont.style.display = v ? 'none' : 'flex';
       if (!v) setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 60); else if (S.mapa) setTimeout(function () { S.mapa.invalidateSize(); }, 60);
     };
-    tabs.querySelector('[data-r=ref]').onclick = function () { cargar(); };
+    tabs.querySelector('[data-r=ref]').onclick = function () { cargar(); }; sonidoBtn(tabs);
     clearInterval(S.tim); S.tim = setInterval(function () { if (!document.body.contains(root)) { clearInterval(S.tim); S.mapa = null; S.caps = null; el = null; return; } if (!document.hidden) cargar(); }, 8000);
     pintar(); cargar();
   }
+
+  /* ── Alarma en vivo: se enciende cuando entra una alerta, alguien la toma, llega un reporte, SOS o mensaje ── */
+  var EV = { sound: false, tt: null, orig: document.title, ctx: null, list: [], go: 'res' };
+  try { EV.sound = localStorage.getItem('pgt.snd') === '1'; } catch (e) {}
+  function snap() { var o = { al: {}, rep: {}, msg: {}, nov: {} }; S.al.forEach(function (a) { o.al[a.id] = a.estado + '|' + (a.asignado_a || ''); }); S.rep.forEach(function (r) { o.rep[r.id] = 1; }); S.msg.forEach(function (m) { o.msg[m.id] = 1; }); S.nov.forEach(function (n) { o.nov[n.id] = 1; }); return o; }
+  function lug(r) { return [r.vereda, r.municipio].filter(Boolean).join(' · ') || 'sin ubicación'; }
+  function beep(n, hz) { if (!EV.sound) return; try { EV.ctx = EV.ctx || new (window.AudioContext || window.webkitAudioContext)(); for (var i = 0; i < n; i++) { var o = EV.ctx.createOscillator(), g = EV.ctx.createGain(); o.type = 'square'; o.frequency.value = (hz || 880) + (i % 2) * 220; g.gain.value = 0.12; o.connect(g); g.connect(EV.ctx.destination); var t = EV.ctx.currentTime + i * 0.28; o.start(t); o.stop(t + 0.2); } } catch (e) {} }
+  function sonidoBtn(tabs) {
+    var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-r', 'snd'); b.textContent = EV.sound ? '🔔 Sonido activo' : '🔕 Activar sonido';
+    b.onclick = function () { EV.sound = !EV.sound; try { localStorage.setItem('pgt.snd', EV.sound ? '1' : '0'); } catch (e) {} if (EV.sound) { beep(2); if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } b.textContent = EV.sound ? '🔔 Sonido activo' : '🔕 Activar sonido'; };
+    tabs.insertBefore(b, tabs.querySelector('[data-r=ref]'));
+  }
+  function detectar(p) {
+    if (!p) return; var me = uid(), ev = [];
+    S.al.forEach(function (a) {
+      if (!(a.id in p.al)) { if (a.estado === 'nueva') ev.push({ t: 'ALERTA ENTRANTE', d: a.titulo + (a.municipio ? ' · ' + a.municipio : ''), go: 'al', c: '#c62828' }); }
+      else if (p.al[a.id] !== a.estado + '|' + (a.asignado_a || '')) {
+        if (a.estado === 'asignada' || a.estado === 'en_camino') ev.push({ t: a.estado === 'en_camino' ? 'Alerta: va en camino' : 'Alerta tomada', d: (a.asignado_nombre || 'Alguien') + ' · ' + a.titulo, go: 'al', c: '#d9731a' });
+        else if (a.estado === 'verificada') ev.push({ t: 'Alerta verificada', d: a.titulo, go: 'al', c: '#3f8a3a' });
+      }
+    });
+    S.rep.forEach(function (r) { if (!(r.id in p.rep)) ev.push({ t: 'NUEVO REPORTE DE INCENDIO', d: lug(r), go: 'rep', c: '#c62828' }); });
+    S.msg.forEach(function (m) { if (!(m.id in p.msg) && m.autor_id !== me) ev.push(m.tipo === 'sos' ? { t: 'SOS', d: (m.autor_nombre || '') + ': ' + (m.texto || 'pide ayuda'), go: 'chat', c: '#c62828' } : { t: 'Mensaje nuevo', d: (m.autor_nombre || '') + ': ' + (m.texto || ''), go: 'chat', c: '#0b5cab' }); });
+    S.nov.forEach(function (n) { if (!(n.id in p.nov)) ev.push({ t: 'Novedad de ronda', d: (n.autor_nombre || '') + ' · ' + (n.tipo || ''), go: 'nov', c: '#0b5cab' }); });
+    if (ev.length) alarma(ev);
+  }
+  function alarma(ev) {
+    var top = ev.filter(function (e) { return e.c === '#c62828'; })[0] || ev.filter(function (e) { return e.c === '#d9731a'; })[0] || ev[0], mas = ev.length > 1 ? ' (+' + (ev.length - 1) + ' más)' : '';
+    var b = document.getElementById('pv-alarm');
+    if (!b) { b = document.createElement('div'); b.id = 'pv-alarm'; b.setAttribute('role', 'alert'); b.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);width:min(680px,94%);z-index:99999;display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:10px;color:#fff;box-shadow:0 6px 24px rgba(0,0,0,.35);font:14px system-ui,sans-serif'; document.body.appendChild(b); }
+    if (!document.getElementById('pv-alarm-css')) { var st = document.createElement('style'); st.id = 'pv-alarm-css'; st.textContent = '@keyframes pvfl{from{box-shadow:0 0 0 0 rgba(198,40,40,.6),0 6px 24px rgba(0,0,0,.35)}to{box-shadow:0 0 0 16px rgba(198,40,40,0),0 6px 24px rgba(0,0,0,.35)}}'; document.head.appendChild(st); }
+    b.style.background = top.c; b.style.display = 'flex'; b.style.animation = top.c === '#c62828' ? 'pvfl 1s infinite alternate' : 'none'; EV.go = top.go;
+    b.innerHTML = '<div style="flex:1"><b style="display:block;font-size:15px">' + esc(top.t + mas) + '</b><span>' + esc(top.d) + '</span></div><button type="button" id="pv-al-go" style="border:0;border-radius:8px;background:#fff;color:#222;font-weight:700;padding:7px 14px;cursor:pointer">Ver</button><button type="button" id="pv-al-x" aria-label="Cerrar" style="border:0;background:none;color:#fff;font-size:22px;cursor:pointer">×</button>';
+    b.querySelector('#pv-al-x').onclick = parar;
+    b.querySelector('#pv-al-go').onclick = function () { parar(); var bt = S.root && S.root.querySelector('.pv-tabs [data-v=vivo]'); if (bt) bt.click(); S.tab = EV.go; S.mapa = null; S.fi = ''; pintar(); };
+    if (top.c === '#c62828') beep(4); else if (top.c === '#d9731a') beep(2, 660); else if (top.c === '#0b5cab') beep(1, 600);
+    if (top.c !== '#3f8a3a') { clearInterval(EV.tt); var on = 0; EV.tt = setInterval(function () { document.title = on++ % 2 ? EV.orig : '🔴 ' + top.t; }, 900); }
+    if ('Notification' in window && Notification.permission === 'granted' && document.hidden) { try { new Notification(top.t, { body: top.d }); } catch (e) {} }
+    if (top.c !== '#c62828') setTimeout(function () { if (b.firstChild && b.firstChild.firstChild && b.firstChild.firstChild.textContent.indexOf(top.t) === 0) parar(); }, 12000);
+  }
+  function parar() { var b = document.getElementById('pv-alarm'); if (b) b.style.display = 'none'; clearInterval(EV.tt); document.title = EV.orig; }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) { clearInterval(EV.tt); document.title = EV.orig; } });
 
   function cn(c) { if (c === 'general') return 'General del equipo'; var r = S.rep.filter(function (x) { return 'inc:' + x.id === c; })[0]; return r ? 'Incendio · ' + [r.vereda, r.municipio].filter(Boolean).join(' · ') : c; }
   function firma() { return S.tab + '|' + S.canal + '|' + S.err + '|' + JSON.stringify([S.rep.map(function (r) { return [r.id, r.estado, r.validado, r.rechazado]; }), S.al.map(function (a) { return [a.id, a.estado, a.asignado_nombre]; }), S.msg.map(function (m) { return m.id; }), S.pos.map(function (p) { return [p.user_id, p.updated_at]; }), S.nov.length]); }
