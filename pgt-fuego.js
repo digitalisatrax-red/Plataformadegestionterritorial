@@ -7,15 +7,14 @@
 (function () {
   var CFG = window.PGT_CONFIG || {};
   var SB = String(CFG.supabaseUrl || '').trim().replace(/\/+$/, '');
-  var IDEAM = 'https://visualizador.ideam.gov.co/gisserver/rest/services/StoryMaps_IDA/Alertas_ICV/MapServer';
+  var IDEAM = 'https://visualizador.ideam.gov.co/gisserver/rest/services/StoryMaps_IDA/Alertas_ICV/MapServer/2';
   function urlCapa(id) { var l = (window.__pgtCapas || []).filter(function (c) { return c.id === id; })[0]; return l ? { url: l.url, id: l.layerId, name: l.name } : null; }
   var DIN = {
-    ideam: { op: .65, nom: 'Amenaza IDEAM', get: function () { return { url: IDEAM, id: 3 }; } },
     sinap: { op: .6, nom: 'Áreas SINAP', get: function () { return urlCapa('eep-sinap'); } },
     aica: { op: .6, nom: 'AICA', get: function () { return urlCapa('eep-aica'); } },
     ver: { op: .85, nom: 'Veredas', get: function () { return urlCapa('caldas-veredas'); } }
   };
-  var E = { firms: [], actualizado: '', tab: 'mapa', dias: 7, radio: 1, horas: 48, solo: 'todos', rep: [], det: [], csv: [], err: '', mapa: null, capas: {}, sel: null, sw: { mun: true, ideam: false, sinap: false, aica: false, ver: false, lug: false }, fondo: 'satellite', hist: undefined, tim: null, mun: '', ver: '', vAttrs: null, verGeo: {}, vista: 'alertas', nivel: 'todos' };
+  var E = { firms: [], actualizado: '', tab: 'mapa', dias: 7, radio: 1, horas: 48, solo: 'todos', rep: [], det: [], csv: [], err: '', mapa: null, capas: {}, sel: null, sw: { mun: true, mb: false, ideam: false, sinap: false, aica: false, ver: false, lug: false }, fondo: 'satellite', hist: undefined, tim: null, mun: '', ver: '', vAttrs: null, verGeo: {}, vista: 'alertas', nivel: 'todos' };
   var el = null;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -101,16 +100,18 @@
         '<div class="fg-cuerpo"><div class="fg-mapa"><div data-r="map"></div>' +
           '<details class="fg-capas"><summary>Capas y fondo</summary><div class="fg-capas-p">' +
             '<label>Fondo<select data-k="fondo"><option value="satellite">Satélite</option><option value="osm">Calles</option><option value="light">Claro</option><option value="topographic">Topográfico</option></select></label>' +
-            '<label class="fg-chk"><input type="checkbox" data-k="sw:lug"> Nombres de lugares</label><label class="fg-chk"><input type="checkbox" data-k="sw:mun"> Municipios</label><label class="fg-chk"><input type="checkbox" data-k="sw:ver"> Veredas</label><label class="fg-chk"><input type="checkbox" data-k="sw:sinap"> Áreas SINAP</label><label class="fg-chk"><input type="checkbox" data-k="sw:aica"> AICA</label><label class="fg-chk"><input type="checkbox" data-k="sw:ideam"> Amenaza IDEAM</label>' +
+            '<label class="fg-chk"><input type="checkbox" data-k="sw:lug"> Nombres de lugares</label><label class="fg-chk"><input type="checkbox" data-k="sw:mun"> Municipios</label><label class="fg-chk"><input type="checkbox" data-k="sw:ver"> Veredas</label><label class="fg-chk"><input type="checkbox" data-k="sw:sinap"> Áreas SINAP</label><label class="fg-chk"><input type="checkbox" data-k="sw:aica"> AICA</label><label class="fg-chk"><input type="checkbox" data-k="sw:ideam"> Alerta IDEAM por municipio</label><div class="fg-sm" data-r="ideamr" style="margin:-2px 0 4px 22px"></div><label class="fg-chk"><input type="checkbox" data-k="sw:mb"> Área quemada MapBiomas</label><div class="fg-mbsel" style="margin:0 0 4px 22px"><select data-k="mbanio"><option value="freq">Frecuencia 2000–2025</option></select></div>' +
           '</div></details>' +
           '<div class="fg-leyenda"><div><i style="background:#dc2626;border-radius:50%"></i>Reporte activo</div><div><i style="background:#f59e0b;border-radius:50%"></i>Controlado</div><div><i style="background:#6b7280;border-radius:50%"></i>Extinguido</div><div><i style="background:#7c3aed;transform:rotate(45deg)"></i>Punto de calor ≤ 24 h</div><div><i style="background:#c4b5fd;transform:rotate(45deg)"></i>Punto de calor anterior</div></div></div>' +
           '<div class="fg-linea" data-r="linea"></div><div class="fg-lado-w"><div class="fg-stabs"><button data-vs="alertas">Alertas</button><button data-vs="analisis">Análisis</button><button data-vs="protocolo">Protocolo</button></div><div class="fg-lado" data-r="lado"></div></div>' +
         '</div></div>';
+      var sa = c.querySelector('[data-k=mbanio]'); for (var ya = 2025; ya >= 2000; ya--) sa.insertAdjacentHTML('beforeend', '<option value="' + ya + '">' + ya + '</option>'); sa.value = E.mbAnio || 'freq';
       c.querySelector('[data-k=fondo]').value = E.fondo; Object.keys(E.sw).forEach(function (k) { c.querySelector('[data-k="sw:' + k + '"]').checked = E.sw[k]; });
       c.querySelectorAll('[data-k]').forEach(function (i) {
         i.onchange = function () {
           var k = i.dataset.k;
-          if (k.indexOf('sw:') === 0) { var kk = k.slice(3); E.sw[kk] = i.checked; if (kk === 'mun') munCapa(); else if (kk === 'lug') lugares(); else din(kk); return; }
+          if (k.indexOf('sw:') === 0) { var kk = k.slice(3); E.sw[kk] = i.checked; if (kk === 'mun') munCapa(); else if (kk === 'lug') lugares(); else if (kk === 'ideam') ideamCapa(); else if (kk === 'mb') mbCapa(); else din(kk); return; }
+          if (k === 'mbanio') { E.mbAnio = i.value; mbCapa(); return; }
           if (k === 'fondo') { E.fondo = i.value; fondo(); return; }
           if (k === 'mun') { E.mun = i.value; E.ver = ''; cargaTerr(); pintarDatos(); return; }
           if (k === 'ver') { E.ver = i.value; pintarDatos(); return; }
@@ -162,7 +163,7 @@
     E.mapa = L.map(cont, { zoomControl: true }).setView([5.28, -75.3], 9); medirZoom();
     fondo();
     E.capas.rep = L.layerGroup().addTo(E.mapa); E.capas.det = L.layerGroup().addTo(E.mapa);
-    munCapa(); Object.keys(DIN).forEach(din);
+    munCapa(); Object.keys(DIN).forEach(din); ideamCapa(); mbCapa();
     [100, 400, 1200].forEach(function (t) { setTimeout(function () { if (E.mapa) E.mapa.invalidateSize(); }, t); });
   }
   /* Contorno de los municipios de Caldas (CORPOCALDAS) */
@@ -244,6 +245,49 @@
       munGeo.forEach(function (f) { if (!f.geometry || !f.geometry.rings) return; L.polygon(f.geometry.rings.map(function (rg) { return rg.map(function (p) { return [p[1], p[0]]; }); }), { color: '#fde047', weight: 1.6, fill: true, fillOpacity: 0, interactive: true }).bindTooltip(String(f.attributes.MpNombre || ''), { sticky: true }).addTo(g); });
       E.capas.mun = g.addTo(E.mapa);
     } catch (e) { fallo('mun', 'Municipios'); }
+  }
+
+  /* IDEAM: alerta por probabilidad de incendios de la cobertura vegetal, por municipio (semáforo) */
+  var NIVI = [['Condición normal', '#22c55e', .12], ['Alerta amarilla', '#facc15', .55], ['Alerta naranja', '#f97316', .6], ['Alerta roja', '#dc2626', .65]];
+  async function ideamDatos() {
+    if (E.ideam !== undefined && Date.now() - (E.ideamT || 0) < 6e5) return E.ideam;
+    try {
+      var r = await fetch(IDEAM + '/query?where=' + encodeURIComponent('DPTO_CCDGO=17') + '&outFields=MPIO_CNMBR,PROBABILID&returnGeometry=false&f=json');
+      var j = await r.json(); if (!j.features || !j.features.length) throw new Error('vacío');
+      E.ideam = {}; j.features.forEach(function (f) { E.ideam[norm(f.attributes.MPIO_CNMBR)] = Number(f.attributes.PROBABILID) || 0; }); E.ideamT = Date.now();
+    } catch (e) { E.ideam = null; }
+    return E.ideam;
+  }
+  async function ideamCapa() {
+    var L = window.__pgtL; if (!E.mapa || !L) return;
+    if (E.capas.ideam) { E.mapa.removeLayer(E.capas.ideam); E.capas.ideam = null; }
+    var nota = el && el.querySelector('[data-r=ideamr]'); if (nota) nota.textContent = '';
+    if (!E.sw.ideam) return;
+    if (nota) nota.textContent = 'Consultando IDEAM…';
+    var d = await ideamDatos(), ok = await ensureMun();
+    if (!E.mapa || !E.sw.ideam) return;
+    if (!d || !ok) { if (nota) nota.textContent = ''; fallo('ideam', 'Alerta IDEAM'); return; }
+    var av = el && el.querySelector('.fg-av-ideam'); if (av) av.remove();
+    var g = L.layerGroup(), cnt = [0, 0, 0, 0];
+    munGeo.forEach(function (f) {
+      if (!f.geometry || !f.geometry.rings) return;
+      var nm = String(f.attributes.MpNombre || ''), n = d[norm(nm)] || 0, c = NIVI[n] || NIVI[0]; cnt[n] = (cnt[n] || 0) + 1;
+      L.polygon(f.geometry.rings.map(function (rg) { return rg.map(function (p) { return [p[1], p[0]]; }); }), { color: c[1], weight: 1, fill: true, fillColor: c[1], fillOpacity: c[2], interactive: true }).bindTooltip(tit(nm) + ' · ' + c[0] + ' (IDEAM)', { sticky: true }).addTo(g);
+    });
+    E.capas.ideam = g.addTo(E.mapa); if (E.capas.mun) E.capas.mun.bringToFront && E.capas.mun.eachLayer(function (l) { l.bringToFront(); });
+    if (nota) nota.innerHTML = 'IDEAM (semanal): ' + (cnt[1] + cnt[2] + cnt[3] ? [3, 2, 1].filter(function (n) { return cnt[n]; }).map(function (n) { return cnt[n] + ' en ' + NIVI[n][0].toLowerCase(); }).join(', ') : 'los 27 municipios en condición normal') + '.';
+  }
+  /* MapBiomas Fuego superpuesto en el mapa de alertas (solo Caldas) */
+  async function mbCapa() {
+    var L = window.__pgtL, m = E.mapa; if (!m || !L) return;
+    if (E.capas.mb) { m.removeLayer(E.capas.mb); E.capas.mb = null; }
+    if (!E.sw.mb) return;
+    if (!E.mbMeta) { try { E.mbMeta = await (await fetch('data/mapbiomas/meta.json')).json(); } catch (e) { E.mbMeta = null; } }
+    if (!E.mapa || !E.sw.mb) return;
+    if (!E.mbMeta) { fallo('mb', 'MapBiomas Fuego'); return; }
+    if (!m.getPane('fgimg')) m.createPane('fgimg').style.zIndex = 350;
+    var a = E.mbAnio || 'freq';
+    E.capas.mb = L.imageOverlay('data/mapbiomas/' + (a === 'freq' ? 'fuego_frecuencia' : 'fuego_' + a) + '.png', E.mbMeta.bounds, { opacity: .9, pane: 'fgimg', interactive: false }).addTo(m);
   }
   /* Capas dinámicas (imagen exportada del servicio ArcGIS para la vista actual) */
   function fallo(k, nom) { E.fallas = E.fallas || {}; E.fallas[k] = nom; var l = el && el.querySelector('[data-r=lado]'); if (l && !l.querySelector('.fg-av-' + k)) l.insertAdjacentHTML('afterbegin', '<div class="fg-aviso fg-av-' + k + '">La capa «' + nom + '» no respondió desde este navegador.</div>'); }
