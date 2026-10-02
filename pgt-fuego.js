@@ -543,7 +543,7 @@
       leg.innerHTML = fr ? '<span style="color:#facc15">■</span> 1 vez &nbsp;<span style="color:#f97316">■</span> 2–3 veces &nbsp;<span style="color:#dc2626">■</span> 4–6 veces &nbsp;<span style="color:#7f1d1d">■</span> 7 o más. ' : '<span style="color:#dc2626">■</span> Área quemada en ' + sl.value + '. ';
       leg.innerHTML += 'Fuente: MapBiomas Fuego Colombia, Colección 1 (30 m); recorte a los municipios de Caldas.';
     }
-    sel.onchange = pinta; sl.oninput = pinta; pinta();
+    sel.value = 'freq'; sel.onchange = pinta; sl.oninput = pinta; pinta();
     m.fitBounds(bounds);
     [100, 400, 1200].forEach(function (t) { setTimeout(function () { m.invalidateSize(); }, t); });
     try {
