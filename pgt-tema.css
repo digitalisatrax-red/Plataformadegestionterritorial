@@ -72,3 +72,5 @@ button[title="Directorio REST"]{display:none!important}
 .pgt-campo-dl b{display:block;margin-bottom:4px;color:#0f5132}
 .pgt-campo-dl a{display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border-radius:8px;background:#0f5132;color:#fff!important;font-weight:700;text-decoration:none;font-size:12.5px}
 .pgt-campo-dl a.sec{background:#fff;color:#0f5132!important;border:1px solid #0f5132}
+
+.pgt-ayuda{margin:6px 0 10px;font-size:12px;line-height:1.5;color:#475569}

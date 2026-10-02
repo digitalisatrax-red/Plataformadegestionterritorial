@@ -21,6 +21,16 @@
       d2.innerHTML = '<b>Proyecto de campo listo · 3 módulos</b>1 · Ambiental, 2 · Social y 3 · Alertas de incendio, con formularios completos (municipio y vereda se llenan solos, foto, GPS). Descargue los dos archivos juntos, en la misma carpeta, y ábralos en QGIS o súbalos a su proyecto de QFieldCloud.<br><a href="data/qfield/Campo_Caldas.qgz" download>Campo_Caldas.qgz</a><a href="data/qfield/campo_caldas.gpkg" download class="sec">campo_caldas.gpkg</a>';
       mb.parentNode.insertBefore(d2, mb);
     }
+    var tin = document.querySelector('input[placeholder="Token de QFieldCloud"]');
+    if (tin && !tin.dataset.pgt) {
+      tin.dataset.pgt = '1'; tin.placeholder = 'usuario:contraseña (o token de API)'; tin.autocomplete = 'off';
+      var lb = tin.closest('label'); if (lb) { var tx = [].slice.call(lb.childNodes).filter(function (n) { return n.nodeType === 3 || (n.tagName === 'SPAN'); })[0]; if (tx) tx.textContent = 'Usuario y contraseña de QFieldCloud'; }
+      var ayuda = document.createElement('div'); ayuda.className = 'pgt-ayuda';
+      ayuda.innerHTML = 'Escriba <b>su_usuario:su_contraseña</b> de app.qfield.cloud, separados por dos puntos (ejemplo del formato: <i>digitalis:miClave</i>). Se usa solo para esta consulta y no se guarda. Su proyecto: <b>Campo_Caldas</b>.';
+      (lb || tin).insertAdjacentElement('afterend', ayuda);
+      var pin = document.querySelector('input[placeholder^="xxxxxxxx-xxxx"]');
+      if (pin && !pin.value) { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(pin, '324901f0-6568-4d28-ad00-875afeae5781'); pin.dispatchEvent(new Event('input', { bubbles: true })); }
+    }
     document.querySelectorAll('.eyebrow').forEach(function (e) { if (/capas de corpocaldas/i.test(e.textContent)) e.style.display = 'none'; });
   }
   var ultAviso = null, tAviso = null;
