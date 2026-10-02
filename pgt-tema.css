@@ -52,6 +52,9 @@ body{font-family:Inter,"Segoe UI",system-ui,-apple-system,Arial,sans-serif;backg
 /* Sin barra de indicadores ni avisos: el mapa gana espacio. Los indicadores de incendios viven en «Alerta temprana» (Planeación). */
 .geocaldas-shell{grid-template-rows:72px minmax(0,1fr) 44px}
 .notice-bar{display:none!important}
+.notice-bar.pgt-show{display:flex!important;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:10px;position:fixed;top:86px;left:50%;transform:translateX(-50%);z-index:100000;max-width:min(680px,92vw);padding:12px 18px;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.18);font-size:13.5px;font-weight:600;height:auto}
+.notice-bar.pgt-show span{white-space:normal;overflow:visible;max-width:none;display:inline}
+.notice-bar.pgt-show svg{display:block;max-width:none}
 .service-bridge{display:none!important}
 .brand-lockup{flex:0 0 auto;overflow:visible}
 .product-name strong{white-space:normal;overflow:visible;font-size:15px;line-height:1.15;max-width:170px}
@@ -64,3 +67,8 @@ body{font-family:Inter,"Segoe UI",system-ui,-apple-system,Arial,sans-serif;backg
 @media(max-width:1250px){.product-name{display:none}}
 
 button[title="Directorio REST"]{display:none!important}
+
+.pgt-campo-dl{margin:10px 0;padding:12px 14px;border:1px solid #cfe3d8;background:#f1f8f4;border-radius:12px;font-size:13px;line-height:1.5}
+.pgt-campo-dl b{display:block;margin-bottom:4px;color:#0f5132}
+.pgt-campo-dl a{display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border-radius:8px;background:#0f5132;color:#fff!important;font-weight:700;text-decoration:none;font-size:12.5px}
+.pgt-campo-dl a.sec{background:#fff;color:#0f5132!important;border:1px solid #0f5132}

@@ -15,8 +15,21 @@
       f.innerHTML = '<span><b>Fuente de los datos:</b> CORPOCALDAS</span>';
       if (d && d.tagName === 'DIV' && !d.children.length) d.replaceWith(f); else ft.insertBefore(f, ft.firstChild);
     }
+    var mb = [].slice.call(document.querySelectorAll('button')).filter(function (b) { return /manifiesto para qgis/i.test(b.textContent); })[0];
+    if (mb && !document.querySelector('.pgt-campo-dl')) {
+      var d2 = document.createElement('div'); d2.className = 'pgt-campo-dl';
+      d2.innerHTML = '<b>Proyecto de campo listo · 3 módulos</b>1 · Ambiental, 2 · Social y 3 · Alertas de incendio, con formularios completos (municipio y vereda se llenan solos, foto, GPS). Descargue los dos archivos juntos, en la misma carpeta, y ábralos en QGIS o súbalos a su proyecto de QFieldCloud.<br><a href="data/qfield/Campo_Caldas.qgz" download>Campo_Caldas.qgz</a><a href="data/qfield/campo_caldas.gpkg" download class="sec">campo_caldas.gpkg</a>';
+      mb.parentNode.insertBefore(d2, mb);
+    }
     document.querySelectorAll('.eyebrow').forEach(function (e) { if (/capas de corpocaldas/i.test(e.textContent)) e.style.display = 'none'; });
   }
-  new MutationObserver(ajustar).observe(document.documentElement, { childList: true, subtree: true });
-  ajustar();
+  var ultAviso = null, tAviso = null;
+  function aviso() {
+    var n = document.querySelector('.notice-bar'); if (!n) return;
+    var tx = n.textContent, tono = /\b(success|error|warning)\b/.exec(n.className);
+    if (ultAviso === null) { ultAviso = tx; return; }
+    if (tx !== ultAviso) { ultAviso = tx; if (tono) { n.classList.add('pgt-show'); clearTimeout(tAviso); tAviso = setTimeout(function () { n.classList.remove('pgt-show'); }, 12000); } }
+  }
+  new MutationObserver(function () { ajustar(); aviso(); }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+  ajustar(); aviso();
 })();
