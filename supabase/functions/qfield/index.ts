@@ -36,6 +36,33 @@ Deno.serve(async (req) => {
       if (!fr.ok) return J({ error: `QFieldCloud no entregó «${nombre}» (HTTP ${fr.status}).` }, fr.status);
       return new Response(fr.body, { status: 200, headers: { ...CORS, 'content-type': fr.headers.get('content-type') || 'application/octet-stream', 'cache-control': 'no-store' } });
     }
+    if (accion === 'delta') {
+      // Crea un registro nuevo en una capa del proyecto, como si lo hubiera enviado QField al sincronizar.
+      const pid1 = String(b.projectId || '').trim(), tk3 = String(b.token || '').trim(), capa = String(b.layer || ''), g = b.geometry, at = b.attributes || {};
+      const PREF: Record<string, [string, string]> = { ambiental: ['1___', '1 · Ambiental'], social: ['2___', '2 · Social'], alerta: ['3___', '3 · Alertas de incendio'] };
+      if (!pid1 || tk3.length < 3 || !PREF[capa] || !Array.isArray(g) || g.length !== 2 || !isFinite(g[0]) || !isFinite(g[1])) return J({ error: 'Faltan datos del reporte (capa, ubicación o credenciales).' }, 400);
+      const tk4 = await resolverToken(tk3), H4 = { Authorization: `token ${tk4}`, Accept: 'application/json' };
+      const pk = await fetch(`${API}/packages/${encodeURIComponent(pid1)}/latest/`, { headers: H4 });
+      if (!pk.ok) return J({ error: `No se pudo leer el paquete del proyecto (HTTP ${pk.status}).` }, pk.status);
+      const pj = await pk.json(), lid = Object.keys(pj.layers || {}).find((k) => k.startsWith(PREF[capa][0]));
+      if (!lid || !pj.package_id) return J({ error: 'No se encontró la capa en el paquete del proyecto.' }, 400);
+      const U = () => crypto.randomUUID(), did = U(), exp = String(pj.package_id);
+      const attrs: Record<string, unknown> = { fid: null, ...at, lat: g[1], lon: g[0] };
+      const delta = { version: '1.0', id: did, projectId: pid1, files: [], deltas: [{ uuid: U(), clientId: U(), exportId: exp, localPk: '1', localLayerId: lid, localLayerCrs: 'EPSG:4326', localLayerName: PREF[capa][1], sourcePk: '', sourceLayerId: lid, method: 'create', new: { geometry: `Point (${g[0]} ${g[1]})`, attributes: attrs } }] };
+      const fd = new FormData(); fd.append('file', new Blob([JSON.stringify(delta)], { type: 'application/json' }), 'delta.json');
+      const r4 = await fetch(`${API}/deltas/${encodeURIComponent(pid1)}/`, { method: 'POST', headers: { Authorization: `token ${tk4}` }, body: fd });
+      const t4 = await r4.text();
+      if (!r4.ok) return J({ error: `QFieldCloud no aceptó el reporte (HTTP ${r4.status}). ${t4.slice(0, 300)}` }, r4.status);
+      let estado = 'enviado', detalle = '';
+      for (let i = 0; i < 10; i++) {
+        await new Promise((ok) => setTimeout(ok, 1500));
+        const dl = await fetch(`${API}/deltas/${encodeURIComponent(pid1)}/`, { headers: H4 });
+        if (!dl.ok) continue;
+        const arr = await dl.json(), me = Array.isArray(arr) ? arr.find((x: any) => String(x.deltafile_id) === did || String(x.content?.uuid) === delta.deltas[0].uuid) : null;
+        if (me) { estado = String(me.last_status || me.status); detalle = String(me.last_feedback?.msg || ''); if (/applied|error|conflict|not_applied/i.test(estado)) break; }
+      }
+      return J({ ok: /applied/i.test(estado) && !/not_applied/i.test(estado), estado, detalle, deltaId: did });
+    }
     const pid = String(b.projectId || '').trim(), tk0 = String(b.token || '').trim();
     if (!pid || tk0.length < 3) return J({ error: 'Proyecto o credenciales de QFieldCloud no válidos.' }, 400);
     const tk = await resolverToken(tk0);

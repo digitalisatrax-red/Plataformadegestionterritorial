@@ -123,7 +123,7 @@
         var res = await window.__pgtQfFetch('file', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ projectId: S.cred.projectId, token: S.cred.token, name: 'campo_caldas.gpkg' }) });
         if (!res.ok) { var m = ''; try { m = (await res.json()).error; } catch (e) {} if (res.status === 401 || res.status === 403) S.cred = null; throw new Error(m || 'No se pudo leer el proyecto (HTTP ' + res.status + ').'); }
         var buf = new Uint8Array(await res.arrayBuffer()), q = await motor(), db = new q.Database(buf);
-        try { S.pts = normalizar(db); } finally { db.close(); }
+        try { S.pts = normalizar(db); S.terr = territorio(db); } finally { db.close(); }
         S.actualizado = Date.now();
       } catch (e) { S.err = e.message || String(e); throw e; }
       finally { S.cargando = false; }
@@ -221,9 +221,9 @@
       Object.keys(MOD).filter(function (k) { return !MOD[k].dyn || cnt[k] || MOD[k].ext; }).map(function (k) { return '<button type="button" class="pc-chip' + (S.mod[k] ? ' on' : '') + '" data-m="' + k + '" style="--c:' + MOD[k].c + '">' + ico(k, 15) + '<span>' + MOD[k].n + '</span><b>' + cnt[k] + '</b>' + (MOD[k].ext ? '<i class="pc-x" data-del="' + k + '" title="Quitar capa">×</i>' : '') + '</button>'; }).join('') + '<button type="button" class="pc-chip pc-add" data-r="add" style="--c:#15803d">+ Añadir capa</button></div>' +
       '<div class="pc-fil"><input type="search" data-r="q" placeholder="Buscar vereda, sitio o persona…" value="' + esc(S.q || '') + '"><select data-r="mun"><option value="">Todos los municipios</option>' + Object.keys(muns).sort().map(function (m) { return '<option value="' + esc(m) + '"' + (m === S.mun ? ' selected' : '') + '>' + esc(tit(m)) + '</option>'; }).join('') + '</select>' +
       '<select data-r="dias">' + [[7, 'Últimos 7 días'], [30, 'Últimos 30 días'], [90, 'Últimos 90 días'], [365, 'Último año'], [0, 'Todo el tiempo']].map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === S.dias ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>' +
-      '<button type="button" class="pgi-btn" data-r="ref">' + (S.cred ? '↻ Actualizar' : 'Conectar QField') + '</button></div></div><div class="pc-est" data-r="est"></div>' +
+      '<button type="button" class="pc-new" data-r="nuevo">+ Nuevo reporte</button><button type="button" class="pgi-btn" data-r="ref">' + (S.cred ? '↻ Actualizar' : 'Conectar QField') + '</button></div></div><div class="pc-est" data-r="est"></div>' +
       '<div class="fg-cuerpo"><div class="fg-mapa"><div data-r="map"></div><div class="pc-base"><button data-b="sat" class="on">Satélite</button><button data-b="map">Mapa</button></div></div><div class="fg-lado" data-r="lado"></div></div>';
-    c.querySelector('[data-r=add]').onclick = dialogo;
+    c.querySelector('[data-r=add]').onclick = dialogo; c.querySelector('[data-r=nuevo]').onclick = nuevo;
     c.querySelectorAll('[data-del]').forEach(function (x) { x.onclick = function (e) { e.stopPropagation(); quitar(x.dataset.del); }; });
     c.querySelectorAll('[data-m]').forEach(function (i) { i.onclick = function () { S.mod[i.dataset.m] = !S.mod[i.dataset.m]; i.classList.toggle('on', S.mod[i.dataset.m]); datos(true); }; });
     c.querySelector('[data-r=q]').oninput = function () { S.q = this.value; datos(); };
@@ -284,6 +284,114 @@
       (ps.length ? '<div class="pc-cnt">' + ps.length + ' registro' + (ps.length === 1 ? '' : 's') + '</div>' : '<div class="pc-vacio">' + (S.pts.length ? 'Ningún registro coincide con estos filtros.' : 'Aún no hay registros. Aparecen aquí cuando se sincronizan desde QField (botón de sincronizar en el teléfono).') + '</div>') +
       lista.map(function (p, i) { return '<div class="pc-it" data-i="' + i + '" style="--c:' + MOD[p.mod].c + '"><span class="pc-ic">' + ico(p.mod, 18) + '</span><div class="pc-tx"><b>' + esc(titulo(p)) + '</b><span>' + esc(lugar(p)) + '</span><small>' + esc(hace(p.fecha)) + (p.reg ? ' · ' + esc(p.reg) : '') + '</small></div></div>'; }).join('');
     lado.querySelectorAll('.pc-it').forEach(function (d) { d.onclick = function () { var p = lista[Number(d.dataset.i)]; if (p && p._m && S.mapa) { S.mapa.setView([p.lat, p.lon], Math.max(S.mapa.getZoom(), 14)); p._m.openPopup(); } }; });
+  }
+
+  /* ── Nuevo reporte desde el PC (se guarda en QFieldCloud) ─────────── */
+  function bbox(g) { var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; (function rec(a) { if (typeof a[0] === 'number') { if (a[0] < x0) x0 = a[0]; if (a[0] > x1) x1 = a[0]; if (a[1] < y0) y0 = a[1]; if (a[1] > y1) y1 = a[1]; } else a.forEach(rec); })(g.coordinates); return [x0, y0, x1, y1]; }
+  function enAnillo(x, y, r) { var d = false; for (var i = 0, j = r.length - 1; i < r.length; j = i++) { if (((r[i][1] > y) !== (r[j][1] > y)) && (x < (r[j][0] - r[i][0]) * (y - r[i][1]) / (r[j][1] - r[i][1]) + r[i][0])) d = !d; } return d; }
+  function enGeom(x, y, g) {
+    var polys = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
+    return polys.some(function (pl) { if (!enAnillo(x, y, pl[0])) return false; for (var h = 1; h < pl.length; h++) if (enAnillo(x, y, pl[h])) return false; return true; });
+  }
+  function territorio(db) {
+    var t = { mun: [], ver: [] };
+    try { tabla(db, 'municipios').forEach(function (r) { var g = geom(r.geom); if (g) t.mun.push({ n: r.MpNombre, g: g, b: bbox(g) }); }); } catch (e) {}
+    try { tabla(db, 'veredas').forEach(function (r) { var g = geom(r.geom); if (g) t.ver.push({ n: r.nombre, m: r.municipio, g: g, b: bbox(g) }); }); } catch (e) {}
+    return t;
+  }
+  function ubicar(lon, lat) {
+    var t = S.terr || { mun: [], ver: [] }, f = function (a) { return a.filter(function (o) { return lon >= o.b[0] && lon <= o.b[2] && lat >= o.b[1] && lat <= o.b[3] && enGeom(lon, lat, o.g); })[0]; };
+    var m = f(t.mun), v = f(t.ver); return { mun: m ? m.n : (v ? v.m : ''), ver: v ? v.n : '' };
+  }
+  var OP = function (a) { return a.map(function (x) { return Array.isArray(x) ? x : [x, x]; }); };
+  var NIVELES = [['Ciudadano', 'ciudadano'], ['Técnico', 'tecnico'], ['Bomberos / Defensa Civil', 'bomberos'], ['Autoridad ambiental', 'autoridad']];
+  var COB = ['Bosque natural', 'Bosque secundario / rastrojo', 'Plantación forestal', 'Pastos', 'Café', 'Cultivo permanente', 'Cultivo transitorio', 'Páramo / subpáramo', 'Humedal', 'Suelo desnudo', 'Zona urbana / infraestructura', 'Otra'];
+  var FORM = {
+    alerta: { n: 'Alerta de incendio', f: [['reportante', 'Quién reporta', 'text'], ['nivel', 'Tipo de reportante', 'sel', NIVELES, 'tecnico'], ['estado', 'Estado del incendio', 'sel', ['Activo', 'Controlado', 'Extinguido'], 'Activo', 1], ['tipo_fuego', 'Tipo de fuego', 'sel', ['Superficial', 'Subterráneo', 'De copa', 'Mixto']], ['cobertura', 'Cobertura vegetal', 'sel', COB], ['area_ha', 'Área afectada (ha)', 'num'], ['causa_probable', 'Causa probable', 'sel', ['Quema agrícola', 'Quema de pastos', 'Quema de residuos', 'Fogata', 'Colilla / vidrio', 'Intencional', 'Rayo', 'Desconocida']], ['afectacion', 'Afectación', 'sel', ['Ninguna', 'Vivienda', 'Cultivos', 'Fuente de agua', 'Fauna', 'Vía', 'Área protegida']], ['sitio', 'Sitio o referencia', 'text'], ['observaciones', 'Observaciones', 'area']] },
+    ambiental: { n: 'Registro ambiental', f: [['registrador', 'Quién registra', 'text'], ['tipo_registro', 'Tipo de registro', 'sel', ['Cobertura vegetal', 'Fauna', 'Flora', 'Recurso hídrico', 'Suelo', 'Ecosistema o área protegida', 'Amenaza o presión', 'Otro'], '', 1], ['cobertura', 'Cobertura vegetal', 'sel', COB], ['estado_conservacion', 'Estado de conservación', 'text'], ['especie_o_grupo', 'Especie o grupo', 'text'], ['n_individuos', 'N.º de individuos', 'num'], ['presion_principal', 'Presión principal', 'text'], ['area_ha', 'Área (ha)', 'num'], ['accion_recomendada', 'Acción recomendada', 'text'], ['sitio', 'Sitio o referencia', 'text'], ['observaciones', 'Observaciones', 'area']] },
+    social: { n: 'Encuesta social', f: [['registrador', 'Quién registra', 'text'], ['consentimiento', 'La persona dio su consentimiento informado', 'chk', null, null, 1], ['tipo_actor', 'Tipo de actor', 'sel', ['Hogar rural', 'Productor agropecuario', 'Junta de Acción Comunal', 'Institución educativa', 'Bomberos / Defensa Civil', 'Autoridad local', 'Organización comunitaria', 'Otro'], '', 1], ['n_personas', 'N.º de personas', 'num'], ['actividad_economica', 'Actividad económica', 'text'], ['usa_fuego', 'Usa fuego en sus labores', 'text'], ['conoce_protocolo', 'Conoce el protocolo', 'text'], ['percepcion_riesgo', 'Percepción del riesgo', 'text'], ['necesidad_principal', 'Necesidad principal', 'text'], ['sitio', 'Sitio o referencia', 'text'], ['observaciones', 'Observaciones', 'area']] }
+  };
+  function nuevo() {
+    if (!S.cred) { S.omitir = false; pintar(); return; }
+    var s0 = sesion(), quien = (s0 && (s0.nombre || s0.correo)) || '';
+    var d = document.createElement('div'); d.className = 'pc-dlg';
+    var st = { k: 'alerta', lon: null, lat: null, mk: null };
+    function campos() {
+      var cfg = FORM[st.k], mun = ((S.terr && S.terr.mun) || []).map(function (m) { return m.n; }).sort();
+      var h = '<label>Municipio<select data-a="municipio"><option value="">—</option>' + mun.map(function (m) { return '<option>' + esc(m) + '</option>'; }).join('') + '</select></label><label>Vereda<select data-a="vereda"><option value="">—</option></select></label>';
+      cfg.f.forEach(function (f) {
+        var id = f[0], lb = esc(f[1]) + (f[5] ? ' *' : '');
+        if (f[2] === 'text') h += '<label>' + lb + '<input data-a="' + id + '" value="' + ((id === 'reportante' || id === 'registrador') ? esc(quien) : '') + '"></label>';
+        else if (f[2] === 'num') h += '<label>' + lb + '<input data-a="' + id + '" type="number" step="any" min="0"></label>';
+        else if (f[2] === 'area') h += '<label>' + lb + '<textarea data-a="' + id + '" rows="2"></textarea></label>';
+        else if (f[2] === 'chk') h += '<label class="pc-chk"><input type="checkbox" data-a="' + id + '"> ' + lb + '</label>';
+        else h += '<label>' + lb + '<select data-a="' + id + '"><option value="">—</option>' + OP(f[3]).map(function (o) { return '<option value="' + esc(o[1]) + '"' + (o[1] === f[4] ? ' selected' : '') + '>' + esc(o[0]) + '</option>'; }).join('') + '</select></label>';
+      });
+      return h;
+    }
+    function pintarForm() {
+      d.innerHTML = '<div class="pc-box pc-ancha"><h3>Nuevo reporte</h3><p>Se guarda en el proyecto de QFieldCloud y los teléfonos lo recibirán al sincronizar.</p>' +
+        '<div class="pc-tipos">' + Object.keys(FORM).map(function (k) { return '<button type="button" class="pc-chip' + (k === st.k ? ' on' : '') + '" data-k="' + k + '" style="--c:' + MOD[k].c + '">' + ico(k, 15) + '<span>' + FORM[k].n + '</span></button>'; }).join('') + '</div>' +
+        '<div class="pc-loc"><b>Ubicación</b><div class="pc-ll"><input data-r="lat" placeholder="Latitud" value="' + (st.lat == null ? '' : st.lat.toFixed(6)) + '"><input data-r="lon" placeholder="Longitud" value="' + (st.lon == null ? '' : st.lon.toFixed(6)) + '"></div><div class="pc-acc" style="justify-content:flex-start"><button type="button" class="pgi-btn" data-r="mapa">Elegir en el mapa</button><button type="button" class="pgi-btn" data-r="gps">Usar mi ubicación</button></div></div>' +
+        '<div class="pc-fgrid" data-r="campos">' + campos() + '</div><div class="pc-err" data-r="e"></div><div class="pc-acc"><button type="button" class="pgi-btn" data-r="x">Cancelar</button><button type="button" class="pc-go" data-r="ok">Guardar en QFieldCloud</button></div></div>';
+      enlazar();
+    }
+    var keep = {};
+    function leer() { d.querySelectorAll('[data-a]').forEach(function (i) { keep[st.k + '.' + i.dataset.a] = i.type === 'checkbox' ? i.checked : i.value; }); }
+    function lugarAuto() {
+      if (st.lat == null) return; var u = ubicar(st.lon, st.lat), sm = d.querySelector('[data-a=municipio]'), sv = d.querySelector('[data-a=vereda]');
+      if (u.mun) sm.value = u.mun; vers(); if (u.ver) sv.value = u.ver;
+    }
+    function vers() {
+      var sm = d.querySelector('[data-a=municipio]'), sv = d.querySelector('[data-a=vereda]'), m = sm.value, ls = ((S.terr && S.terr.ver) || []).filter(function (v) { return !m || v.m === m; }).map(function (v) { return v.n; }).sort();
+      var cur = sv.value; sv.innerHTML = '<option value="">—</option>' + ls.map(function (v) { return '<option>' + esc(v) + '</option>'; }).join(''); sv.value = cur;
+    }
+    function fijar(lon, lat) {
+      st.lon = lon; st.lat = lat; d.querySelector('[data-r=lat]').value = lat.toFixed(6); d.querySelector('[data-r=lon]').value = lon.toFixed(6);
+      var L = window.__pgtL; if (S.mapa && L) { if (st.mk) S.mapa.removeLayer(st.mk); st.mk = L.marker([lat, lon], { icon: L.divIcon({ className: 'pc-pin', html: '<span style="background:#15803d">' + ico('alerta', 15) + '</span>', iconSize: [30, 30], iconAnchor: [15, 15] }) }).addTo(S.mapa); }
+      lugarAuto();
+    }
+    function enlazar() {
+      d.querySelectorAll('[data-k]').forEach(function (b) { b.onclick = function () { leer(); var la = st.lat, lo = st.lon; st.k = b.dataset.k; pintarForm(); if (la != null) { d.querySelector('[data-r=lat]').value = la.toFixed(6); d.querySelector('[data-r=lon]').value = lo.toFixed(6); lugarAuto(); } }; });
+      d.querySelector('[data-a=municipio]').onchange = vers;
+      var ent = function () { var la = parseFloat(d.querySelector('[data-r=lat]').value.replace(',', '.')), lo = parseFloat(d.querySelector('[data-r=lon]').value.replace(',', '.')); if (isFinite(la) && isFinite(lo)) fijar(lo, la); };
+      d.querySelector('[data-r=lat]').onchange = ent; d.querySelector('[data-r=lon]').onchange = ent;
+      d.querySelector('[data-r=gps]').onclick = function () { var e = d.querySelector('[data-r=e]'); if (!navigator.geolocation) { e.textContent = 'Este navegador no ofrece ubicación.'; return; } navigator.geolocation.getCurrentPosition(function (p) { fijar(p.coords.longitude, p.coords.latitude); if (S.mapa) S.mapa.setView([p.coords.latitude, p.coords.longitude], 15); }, function () { e.textContent = 'No se pudo obtener su ubicación; escriba las coordenadas o elíjala en el mapa.'; }); };
+      d.querySelector('[data-r=mapa]').onclick = function () {
+        if (!S.mapa) return; leer(); d.style.display = 'none'; var cn = S.mapa.getContainer(); cn.style.cursor = 'crosshair';
+        var av = document.createElement('div'); av.className = 'pc-pick'; av.innerHTML = 'Haga clic en el mapa para marcar el lugar del reporte <button type="button" class="pgi-btn">Cancelar</button>'; el.appendChild(av);
+        var fin = function () { S.mapa.off('click', al); cn.style.cursor = ''; av.remove(); d.style.display = ''; };
+        var al = function (e) { fin(); pintarForm(); restaurar2(); fijar(e.latlng.lng, e.latlng.lat); };
+        av.querySelector('button').onclick = function () { fin(); };
+        S.mapa.on('click', al);
+      };
+      d.querySelector('[data-r=x]').onclick = function () { if (st.mk && S.mapa) S.mapa.removeLayer(st.mk); d.remove(); };
+      d.querySelector('[data-r=ok]').onclick = guardar;
+      restaurar2();
+    }
+    function restaurar2() { d.querySelectorAll('[data-a]').forEach(function (i) { var v = keep[st.k + '.' + i.dataset.a]; if (v === undefined) return; if (i.type === 'checkbox') i.checked = v; else i.value = v; }); var sm = d.querySelector('[data-a=municipio]'); if (sm) { vers(); var v2 = keep[st.k + '.vereda']; if (v2) d.querySelector('[data-a=vereda]').value = v2; } }
+    async function guardar() {
+      var b = d.querySelector('[data-r=ok]'), e = d.querySelector('[data-r=e]'); e.textContent = '';
+      var la = parseFloat(d.querySelector('[data-r=lat]').value.replace(',', '.')), lo = parseFloat(d.querySelector('[data-r=lon]').value.replace(',', '.'));
+      if (!isFinite(la) || !isFinite(lo) || la < -5 || la > 14 || lo < -82 || lo > -66) { e.textContent = 'Marque la ubicación en el mapa o escriba latitud y longitud válidas (Colombia).'; return; }
+      var at = { fecha_hora: new Date().toISOString(), origen: 'qfield' }, falta = [];
+      FORM[st.k].f.forEach(function (f) { var i = d.querySelector('[data-a=' + f[0] + ']'), v = i.type === 'checkbox' ? (i.checked ? 1 : 0) : i.value.trim(); if (f[5] && (v === '' || v === 0)) falta.push(f[1]); if (v !== '' && v !== null) at[f[0]] = f[2] === 'num' ? Number(v) : v; });
+      ['municipio', 'vereda'].forEach(function (k) { var v = d.querySelector('[data-a=' + k + ']').value; if (v) at[k] = v; });
+      if (st.k === 'alerta') at.validado = 0;
+      if (falta.length) { e.textContent = 'Falta: ' + falta.join(', ') + '.'; return; }
+      b.disabled = true; b.textContent = 'Guardando…';
+      try {
+        var res = await window.__pgtQfFetch('delta', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ projectId: S.cred.projectId, token: S.cred.token, layer: st.k, geometry: [lo, la], attributes: at }) });
+        var j = {}; try { j = await res.json(); } catch (x) {}
+        if (!res.ok || j.error) throw new Error(j.error || ('HTTP ' + res.status));
+        if (!j.ok) throw new Error('QFieldCloud recibió el reporte pero no lo aplicó todavía (' + (j.estado || '?') + (j.detalle ? ': ' + j.detalle : '') + '). Revise el proyecto en QFieldCloud.');
+        if (st.mk && S.mapa) S.mapa.removeLayer(st.mk);
+        d.innerHTML = '<div class="pc-box"><h3>Reporte guardado</h3><p>Quedó registrado en el proyecto de QFieldCloud y los teléfonos lo recibirán al sincronizar.' + (st.k === 'alerta' ? ' La alerta también pasa a Alerta temprana.' : '') + '</p><div class="pc-acc"><button type="button" class="pc-go" data-r="c">Cerrar</button></div></div>';
+        d.querySelector('[data-r=c]').onclick = function () { d.remove(); };
+        S.actualizado = 0; cargar().then(sincronizar).then(function () { if (el) pintar(); }, function () {});
+      } catch (x) { e.textContent = 'No se pudo guardar: ' + (x.message || x); b.disabled = false; b.textContent = 'Guardar en QFieldCloud'; }
+    }
+    el.appendChild(d); pintarForm();
   }
 
   /* ── Catálogo de capas del geoportal (como en el geovisor) ── */
