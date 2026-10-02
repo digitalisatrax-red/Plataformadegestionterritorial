@@ -72,3 +72,7 @@ create policy "subir_fotos_incendios" on storage.objects
 drop policy if exists "ver_fotos_incendios" on storage.objects;
 create policy "ver_fotos_incendios" on storage.objects
   for select to anon, authenticated using (bucket_id = 'fotos-incendios');
+
+-- 4) Alertas registradas en QField: referencia única para no duplicarlas al sincronizar
+alter table public.reportes_incendio add column if not exists qfield_ref text;
+create unique index if not exists reportes_incendio_qfield_ref on public.reportes_incendio (qfield_ref);

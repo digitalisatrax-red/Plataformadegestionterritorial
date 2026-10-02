@@ -33,7 +33,7 @@
       if (!r.ok) throw new Error('reportes (HTTP ' + r.status + '). ¿Ya ejecutó supabase/incendios.sql?');
       E.rep = await r.json();
       E.qfN = '';
-      if (window.__pgtCampo) { if (window.__pgtCampo.conectado()) { try { await window.__pgtCampo.cargar(); } catch (e) { E.qfN = 'No se pudieron leer las alertas de QField: ' + e.message; } E.rep = E.rep.concat(window.__pgtCampo.alertas(E.dias)); } else E.qfN = 'Las alertas reportadas en QField aparecen aquí cuando se conecta el proyecto (pestaña Campo → Verificar conexión, o «Operaciones de campo»).'; }
+      if (window.__pgtCampo) { if (window.__pgtCampo.conectado()) { try { await window.__pgtCampo.cargar(); } catch (e) { E.qfN = 'No se pudieron leer las alertas de QField: ' + e.message; } var ya = {}; E.rep.forEach(function (x) { if (x.qfield_ref) ya[x.qfield_ref] = 1; }); E.rep = E.rep.concat(window.__pgtCampo.alertas(E.dias, ya)); } else E.qfN = 'Las alertas reportadas en QField aparecen aquí cuando se conecta el proyecto (pestaña Campo → Verificar conexión, o «Operaciones de campo»).'; }
       var d = await fetch(SB + '/rest/v1/detecciones_calor?select=*&fecha_hora=gte.' + encodeURIComponent(new Date(Date.now() - (E.dias + 3) * 864e5).toISOString()) + '&order=fecha_hora.desc&limit=5000', { headers: hdr() });
       E.det = d.ok ? await d.json() : [];
     } catch (e) { E.err = e.message; }
@@ -415,7 +415,7 @@
     var h = '';
     Object.keys(E.fallas || {}).forEach(function (k) { h += '<div class="fg-aviso fg-av-' + k + '">La capa «' + esc(E.fallas[k]) + '» no respondió desde este navegador.</div>'; });
     if (E.err) h += '<div class="fg-aviso">' + esc(E.err) + '</div>';
-    if (E.qfN) h += '<div class="fg-aviso" style="background:#f0fdf4;border-color:#bbf7d0;color:#166534">' + esc(E.qfN) + '</div>';
+    if (E.qfN) h += '<div class="fg-aviso" style="background:#f0fdf4;border-color:#bbf7d0;color:#166534">' + esc(E.qfN) + (window.__pgtCampo && !window.__pgtCampo.conectado() ? ' <button type="button" class="pgi-btn" style="margin-left:8px" onclick="window.__pgtCampo.abrir()">Conectar QField</button>' : '') + '</div>';
     if (!sesion()) h += '<div class="fg-aviso">Sin sesión: solo se muestran reportes validados. Planeación puede ver y validar todos.</div>';
     if (E.desde && E.dias * 864e5 > Date.now() - E.desde + 864e5) h += '<div class="fg-aviso">El historial satelital disponible empieza el ' + new Date(E.desde).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' }) + ': NASA solo publica los últimos 7 días y aquí se acumulan cada 3 horas. Por eso «' + E.dias + ' días» aún muestra menos de ese periodo.</div>';
     if (E.vista === 'alertas') h += vistaAlertas(D);
