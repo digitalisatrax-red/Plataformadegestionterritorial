@@ -14,7 +14,7 @@
     aica: { op: .6, nom: 'AICA', get: function () { return urlCapa('eep-aica'); } },
     ver: { op: .85, nom: 'Veredas', get: function () { return urlCapa('caldas-veredas'); } }
   };
-  var E = { firms: [], actualizado: '', tab: 'mapa', dias: 7, radio: 1, horas: 48, solo: 'todos', rep: [], det: [], csv: [], err: '', mapa: null, capas: {}, sel: null, sw: { mun: true, mb: false, ideam: false, sinap: false, aica: false, ver: false, lug: false }, fondo: 'satellite', hist: undefined, tim: null, mun: '', ver: '', vAttrs: null, verGeo: {}, vista: 'alertas', nivel: 'todos' };
+  var E = { src: { app: true, qf: true, firms: true, ideam: true }, firms: [], actualizado: '', tab: 'mapa', dias: 7, radio: 1, horas: 48, solo: 'todos', rep: [], det: [], csv: [], err: '', mapa: null, capas: {}, sel: null, sw: { mun: true, mb: false, ideam: false, sinap: false, aica: false, ver: false, lug: false }, fondo: 'satellite', hist: undefined, tim: null, mun: '', ver: '', vAttrs: null, verGeo: {}, vista: 'alertas', nivel: 'todos' };
   var el = null;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -80,7 +80,10 @@
       return !E.rep.some(function (r) { return Math.abs(new Date(r.fecha_hora).getTime() - t) / 36e5 <= E.horas && km(r.lat, r.lon, d.lat, d.lon) <= E.radio; });
     });
   }
-  function reportesVisibles() { return E.rep.filter(function (r) { return E.solo === 'todos' || (E.solo === 'activos' ? r.estado === 'Activo' : r.estado === E.solo); }); }
+  function esQF(r) { return !!(r._qfield || r.origen === 'qfield'); }
+  function srcRep(r) { return esQF(r) ? E.src.qf : E.src.app; }
+  function srcDet(d) { return d.fuente === 'IDEAM' ? E.src.ideam : E.src.firms; }
+  function reportesVisibles() { return E.rep.filter(function (r) { return srcRep(r) && (E.solo === 'todos' || (E.solo === 'activos' ? r.estado === 'Activo' : r.estado === E.solo)); }); }
 
   /* ── Interfaz ───────────────────────────────────────── */
   function abrir() {
@@ -109,6 +112,7 @@
           '<div class="fg-grp"><span>Municipio</span><select data-k="mun"><option value="">Todo Caldas</option></select></div>' +
           '<div class="fg-grp"><span>Vereda</span><select data-k="ver"><option value="">Todas las veredas</option></select></div>' +
           '<div class="fg-grp"><span>Estado del reporte</span><div class="fg-chips" data-g="solo"><button data-v="todos">Todos</button><button data-v="activos">Activos</button><button data-v="Controlado">Controlados</button><button data-v="Extinguido">Extinguidos</button></div></div>' +
+          '<div class="fg-grp"><span>Fuentes a mostrar</span><div class="fg-chips" data-g="src"><button data-s="app" title="Reportes de la ciudadanía y la app">Reportes comunitarios</button><button data-s="qf" title="Registros hechos con QField">Reportes de campo</button><button data-s="firms" title="NASA FIRMS (VIIRS/MODIS)">FIRMS</button><button data-s="ideam" title="Puntos de calor IDEAM">IDEAM puntos</button><button data-s="nivel" title="Nivel de alerta por municipio (IDEAM)">IDEAM nivel</button><button data-s="mb" title="Quemas históricas (MapBiomas Fuego)">MapBiomas</button></div></div>' +
           '<div class="fg-grp fg-grow"></div>' +
           '<details class="fg-aj"><summary>Ajustes de cruce</summary><div class="fg-aj-p"><label>Radio para confirmar (km)<input type="number" data-k="radio" value="' + E.radio + '" min="0.1" step="0.5"></label><label>Ventana de tiempo (± h)<input type="number" data-k="horas" value="' + E.horas + '" min="1" step="6"></label><button class="fg-b" data-a="csv">Cargar CSV de puntos de calor</button><input type="file" accept=".csv,text/csv" data-r="file" hidden><p>Un reporte se «confirma» si hay un punto de calor a menos de ese radio y dentro de esa ventana.</p></div></details>' +
           '<button class="fg-b p" data-a="ref">Actualizar</button>' +
@@ -127,13 +131,20 @@
       c.querySelectorAll('[data-k]').forEach(function (i) {
         i.onchange = function () {
           var k = i.dataset.k;
-          if (k.indexOf('sw:') === 0) { var kk = k.slice(3); E.sw[kk] = i.checked; if (kk === 'mun') munCapa(); else if (kk === 'lug') lugares(); else if (kk === 'ideam') ideamCapa(); else if (kk === 'mb') mbCapa(); else din(kk); return; }
+          if (k.indexOf('sw:') === 0) { var kk = k.slice(3); E.sw[kk] = i.checked; if (kk === 'mun') munCapa(); else if (kk === 'lug') lugares(); else if (kk === 'ideam') ideamCapa(); else if (kk === 'mb') mbCapa(); else din(kk); marcar(); return; }
           if (k === 'mbanio') { E.mbAnio = i.value; E.mbFreq = false; var cf = c.querySelector('[data-k=mbfreq]'); if (cf) cf.checked = false; c.querySelector('[data-r=mbyr]').textContent = i.value; if (!E.sw.mb) { E.sw.mb = true; c.querySelector('[data-k="sw:mb"]').checked = true; } mbCapa(); return; }
           if (k === 'mbfreq') { E.mbFreq = i.checked; if (i.checked && !E.sw.mb) { E.sw.mb = true; c.querySelector('[data-k="sw:mb"]').checked = true; } mbCapa(); return; }
           if (k === 'fondo') { E.fondo = i.value; fondo(); return; }
           if (k === 'mun') { E.mun = i.value; E.ver = ''; cargaTerr(); pintarDatos(); return; }
           if (k === 'ver') { E.ver = i.value; pintarDatos(); return; }
           E[k] = Number(i.value); pintarDatos();
+        };
+      });
+      c.querySelectorAll('[data-g=src] button').forEach(function (b) {
+        b.onclick = function () {
+          var s = b.dataset.s;
+          if (s === 'nivel' || s === 'mb') { var kk = s === 'nivel' ? 'ideam' : 'mb'; E.sw[kk] = !E.sw[kk]; var cb = c.querySelector('[data-k="sw:' + kk + '"]'); if (cb) cb.checked = E.sw[kk]; if (kk === 'ideam') ideamCapa(); else mbCapa(); marcar(); return; }
+          E.src[s] = !E.src[s]; marcar(); pintarDatos();
         };
       });
       var bp = c.querySelector('[data-k=mbplay]'); if (bp) bp.onclick = function () {
@@ -145,7 +156,7 @@
           sl.value = v; sl.onchange();
         }, 900);
       };
-      c.querySelectorAll('[data-g]').forEach(function (g) {
+      c.querySelectorAll('[data-g]').forEach(function (g) { if (g.dataset.g === 'src') return;
         g.querySelectorAll('button').forEach(function (b) {
           b.onclick = function () { if (g.dataset.g === 'dias') { E.dias = Number(b.dataset.v); refrescar(); } else { E.solo = b.dataset.v; pintarDatos(); } marcar(); };
         });
@@ -161,6 +172,7 @@
   function marcar() {
     if (!el) return;
     el.querySelectorAll('[data-g=dias] button').forEach(function (b) { b.classList.toggle('on', Number(b.dataset.v) === E.dias); });
+    el.querySelectorAll('[data-g=src] button').forEach(function (b) { var s = b.dataset.s; b.classList.toggle('on', s === 'nivel' ? !!E.sw.ideam : s === 'mb' ? !!E.sw.mb : !!E.src[s]); });
     el.querySelectorAll('[data-g=solo] button').forEach(function (b) { b.classList.toggle('on', b.dataset.v === E.solo); });
     el.querySelectorAll('[data-vs]').forEach(function (b) { b.classList.toggle('on', b.dataset.vs === E.vista); });
   }
@@ -351,7 +363,7 @@
     var okM = function (n) { return sinM || norm(n) === E.mun; };
     var okV = function (o) { return !E.ver || verDe(o, E.mun) === String(E.ver); };
     var reps = reportesVisibles().filter(function (r) { return okM(nombreMun(r)) && okV(r); });
-    var dets = todasDet().filter(function (d) { if (new Date(d.fecha_hora).getTime() < lim) return false; if (munGeo && d._mun === undefined) d._mun = munDe(d.lat, d.lon); return (sinM || (d._mun != null && norm(d._mun) === E.mun)) && okV(d); });
+    var dets = todasDet().filter(function (d) { if (!srcDet(d) || new Date(d.fecha_hora).getTime() < lim) return false; if (munGeo && d._mun === undefined) d._mun = munDe(d.lat, d.lon); return (sinM || (d._mun != null && norm(d._mun) === E.mun)) && okV(d); });
     var sinRep = dets.filter(function (d) { var t = new Date(d.fecha_hora).getTime(); return !E.rep.some(function (r) { return Math.abs(new Date(r.fecha_hora).getTime() - t) / 36e5 <= E.horas && km(r.lat, r.lon, d.lat, d.lon) <= E.radio; }); });
     var al = [], lat = [];
     reps.forEach(function (r) {
