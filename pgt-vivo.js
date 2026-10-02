@@ -72,6 +72,7 @@
     pintar(); cargar();
   }
 
+  function cn(c) { if (c === 'general') return 'General del equipo'; var r = S.rep.filter(function (x) { return 'inc:' + x.id === c; })[0]; return r ? 'Incendio · ' + [r.vereda, r.municipio].filter(Boolean).join(' · ') : c; }
   function firma() { return S.tab + '|' + S.canal + '|' + S.err + '|' + JSON.stringify([S.rep.map(function (r) { return [r.id, r.estado, r.validado, r.rechazado]; }), S.al.map(function (a) { return [a.id, a.estado, a.asignado_nombre]; }), S.msg.map(function (m) { return m.id; }), S.pos.map(function (p) { return [p.user_id, p.updated_at]; }), S.nov.length]); }
   function pintar() {
     if (!el || !document.body.contains(el)) return;
@@ -104,7 +105,7 @@
     var enc = S.pos.filter(function (p) { return Date.now() - new Date(p.updated_at) < 3600e3; }).length;
     var sos = S.msg.filter(function (m) { return m.tipo === 'sos' && Date.now() - new Date(m.created_at) < 864e5; }).length;
     var ha = S.rep.filter(function (r) { return valid(r) === 'validado'; }).reduce(function (s, r) { return s + (+r.area_ha || 0); }, 0);
-    var ult = S.msg.slice(-5).reverse().map(function (m) { return '<div class="pv-li"><b>' + esc(m.autor_nombre || '') + '</b> <small>' + hace(m.created_at) + ' · #' + esc(m.canal) + '</small><div>' + (m.tipo === 'sos' ? '<b style="color:#c62828">SOS</b> ' : '') + esc(m.texto || (m.tipo === 'ubicacion' ? 'Compartió su ubicación' : '')) + '</div></div>'; }).join('') || '<div class="pv-vac">Sin mensajes todavía.</div>';
+    var ult = S.msg.slice(-5).reverse().map(function (m) { return '<div class="pv-li"><b>' + esc(m.autor_nombre || '') + '</b> <small>' + hace(m.created_at) + ' · ' + esc(cn(m.canal)) + '</small><div>' + (m.tipo === 'sos' ? '<b style="color:#c62828">SOS</b> ' : '') + esc(m.texto || (m.tipo === 'ubicacion' ? 'Compartió su ubicación' : '')) + '</div></div>'; }).join('') || '<div class="pv-vac">Sin mensajes todavía.</div>';
     return '<div class="pv-kpis">' + kpi(act, 'Incendios activos', act) + kpi(pen, 'Reportes por validar', pen) + kpi(al, 'Alertas abiertas', al) + kpi(enc, 'Guardabosques en campo (1 h)') + kpi(sos, 'SOS (24 h)', sos) + kpi(S.nov.filter(function (n) { return Date.now() - new Date(n.created_at) < 864e5; }).length, 'Novedades (24 h)') + kpi(ha.toFixed(1), 'Área validada (ha)') + '</div>' +
       '<div class="pv-grid"><div class="pv-map" id="pvMap"></div><div class="pv-side"><h3>Últimos mensajes del equipo</h3>' + ult + '</div></div>';
   }
@@ -134,9 +135,9 @@
     var lista = Object.keys(cs).sort(function (a, b) { return a === 'general' ? -1 : b === 'general' ? 1 : a < b ? -1 : 1; });
     if (lista.indexOf(S.canal) < 0) S.canal = 'general';
     var ms = S.msg.filter(function (m) { return m.canal === S.canal; }), yo = uid();
-    return '<div class="pv-chat"><div class="pv-chs">' + lista.map(function (c) { return '<button type="button" data-c="' + esc(c) + '" class="' + (c === S.canal ? 'on' : '') + '">#' + esc(c) + ' <b>' + cs[c] + '</b></button>'; }).join('') + '</div><div class="pv-msgs">' +
+    return '<div class="pv-chat"><div class="pv-chs">' + lista.map(function (c) { return '<button type="button" data-c="' + esc(c) + '" class="' + (c === S.canal ? 'on' : '') + '">' + esc(cn(c)) + ' <b>' + cs[c] + '</b></button>'; }).join('') + '</div><div class="pv-msgs">' +
       (ms.map(function (m) { var mio = m.autor_id === yo; return '<div class="pv-m' + (mio ? ' mio' : '') + (m.tipo === 'sos' ? ' sos' : '') + '"><small>' + esc(m.autor_nombre || '') + ' · ' + fmt(m.created_at) + '</small><div>' + (m.tipo === 'sos' ? '<b>SOS</b> ' : '') + esc(m.texto || '') + (m.lat != null ? ' <a target="_blank" rel="noopener" href="https://www.google.com/maps?q=' + m.lat + ',' + m.lon + '">📍 ver ubicación</a>' : '') + '</div><button type="button" class="pv-del" data-act="del" data-id="' + esc(m.id) + '" title="Moderar: borrar mensaje">🗑</button></div>'; }).join('') || '<div class="pv-vac">Sin mensajes en este canal.</div>') + '</div>' +
-      '<div class="pv-send"><input class="pv-ci" placeholder="Responder en #' + esc(S.canal) + ' como coordinación…" maxlength="500"><button type="button" class="pv-go" data-r="snd">Enviar</button></div></div>';
+      '<div class="pv-send"><input class="pv-ci" placeholder="Responder en ' + esc(cn(S.canal)) + ' como coordinación…" maxlength="500"><button type="button" class="pv-go" data-r="snd">Enviar</button></div></div>';
   }
   async function enviar() {
     var i = el.querySelector('.pv-ci'), t = i.value.trim(), s = sesion(), id = uid(); if (!t || !s || !id) return; i.value = '';
