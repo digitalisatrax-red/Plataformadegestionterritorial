@@ -44,3 +44,7 @@ body{font-family:Inter,"Segoe UI",system-ui,-apple-system,Arial,sans-serif;backg
 .pgt-kpi{flex:1 1 0;min-width:0;padding:5px 12px}.pgt-kpi b{font-size:20px}.pgt-kpi span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:1180px){.pgt-kpis{flex-wrap:wrap}.pgt-kpi{flex:1 1 140px}.product-name span{display:none}}
 .pgt-res2 .r-root{max-width:none}.r-root{max-width:none!important}
+.brand-lockup{overflow:hidden}.product-name strong{overflow:hidden;text-overflow:ellipsis}
+.nav-item{min-width:0}
+@media(max-width:1500px){.product-name span{display:none}}
+@media(max-width:1250px){.product-name{display:none}.corp-logo{height:42px}}
