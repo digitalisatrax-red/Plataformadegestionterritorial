@@ -57,7 +57,7 @@
     if (!cab || !cont) return;
     var sub = root.querySelector('.fg-sub'); if (sub) sub.textContent = 'Reportes de la app de guardabosques y de QField en Caldas: incendios, alertas por verificar, posición del equipo y chat, actualizados en vivo.';
     var tabs = document.createElement('div'); tabs.className = 'pv-tabs';
-    tabs.innerHTML = '<button type="button" data-v="vivo" class="on">En vivo · App de guardabosques</button><button type="button" data-v="qf">QField (ambiental y social)</button><span class="pv-est" data-r="est"></span><button type="button" class="pv-ref" data-r="ref">Actualizar</button><a class="pv-app" href="app/" target="_blank" rel="noopener">Abrir la app de guardabosques ↗</a>';
+    tabs.innerHTML = '<button type="button" data-v="vivo" class="on">En vivo · App de guardabosques</button><button type="button" data-v="qf">QField (ambiental y social)</button><span class="pv-est" data-r="est"></span><button type="button" class="pv-ref" data-r="ref">Actualizar</button><a class="pv-app" href="https://digitalisatrax-red.github.io/app-incendios-caldas/" target="_blank" rel="noopener">Abrir la app de guardabosques ↗</a>';
     var vivo = document.createElement('div'); vivo.className = 'pv-vivo'; vivo.setAttribute('data-r', 'vivo');
     cab.insertAdjacentElement('afterend', tabs); tabs.insertAdjacentElement('afterend', vivo);
     cont.style.display = 'none'; S.root = root; el = vivo;
