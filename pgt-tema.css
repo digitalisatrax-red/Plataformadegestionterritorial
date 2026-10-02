@@ -69,8 +69,10 @@ body{font-family:Inter,"Segoe UI",system-ui,-apple-system,Arial,sans-serif;backg
 button[title="Directorio REST"]{display:none!important}
 
 .pgt-campo-dl{margin:10px 0;padding:12px 14px;border:1px solid #cfe3d8;background:#f1f8f4;border-radius:12px;font-size:13px;line-height:1.5}
-.pgt-campo-dl b{display:block;margin-bottom:4px;color:#0f5132}
+.pgt-campo-dl>b:first-child{display:block;margin-bottom:4px;color:#0f5132}
 .pgt-campo-dl a{display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border-radius:8px;background:#0f5132;color:#fff!important;font-weight:700;text-decoration:none;font-size:12.5px}
 .pgt-campo-dl a.sec{background:#fff;color:#0f5132!important;border:1px solid #0f5132}
 
 .pgt-ayuda{margin:6px 0 10px;font-size:12px;line-height:1.5;color:#475569}
+
+.pgt-qr{display:flex;gap:14px;align-items:center;margin-top:8px}.pgt-qr img{width:132px;height:132px;border:1px solid #cfe3d8;border-radius:8px;background:#fff;flex:none}.pgt-qr small{display:block;margin-top:8px;color:#475569;font-size:11.5px;line-height:1.4}
