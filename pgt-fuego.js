@@ -39,6 +39,21 @@
       var fr = await fetch('data/firms_caldas.json?t=' + Math.floor(Date.now() / 600000), { cache: 'no-cache' });
       if (fr.ok) { var fj = await fr.json(); var lim = Date.now() - (E.dias + 3) * 864e5; E.firms = (fj.puntos || []).filter(function (p) { return new Date(p.fecha_hora).getTime() >= lim; }); E.actualizado = fj.actualizado || ''; var ts = (fj.puntos || []).map(function (p) { return new Date(p.fecha_hora).getTime(); }).filter(isFinite); E.desde = ts.length ? Math.min.apply(null, ts) : null; }
     } catch (e) {}
+    try {
+      var ir = await fetch('data/ideam_caldas.json?t=' + Math.floor(Date.now() / 600000), { cache: 'no-cache' });
+      if (ir.ok) {
+        var ij = await ir.json(), t0 = new Date(ij.t0 + '-05:00').getTime(), lim2 = Date.now() - (E.dias + 3) * 864e5, tf = {};
+        E.firms.forEach(function (f) { tf[f.lat.toFixed(2) + '|' + f.lon.toFixed(2) + '|' + Math.round(new Date(f.fecha_hora).getTime() / 6e5)] = 1; });
+        E.ideamPts = []; var mn = null;
+        (ij.pts || []).forEach(function (q) {
+          var t = t0 + q[2] * 6e4; if (mn === null || t < mn) mn = t; if (t < lim2) return;
+          var dup = false; for (var dt = -1; dt <= 1 && !dup; dt++) if (tf[q[0].toFixed(2) + '|' + q[1].toFixed(2) + '|' + (Math.round(t / 6e5) + dt)]) dup = true;
+          if (!dup) E.ideamPts.push({ fuente: 'IDEAM', fecha_hora: new Date(t).toISOString(), lat: q[0], lon: q[1], confianza: 'IDEAM' });
+        });
+        E.ideamAct = ij.actualizado || ''; if (mn !== null && (!E.desde || mn < E.desde)) E.desde = mn;
+        if (E.ideamAct && (!E.actualizado || new Date(E.ideamAct) > new Date(E.actualizado))) E.actualizado = E.ideamAct;
+      }
+    } catch (e) {}
   }
 
   function km(a, b, c, d) {
@@ -46,7 +61,7 @@
     var x = Math.sin(dl / 2) * Math.sin(dl / 2) + Math.cos(a * t) * Math.cos(c * t) * Math.sin(dg / 2) * Math.sin(dg / 2);
     return 2 * R * Math.asin(Math.sqrt(x));
   }
-  function todasDet() { var vistos = {}; return E.det.concat(E.firms, E.csv).filter(function (d) { var k = d.fuente + d.fecha_hora + d.lat + d.lon; if (vistos[k]) return false; vistos[k] = 1; return true; }); }
+  function todasDet() { var vistos = {}; return E.det.concat(E.firms, E.ideamPts || [], E.csv).filter(function (d) { var k = d.fuente + d.fecha_hora + d.lat + d.lon; if (vistos[k]) return false; vistos[k] = 1; return true; }); }
   function cruzar(r) {
     var t0 = new Date(r.fecha_hora).getTime(), mejor = null;
     todasDet().forEach(function (d) {
@@ -100,24 +115,34 @@
         '<div class="fg-cuerpo"><div class="fg-mapa"><div data-r="map"></div>' +
           '<details class="fg-capas"><summary>Capas y fondo</summary><div class="fg-capas-p">' +
             '<label>Fondo<select data-k="fondo"><option value="satellite">Satélite</option><option value="osm">Calles</option><option value="light">Claro</option><option value="topographic">Topográfico</option></select></label>' +
-            '<label class="fg-chk"><input type="checkbox" data-k="sw:lug"> Nombres de lugares</label><label class="fg-chk"><input type="checkbox" data-k="sw:mun"> Municipios</label><label class="fg-chk"><input type="checkbox" data-k="sw:ver"> Veredas</label><label class="fg-chk"><input type="checkbox" data-k="sw:sinap"> Áreas SINAP</label><label class="fg-chk"><input type="checkbox" data-k="sw:aica"> AICA</label><label class="fg-chk"><input type="checkbox" data-k="sw:ideam"> Alerta IDEAM por municipio</label><div class="fg-sm" data-r="ideamr" style="margin:-2px 0 4px 22px"></div><label class="fg-chk"><input type="checkbox" data-k="sw:mb"> Área quemada MapBiomas</label><div class="fg-mbsel" style="margin:0 0 4px 22px"><select data-k="mbanio"><option value="freq">Frecuencia 2000–2025</option></select></div>' +
+            '<label class="fg-chk"><input type="checkbox" data-k="sw:lug"> Nombres de lugares</label><label class="fg-chk"><input type="checkbox" data-k="sw:mun"> Municipios</label><label class="fg-chk"><input type="checkbox" data-k="sw:ver"> Veredas</label><label class="fg-chk"><input type="checkbox" data-k="sw:sinap"> Áreas SINAP</label><label class="fg-chk"><input type="checkbox" data-k="sw:aica"> AICA</label><label class="fg-chk"><input type="checkbox" data-k="sw:ideam"> Alerta IDEAM por municipio</label><div class="fg-sm" data-r="ideamr" style="margin:-2px 0 4px 22px"></div><label class="fg-chk"><input type="checkbox" data-k="sw:mb"> Área quemada MapBiomas</label><div class="fg-mbsel" style="margin:0 0 6px 22px;display:flex;align-items:center;gap:6px"><button type="button" data-k="mbplay" title="Reproducir línea de tiempo" style="border:1px solid #d6c9be;background:#fff;border-radius:6px;padding:2px 8px;cursor:pointer">▶</button><input type="range" data-k="mbanio" min="2000" max="2025" step="1" value="2025" style="flex:1;min-width:90px"><b data-r="mbyr" style="min-width:36px;text-align:right">2025</b></div><label class="fg-chk" style="margin-left:22px"><input type="checkbox" data-k="mbfreq"> Acumulado 2000–2025</label>' +
           '</div></details>' +
           '<div class="fg-leyenda"><div><i style="background:#dc2626;border-radius:50%"></i>Reporte activo</div><div><i style="background:#f59e0b;border-radius:50%"></i>Controlado</div><div><i style="background:#6b7280;border-radius:50%"></i>Extinguido</div><div><i style="background:#7c3aed;transform:rotate(45deg)"></i>Punto de calor ≤ 24 h</div><div><i style="background:#c4b5fd;transform:rotate(45deg)"></i>Punto de calor anterior</div></div></div>' +
           '<div class="fg-linea" data-r="linea"></div><div class="fg-lado-w"><div class="fg-stabs"><button data-vs="alertas">Alertas</button><button data-vs="analisis">Análisis</button><button data-vs="protocolo">Protocolo</button></div><div class="fg-lado" data-r="lado"></div></div>' +
         '</div></div>';
-      var sa = c.querySelector('[data-k=mbanio]'); for (var ya = 2025; ya >= 2000; ya--) sa.insertAdjacentHTML('beforeend', '<option value="' + ya + '">' + ya + '</option>'); sa.value = E.mbAnio || 'freq';
+      var sa = c.querySelector('[data-k=mbanio]'); sa.value = E.mbAnio || 2025; c.querySelector('[data-r=mbyr]').textContent = sa.value;
       c.querySelector('[data-k=fondo]').value = E.fondo; Object.keys(E.sw).forEach(function (k) { c.querySelector('[data-k="sw:' + k + '"]').checked = E.sw[k]; });
       c.querySelectorAll('[data-k]').forEach(function (i) {
         i.onchange = function () {
           var k = i.dataset.k;
           if (k.indexOf('sw:') === 0) { var kk = k.slice(3); E.sw[kk] = i.checked; if (kk === 'mun') munCapa(); else if (kk === 'lug') lugares(); else if (kk === 'ideam') ideamCapa(); else if (kk === 'mb') mbCapa(); else din(kk); return; }
-          if (k === 'mbanio') { E.mbAnio = i.value; mbCapa(); return; }
+          if (k === 'mbanio') { E.mbAnio = i.value; E.mbFreq = false; var cf = c.querySelector('[data-k=mbfreq]'); if (cf) cf.checked = false; c.querySelector('[data-r=mbyr]').textContent = i.value; if (!E.sw.mb) { E.sw.mb = true; c.querySelector('[data-k="sw:mb"]').checked = true; } mbCapa(); return; }
+          if (k === 'mbfreq') { E.mbFreq = i.checked; if (i.checked && !E.sw.mb) { E.sw.mb = true; c.querySelector('[data-k="sw:mb"]').checked = true; } mbCapa(); return; }
           if (k === 'fondo') { E.fondo = i.value; fondo(); return; }
           if (k === 'mun') { E.mun = i.value; E.ver = ''; cargaTerr(); pintarDatos(); return; }
           if (k === 'ver') { E.ver = i.value; pintarDatos(); return; }
           E[k] = Number(i.value); pintarDatos();
         };
       });
+      var bp = c.querySelector('[data-k=mbplay]'); if (bp) bp.onclick = function () {
+        if (E.mbTimer) { clearInterval(E.mbTimer); E.mbTimer = null; bp.textContent = '▶'; return; }
+        var sl = c.querySelector('[data-k=mbanio]'); if (Number(sl.value) >= 2025) sl.value = 1999; bp.textContent = '❚❚';
+        E.mbTimer = setInterval(function () {
+          if (!document.body.contains(sl)) { clearInterval(E.mbTimer); E.mbTimer = null; return; }
+          var v = Number(sl.value) + 1; if (v > 2025) { clearInterval(E.mbTimer); E.mbTimer = null; bp.textContent = '▶'; return; }
+          sl.value = v; sl.onchange();
+        }, 900);
+      };
       c.querySelectorAll('[data-g]').forEach(function (g) {
         g.querySelectorAll('button').forEach(function (b) {
           b.onclick = function () { if (g.dataset.g === 'dias') { E.dias = Number(b.dataset.v); refrescar(); } else { E.solo = b.dataset.v; pintarDatos(); } marcar(); };
@@ -286,7 +311,7 @@
     if (!E.mapa || !E.sw.mb) return;
     if (!E.mbMeta) { fallo('mb', 'MapBiomas Fuego'); return; }
     if (!m.getPane('fgimg')) m.createPane('fgimg').style.zIndex = 350;
-    var a = E.mbAnio || 'freq';
+    var a = E.mbFreq ? 'freq' : (E.mbAnio || 2025);
     E.capas.mb = L.imageOverlay('data/mapbiomas/' + (a === 'freq' ? 'fuego_frecuencia' : 'fuego_' + a) + '.png', E.mbMeta.bounds, { opacity: .9, pane: 'fgimg', interactive: false }).addTo(m);
   }
   /* Capas dinámicas (imagen exportada del servicio ArcGIS para la vista actual) */
