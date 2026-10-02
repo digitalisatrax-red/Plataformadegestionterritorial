@@ -127,7 +127,7 @@
       var f = c.querySelector('[data-r=file]'); c.querySelector('[data-a=csv]').onclick = function () { f.click(); };
       f.onchange = function () { if (f.files[0]) leerCsv(f.files[0]); };
       marcar(); iniciarMapa(); pintarDatos(); ensureMun();
-    } else if (E.tab === 'hist') { c.innerHTML = '<div class="fg-pagina" data-r="hist">Cargando…</div>'; historico(c.querySelector('[data-r=hist]')); }
+    } else if (E.tab === 'hist') { c.innerHTML = '<div class="fg-dash" data-r="hist"><div class="fg-vacio">Cargando…</div></div>'; historico(c.querySelector('[data-r=hist]')); }
     else { c.innerHTML = '<div class="fg-pagina">' + fuentes() + '</div>'; }
   }
   function marcar() {
@@ -200,20 +200,20 @@
     E.vAttrs = out; return out;
   }
   function veredasDe(mk) { var l = (E.vAttrs || []).filter(function (v) { return norm(v.mun) === mk; }), c = {}; l.forEach(function (v) { c[v.nombre] = (c[v.nombre] || 0) + 1; }); return l.map(function (v) { return { id: v.id, nombre: v.nombre, etq: c[v.nombre] > 1 ? v.nombre + ' (' + v.id + ')' : v.nombre }; }).sort(function (a, b) { return a.etq.localeCompare(b.etq, 'es'); }); }
+  async function cargaVer(mk) {
+    await listaVeredas();
+    if (E.verGeo[mk]) return E.verGeo[mk];
+    var c = urlCapa('caldas-veredas'), ids = veredasDe(mk).map(function (v) { return v.id; }), out = [];
+    for (var i = 0; i < ids.length; i += 120) {
+      var ch = ids.slice(i, i + 120).map(function (x) { return isFinite(Number(x)) ? Number(x) : "'" + x + "'"; }).join(',');
+      var j = await consultaV(c, { where: 'ID_VEREDA IN (' + ch + ')', outSR: '4326', returnGeometry: 'true', maxAllowableOffset: '0.0004', geometryPrecision: '4' });
+      (j.features || []).forEach(function (f) { var rings = (f.geometry && f.geometry.rings) || [], bb = [1e9, 1e9, -1e9, -1e9]; rings.forEach(function (rg) { rg.forEach(function (q) { bb[0] = Math.min(bb[0], q[0]); bb[1] = Math.min(bb[1], q[1]); bb[2] = Math.max(bb[2], q[0]); bb[3] = Math.max(bb[3], q[1]); }); }); out.push({ id: String(aV(f, 'ID_VEREDA')), nombre: String(aV(f, 'NOMBRE') || ''), rings: rings, bb: bb }); });
+    }
+    E.verGeo[mk] = out; return out;
+  }
   async function cargaTerr() {
     var mk = E.mun; if (!mk) { pintarDatos(); return; }
-    try {
-      await listaVeredas();
-      if (!E.verGeo[mk]) {
-        var c = urlCapa('caldas-veredas'), ids = veredasDe(mk).map(function (v) { return v.id; }), out = [];
-        for (var i = 0; i < ids.length; i += 120) {
-          var ch = ids.slice(i, i + 120).map(function (x) { return isFinite(Number(x)) ? Number(x) : "'" + x + "'"; }).join(',');
-          var j = await consultaV(c, { where: 'ID_VEREDA IN (' + ch + ')', outSR: '4326', returnGeometry: 'true', maxAllowableOffset: '0.0004', geometryPrecision: '4' });
-          (j.features || []).forEach(function (f) { var rings = (f.geometry && f.geometry.rings) || [], bb = [1e9, 1e9, -1e9, -1e9]; rings.forEach(function (rg) { rg.forEach(function (q) { bb[0] = Math.min(bb[0], q[0]); bb[1] = Math.min(bb[1], q[1]); bb[2] = Math.max(bb[2], q[0]); bb[3] = Math.max(bb[3], q[1]); }); }); out.push({ id: String(aV(f, 'ID_VEREDA')), nombre: String(aV(f, 'NOMBRE') || ''), rings: rings, bb: bb }); });
-        }
-        E.verGeo[mk] = out;
-      }
-    } catch (e) { E.errT = 'No se pudieron cargar las veredas: ' + e.message; }
+    try { await cargaVer(mk); } catch (e) { E.errT = 'No se pudieron cargar las veredas: ' + e.message; }
     if (el && E.tab === 'mapa') pintarDatos();
   }
   function verDe(o, mk) {
@@ -506,58 +506,111 @@
 
   /* ── Histórico MapBiomas Fuego ──────────────────────── */
   async function historico(box) {
-    if (E.hist === undefined) { try { var r = await fetch('data/mapbiomas_fuego_caldas.json', { cache: 'no-cache' }); E.hist = r.ok ? await r.json() : null; } catch (e) { E.hist = null; } }
-    if (!E.hist || !E.hist.municipios) {
-      box.innerHTML = '<h2>Histórico de área quemada · MapBiomas Fuego</h2><div class="fg-aviso">Los datos históricos aún no están cargados. Se generan una sola vez con el script de Google Earth Engine (<code>herramientas/mapbiomas_fuego_gee.js</code>) y el resultado se guarda en <code>data/mapbiomas_fuego_caldas.json</code>.</div><p>Cuando estén cargados verá aquí el área quemada anual por municipio (ha), la frecuencia de fuego y el desglose por cobertura, con el crédito a MapBiomas Fuego Colombia.</p>'; return;
-    }
-    var H = E.hist, anios = H.anios || [], filas = H.municipios;
-    var tot = anios.map(function (_, i) { return filas.reduce(function (a, f) { return a + (f.ha[i] || 0); }, 0); }), mx = Math.max.apply(null, tot.concat([1]));
-    var w = 760, h = 200, bw = w / Math.max(anios.length, 1);
-    var svg = '<svg viewBox="0 0 ' + w + ' ' + (h + 30) + '" style="width:100%;height:auto">' + tot.map(function (v, i) { var bh = v / mx * h; return '<rect x="' + (i * bw + 2) + '" y="' + (h - bh) + '" width="' + (bw - 4) + '" height="' + bh + '" fill="#c2410c"><title>' + anios[i] + ': ' + Math.round(v).toLocaleString('es-CO') + ' ha</title></rect>' + (i % 3 === 0 ? '<text x="' + (i * bw + bw / 2) + '" y="' + (h + 14) + '" font-size="10" text-anchor="middle" fill="#7c6a5d">' + anios[i] + '</text>' : ''); }).join('') + '</svg>';
-    var tabla = '<table class="g-tab" style="border-collapse:collapse;width:100%"><tr><th align="left">Municipio</th><th align="right">Total ' + anios[0] + '–' + anios[anios.length - 1] + ' (ha)</th><th align="right">Último año (ha)</th></tr>' +
-      filas.slice().sort(function (a, b) { return b.ha.reduce(function (s, v) { return s + v; }, 0) - a.ha.reduce(function (s, v) { return s + v; }, 0); }).map(function (f) { var s = f.ha.reduce(function (a, v) { return a + v; }, 0); return '<tr><td>' + esc(f.nombre) + '</td><td align="right">' + Math.round(s).toLocaleString('es-CO') + '</td><td align="right">' + Math.round(f.ha[f.ha.length - 1] || 0).toLocaleString('es-CO') + '</td></tr>'; }).join('') + '</table>';
-    var ult = anios[anios.length - 1];
-    box.innerHTML = '<h2>Mapa de área quemada · MapBiomas Fuego</h2>' +
-      '<div class="fg-hbar" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0"><select data-r="hmod"><option value="anio">Año específico</option><option value="freq">Frecuencia de fuego ' + anios[0] + '–' + ult + '</option></select>' +
-      '<input type="range" data-r="hanio" min="' + anios[0] + '" max="' + ult + '" value="' + ult + '" step="1" style="flex:1;min-width:160px"><b data-r="hlab">' + ult + '</b></div>' +
-      '<div data-r="hmap" style="height:460px;border-radius:8px;overflow:hidden;position:relative"></div>' +
-      '<div data-r="hleg" style="font-size:11.5px;color:#7c6a5d;margin:6px 0 14px"></div>' +
-      '<h2>Área quemada anual en Caldas (ha)</h2>' + svg + '<p style="font-size:11.5px;color:#7c6a5d">Fuente: MapBiomas Fuego Colombia, Colección 1 (' + esc(H.generado || '') + '). Procesamiento: Plataforma de Gestión Territorial.</p>' + tabla;
-    mapaHist(box);
-  }
-  async function mapaHist(box) {
-    var L = window.__pgtL, cont = box.querySelector('[data-r=hmap]'); if (!cont) return;
+    var get = function (u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); };
+    if (E.hist === undefined || E.hist === null) E.hist = await get('data/mapbiomas_fuego_caldas.json');
+    if (E.histV === undefined) E.histV = await get('data/mapbiomas_fuego_veredas.json');
+    if (!E.hist || !E.hist.municipios) { box.innerHTML = '<div class="fg-aviso">Los datos históricos de MapBiomas Fuego aún no están cargados.</div>'; return; }
+    var meta = await get('data/mapbiomas/meta.json'); if (!meta) { box.innerHTML = '<div class="fg-aviso">Las imágenes del mapa histórico aún no están publicadas.</div>'; return; }
+    var an = E.hist.anios, ult = an[an.length - 1], HS = E.hs = E.hs || { modo: 'anio', anio: ult, mun: '', ver: '' };
+    var lectura = function (n) { return Math.round(n).toLocaleString('es-CO'); };
+    box.innerHTML =
+      '<div class="fg-filtros">' +
+        '<div class="fg-grp"><span>Vista</span><div class="fg-chips" data-g="modo"><button data-v="anio">Por año</button><button data-v="freq">Frecuencia ' + an[0] + '–' + ult + '</button></div></div>' +
+        '<div class="fg-grp"><span>Año</span><div style="display:flex;align-items:center;gap:8px"><button class="fg-b" data-a="play" title="Reproducir los años">▶</button><input type="range" data-r="hanio" min="' + an[0] + '" max="' + ult + '" step="1" value="' + HS.anio + '" style="width:200px"><b data-r="hlab" style="min-width:36px">' + HS.anio + '</b></div></div>' +
+        '<div class="fg-grp"><span>Municipio</span><select data-k="hmun"><option value="">Todo Caldas</option></select></div>' +
+        '<div class="fg-grp"><span>Vereda</span><select data-k="hver"><option value="">Todas las veredas</option></select></div>' +
+      '</div>' +
+      '<div class="fg-kpis" data-r="hk"></div>' +
+      '<div class="fg-cuerpo"><div class="fg-mapa"><div data-r="hmap"></div><div class="fg-leyenda" data-r="hleg"></div></div><div class="fg-lado-w"><div class="fg-lado" data-r="hl"></div></div></div>' +
+      '<p class="fg-sm" style="margin:2px 4px">Fuente: MapBiomas Fuego Colombia, Colección 1 (30 m; CC BY 4.0). Procesamiento: Plataforma de Gestión Territorial. Solo se muestra el territorio de Caldas.</p>';
+    var $ = function (q) { return box.querySelector(q); }, L = window.__pgtL, cont = $('[data-r=hmap]');
     if (!L) { cont.innerHTML = '<div class="fg-vacio">El mapa no está disponible todavía. Abra Territorio una vez y vuelva a intentarlo.</div>'; return; }
-    var meta = null; try { var r = await fetch('data/mapbiomas/meta.json', { cache: 'no-cache' }); if (r.ok) meta = await r.json(); } catch (e) {}
-    if (!meta) { cont.innerHTML = '<div class="fg-vacio">Las imágenes del mapa histórico aún no están publicadas.</div>'; return; }
     if (E.hmapa) { try { E.hmapa.remove(); } catch (e) {} }
-    var m = E.hmapa = L.map(cont).setView([5.28, -75.3], 9);
-    m.__gcCentrado = true; if (window.__gcBase) window.__gcBase(L, { id: 'satellite' }, m); else L.tileLayer(FONDOS.sat[0], { maxZoom: 16, attribution: FONDOS.sat[1] }).addTo(m);
+    var m = E.hmapa = L.map(cont); m.__gcCentrado = true; m.createPane('fgimg').style.zIndex = 350;
+    if (window.__gcBase) window.__gcBase(L, { id: 'satellite' }, m); else L.tileLayer(FONDOS.sat[0], { maxZoom: 16 }).addTo(m);
     m.attributionControl.addAttribution('MapBiomas Fuego Colombia (CC BY 4.0)');
-    var cap = null, bounds = meta.bounds;
-    var sel = box.querySelector('[data-r=hmod]'), sl = box.querySelector('[data-r=hanio]'), lab = box.querySelector('[data-r=hlab]'), leg = box.querySelector('[data-r=hleg]');
-    function pinta() {
-      if (cap) m.removeLayer(cap);
-      var fr = sel.value === 'freq';
-      sl.disabled = fr; lab.textContent = fr ? meta.anios[0] + '–' + meta.anios[meta.anios.length - 1] : sl.value;
-      cap = L.imageOverlay('data/mapbiomas/' + (fr ? 'fuego_frecuencia' : 'fuego_' + sl.value) + '.png', bounds, { opacity: 0.9 }).addTo(m);
-      leg.innerHTML = fr ? '<span style="color:#facc15">■</span> 1 vez &nbsp;<span style="color:#f97316">■</span> 2–3 veces &nbsp;<span style="color:#dc2626">■</span> 4–6 veces &nbsp;<span style="color:#7f1d1d">■</span> 7 o más. ' : '<span style="color:#dc2626">■</span> Área quemada en ' + sl.value + '. ';
-      leg.innerHTML += 'Fuente: MapBiomas Fuego Colombia, Colección 1 (30 m); recorte a los municipios de Caldas.';
+    m.fitBounds(meta.bounds); var img = null, mask = null, linea = null, vers = null, bbCaldas = null;
+    var normK = norm, nombres = {}; E.hist.municipios.forEach(function (f) { nombres[normK(f.nombre)] = tit(f.nombre); });
+
+    function serie() {
+      if (HS.ver) { var v = E.histV && (E.histV.v || []).filter(function (x) { return String(x[0]) === String(HS.ver); })[0]; return v ? { v: v[3], et: v[1] + ' (' + tit(v[2]) + ')' } : null; }
+      if (HS.mun) { var f = E.hist.municipios.filter(function (x) { return normK(x.nombre) === HS.mun; })[0]; return f ? { v: f.ha, et: tit(f.nombre) } : null; }
+      var t = an.map(function (_, i) { return E.hist.municipios.reduce(function (a, f) { return a + (f.ha[i] || 0); }, 0); }); return { v: t, et: 'Caldas' };
     }
-    sel.value = 'freq'; sel.onchange = pinta; sl.oninput = pinta; pinta();
-    m.fitBounds(bounds);
-    [100, 400, 1200].forEach(function (t) { setTimeout(function () { m.invalidateSize(); }, t); });
-    try {
-      await ensureMun();
-      if (munGeo && E.hmapa === m) {
-        /* Todo lo que está fuera de Caldas se atenúa y el mapa no se puede alejar de Caldas */
-        var all = [], bb = [1e9, 1e9, -1e9, -1e9];
-        munGeo.forEach(function (f) { if (!f.geometry || !f.geometry.rings) return; f.geometry.rings.forEach(function (rg) { all.push(rg.map(function (p) { return [p[1], p[0]]; })); }); if (f._bb) { bb[0] = Math.min(bb[0], f._bb[0]); bb[1] = Math.min(bb[1], f._bb[1]); bb[2] = Math.max(bb[2], f._bb[2]); bb[3] = Math.max(bb[3], f._bb[3]); } });
-        L.polygon([[[-90, -180], [-90, 180], [90, 180], [90, -180]]].concat(all), { stroke: false, fillColor: '#f8fafc', fillOpacity: .88, interactive: false }).addTo(m);
-        munGeo.forEach(function (f) { if (!f.geometry || !f.geometry.rings) return; L.polygon(f.geometry.rings.map(function (rg) { return rg.map(function (p) { return [p[1], p[0]]; }); }), { color: '#fde047', weight: 1.3, fill: true, fillOpacity: 0 }).bindTooltip(tit(f.attributes.MpNombre), { sticky: true }).addTo(m); });
-        var cb = [[bb[1], bb[0]], [bb[3], bb[2]]]; m.fitBounds(cb); m.setMaxBounds(L.latLngBounds(cb).pad(0.25)); m.setMinZoom(Math.max(7, m.getZoom() - 1));
+    function ranking() {
+      var i = an.indexOf(HS.anio), val = function (a) { return HS.modo === 'freq' ? a.reduce(function (s, x) { return s + (x || 0); }, 0) : (a[i] || 0); }, filas;
+      if (HS.ver) return null;
+      if (HS.mun) { if (!E.histV) return []; filas = (E.histV.v || []).filter(function (x) { return normK(x[2]) === HS.mun; }).map(function (x) { return { k: x[1], id: String(x[0]), n: val(x[3]), lv: 'ver' }; }); }
+      else filas = E.hist.municipios.map(function (f) { return { k: tit(f.nombre), id: normK(f.nombre), n: val(f.ha), lv: 'mun' }; });
+      return filas.sort(function (a, b) { return b.n - a.n; });
+    }
+    function panel() {
+      var S = serie(), i = an.indexOf(HS.anio), h = '';
+      var nombre = S ? S.et : (HS.ver ? 'Vereda' : '');
+      if (!S) { $('[data-r=hk]').innerHTML = ''; $('[data-r=hl]').innerHTML = '<div class="fg-aviso">' + (HS.ver ? 'Aún no se ha calculado el área quemada por vereda (se genera una sola vez con los rásteres de MapBiomas).' : 'Sin datos para este territorio.') + '</div>'; return; }
+      var tot = S.v.reduce(function (a, b) { return a + (b || 0); }, 0), mx = Math.max.apply(null, S.v.concat([0])), im = S.v.indexOf(mx), prom = tot / an.length;
+      $('[data-r=hk]').innerHTML = kpi('k-rojo', lectura(S.v[i] || 0) + ' ha', 'Área quemada ' + HS.anio, esc(nombre)) + kpi('', lectura(tot) + ' ha', 'Total ' + an[0] + '–' + ult, esc(nombre)) + kpi('k-mor', mx > 0 ? String(an[im]) : '—', 'Año con más área', mx > 0 ? lectura(mx) + ' ha' : 'sin fuego registrado') + kpi('k-ver', lectura(prom) + ' ha', 'Promedio anual', esc(nombre));
+      h += '<div class="fg-bc"><a data-bc="c" class="' + (!HS.mun ? 'on' : '') + '">Caldas</a>' + (HS.mun ? ' › <a data-bc="m" class="' + (!HS.ver ? 'on' : '') + '">' + esc(nombres[HS.mun] || tit(HS.mun)) + '</a>' : '') + (HS.ver ? ' › <a class="on">' + esc(S.et) + '</a>' : '') + '</div>';
+      h += '<div class="fg-card"><h3>Área quemada por año · ' + esc(nombre) + ' (ha)</h3><div class="fg-serie fg-serie-h">' + S.v.map(function (v, k) { return '<div class="fg-col" data-y="' + an[k] + '" style="cursor:pointer" title="' + an[k] + ': ' + lectura(v) + ' ha"><div class="fg-col-b"><i style="height:' + (mx ? v / mx * 100 : 0) + '%;background:' + (an[k] === HS.anio && HS.modo === 'anio' ? '#7c2d12' : '#f59e0b') + '"></i></div><span>' + (k % 5 === 0 || an[k] === HS.anio ? an[k] : '&nbsp;') + '</span></div>'; }).join('') + '</div><p class="fg-sm">Toque una barra para ver ese año en el mapa.</p></div>';
+      var R = ranking();
+      if (R) {
+        var mr = Math.max.apply(null, R.map(function (x) { return x.n; }).concat([1]));
+        h += '<div class="fg-card"><h3>' + (HS.mun ? 'Veredas de ' + esc(nombres[HS.mun] || tit(HS.mun)) : 'Municipios') + ' · ' + (HS.modo === 'freq' ? 'acumulado ' + an[0] + '–' + ult : HS.anio) + '</h3>' + (R.length ? R.slice(0, 40).map(function (x) { return '<div class="fg-br" style="grid-template-columns:120px 1fr 72px" data-lv="' + x.lv + '" data-m="' + esc(x.id) + '"><span class="fg-br-n" title="' + esc(x.k) + '">' + esc(x.k) + '</span><div class="fg-br-b"><i style="width:' + (x.n / mr * 100) + '%;background:#c2410c"></i></div><b style="min-width:62px">' + lectura(x.n) + '</b></div>'; }).join('') + '<p class="fg-sm">Hectáreas quemadas. Toque un nombre para verlo en el mapa.</p>' : '<div class="fg-vacio">' + (E.histV ? 'Sin datos por vereda.' : 'El cálculo por vereda aún no está publicado.') + '</div>') + '</div>';
       }
-    } catch (e) {}
+      var lado = $('[data-r=hl]'); lado.innerHTML = h;
+      lado.querySelectorAll('[data-y]').forEach(function (b) { b.onclick = function () { HS.modo = 'anio'; HS.anio = Number(b.dataset.y); sync(); }; });
+      lado.querySelectorAll('.fg-br[data-lv]').forEach(function (b) { b.onclick = function () { if (b.dataset.lv === 'ver') HS.ver = b.dataset.m; else { HS.mun = b.dataset.m; HS.ver = ''; } sync(); }; });
+      lado.querySelectorAll('[data-bc]').forEach(function (b) { b.onclick = function () { if (b.dataset.bc === 'c') { HS.mun = ''; HS.ver = ''; } else HS.ver = ''; sync(); }; });
+    }
+    async function territorio() {
+      if (mask) { m.removeLayer(mask); mask = null; } if (linea) { m.removeLayer(linea); linea = null; } if (vers) { m.removeLayer(vers); vers = null; }
+      await ensureMun(); if (!munGeo || E.hmapa !== m) return;
+      var ll = function (rings) { return rings.map(function (rg) { return rg.map(function (p) { return [p[1], p[0]]; }); }); }, hueco = [], bb = [1e9, 1e9, -1e9, -1e9], borde = null;
+      var ext = function (b) { bb[0] = Math.min(bb[0], b[0]); bb[1] = Math.min(bb[1], b[1]); bb[2] = Math.max(bb[2], b[2]); bb[3] = Math.max(bb[3], b[3]); };
+      if (HS.ver && HS.mun) {
+        var gv = await cargaVer(HS.mun).catch(function () { return []; }), v = gv.filter(function (x) { return x.id === String(HS.ver); })[0];
+        if (v) { hueco = ll(v.rings); ext(v.bb); borde = hueco; }
+      } else if (HS.mun) {
+        var f = munGeo.filter(function (x) { return normK(x.attributes.MpNombre) === HS.mun; })[0]; if (f) { hueco = ll(f.geometry.rings); ext(f._bb); borde = hueco; }
+      }
+      if (!hueco.length) { munGeo.forEach(function (f) { if (f.geometry && f.geometry.rings) hueco = hueco.concat(ll(f.geometry.rings)); if (f._bb) ext(f._bb); }); bbCaldas = bb.slice(); }
+      if (E.hmapa !== m) return;
+      mask = L.polygon([[[-90, -180], [-90, 180], [90, 180], [90, -180]]].concat(hueco), { stroke: false, fillColor: '#f8fafc', fillOpacity: .9, interactive: false }).addTo(m);
+      var g = L.layerGroup();
+      munGeo.forEach(function (f) { if (f.geometry && f.geometry.rings) L.polygon(ll(f.geometry.rings), { color: '#fde047', weight: HS.mun ? 1 : 1.3, fill: true, fillOpacity: 0 }).bindTooltip(tit(f.attributes.MpNombre), { sticky: true }).addTo(g); });
+      linea = g.addTo(m);
+      if (HS.mun) { try { var gv2 = await cargaVer(HS.mun); if (E.hmapa === m) { var gg = L.layerGroup(); gv2.forEach(function (x) { L.polygon(ll(x.rings), { color: x.id === String(HS.ver) ? '#ea580c' : '#fff', weight: x.id === String(HS.ver) ? 3 : .8, fill: true, fillOpacity: 0 }).bindTooltip(x.nombre, { sticky: true }).on('click', function () { HS.ver = x.id; sync(); }).addTo(gg); }); vers = gg.addTo(m); } } catch (e) {} }
+      if (borde) L.polygon(borde, { color: '#ea580c', weight: 3, fill: false, interactive: false }).addTo(m);
+      var cb = [[bb[1], bb[0]], [bb[3], bb[2]]]; m.fitBounds(cb, { padding: [20, 20], animate: false });
+      if (!HS.mun) { m.setMaxBounds(L.latLngBounds(cb).pad(0.25)); }
+      else m.setMaxBounds(null);
+    }
+    function mapa() {
+      if (img) m.removeLayer(img);
+      var fr = HS.modo === 'freq';
+      img = L.imageOverlay('data/mapbiomas/' + (fr ? 'fuego_frecuencia' : 'fuego_' + HS.anio) + '.png', meta.bounds, { opacity: .92, pane: 'fgimg' }).addTo(m);
+      $('[data-r=hleg]').innerHTML = fr ? '<div><i style="background:#facc15"></i>1 vez</div><div><i style="background:#f97316"></i>2–3 veces</div><div><i style="background:#dc2626"></i>4–6 veces</div><div><i style="background:#7f1d1d"></i>7 o más</div>' : '<div><i style="background:#dc2626"></i>Área quemada en ' + HS.anio + '</div>';
+    }
+    async function sync() {
+      var sm = $('[data-k=hmun]'), sv = $('[data-k=hver]');
+      sm.value = HS.mun;
+      var vl = HS.mun ? veredasDe(HS.mun) : [];
+      sv.innerHTML = '<option value="">' + (HS.mun ? (vl.length ? 'Todas las veredas' : 'Cargando veredas…') : 'Elija un municipio') + '</option>' + vl.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.etq) + '</option>'; }).join(''); sv.disabled = !HS.mun; sv.value = HS.ver;
+      $('[data-r=hanio]').value = HS.anio; $('[data-r=hlab]').textContent = HS.modo === 'freq' ? an[0] + '–' + ult : HS.anio; $('[data-r=hanio]').disabled = HS.modo === 'freq';
+      box.querySelectorAll('[data-g=modo] button').forEach(function (b) { b.classList.toggle('on', b.dataset.v === HS.modo); });
+      panel(); mapa(); await territorio(); mapa();
+    }
+    /* municipios y veredas */
+    var sm = $('[data-k=hmun]'); Object.keys(nombres).sort().forEach(function (k) { sm.insertAdjacentHTML('beforeend', '<option value="' + esc(k) + '">' + esc(nombres[k]) + '</option>'); });
+    sm.onchange = async function () { HS.mun = sm.value; HS.ver = ''; sync(); if (HS.mun) { try { await listaVeredas(); await cargaVer(HS.mun); } catch (e) {} if (E.hmapa === m) sync(); } };
+    $('[data-k=hver]').onchange = function () { HS.ver = this.value; sync(); };
+    box.querySelectorAll('[data-g=modo] button').forEach(function (b) { b.onclick = function () { HS.modo = b.dataset.v; sync(); }; });
+    var sl = $('[data-r=hanio]'); sl.oninput = function () { HS.anio = Number(sl.value); HS.modo = 'anio'; sync(); };
+    var tim = null, pl = $('[data-a=play]');
+    pl.onclick = function () { if (tim) { clearInterval(tim); tim = null; pl.textContent = '▶'; return; } HS.modo = 'anio'; if (HS.anio >= ult) HS.anio = an[0]; pl.textContent = '❚❚'; tim = setInterval(function () { if (!document.body.contains(sl) || HS.anio >= ult) { clearInterval(tim); tim = null; pl.textContent = '▶'; return; } HS.anio++; sync(); }, 1100); };
+    if (HS.mun) { try { await listaVeredas(); } catch (e) {} }
+    sync();
+    [100, 400, 1200].forEach(function (t) { setTimeout(function () { m.invalidateSize(); }, t); });
   }
 
   function fuentes() {

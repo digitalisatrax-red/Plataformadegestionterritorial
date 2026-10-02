@@ -111,3 +111,5 @@
 .fg-chips button{padding:6px 9px}.fg-filtros{padding:8px 12px}
 
 .fg-dash{overflow:auto}.fg-cuerpo{min-height:380px}
+
+.fg-mapa>div[data-r=hmap]{position:absolute;inset:0}
