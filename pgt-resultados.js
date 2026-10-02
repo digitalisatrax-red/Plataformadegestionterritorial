@@ -19,14 +19,19 @@
   function base(c) { return c.url + '/' + c.layerId; }
   /* Capas que entran al análisis: las 7 de Ciudadanía + cualquier capa vectorial (ArcGIS) que esté encendida en Territorio. */
   function visibles() { return window.__pgtVisibles || {}; }
-  function visSig() { return Object.keys(visibles()).sort().join(',') + '|' + (window.__pgtCapas || []).length; }
+  function hidLeer() { try { return JSON.parse(localStorage.getItem('pgt.res.hid') || '{}'); } catch (e) { return {}; } }
+  function hidGuardar(h) { try { localStorage.setItem('pgt.res.hid', JSON.stringify(h)); } catch (e) {} }
+  function anaCat() { try { return window.__pgtAnaCat ? window.__pgtAnaCat() : []; } catch (e) { return []; } }
+  function visSig() { return Object.keys(visibles()).sort().join(',') + '|' + (window.__pgtCapas || []).length + '|' + anaCat().map(function (c) { return c.id; }).join(',') + '|' + Object.keys(hidLeer()).join(','); }
   function medibles() {
     var all = window.__pgtCapas || [], vis = visibles();
+    var hid = hidLeer();
     return all.filter(function (c) {
       if (c.id === BASE_MUN || c.id === BASE_VER) return false;
       if (c.kind === 'wms' || !c.url) return false;
+      if (hid[c.id]) return false;
       return CRUCE_IDS.indexOf(c.id) !== -1 || (vis[c.id] != null);
-    }).sort(function (a, b) { return CRUCE_IDS.indexOf(a.id) === -1 ? 1 : CRUCE_IDS.indexOf(b.id) === -1 ? -1 : 0; });
+    }).concat(anaCat()).sort(function (a, b) { return CRUCE_IDS.indexOf(a.id) === -1 ? 1 : CRUCE_IDS.indexOf(b.id) === -1 ? -1 : 0; });
   }
   function elegidas() { return medibles().filter(function (c) { return !S.off[c.id]; }); }
   function wmsVisibles() { var vis = visibles(); return (window.__pgtCapas || []).filter(function (c) { return c.kind === 'wms' && vis[c.id] != null; }); }
@@ -295,9 +300,10 @@
     var ms = medibles(), w = wmsVisibles();
     var h = '<section class="r-sec r-capasel"><div class="r-kick">Capas del reporte</div><h2>¿Qué capas entran en el análisis?</h2><div class="r-chk">';
     ms.forEach(function (c) {
-      h += '<label><input type="checkbox" data-r="sel" data-id="' + esc(c.id) + '"' + (S.off[c.id] ? '' : ' checked') + '> <i style="background:' + esc(c.color || '#64748b') + '"></i>' + esc(c.name) + (esExtra(c) ? ' <em>(encendida en Territorio)</em>' : '') + '</label>';
+      h += '<label><input type="checkbox" data-r="sel" data-id="' + esc(c.id) + '"' + (S.off[c.id] ? '' : ' checked') + '> <i style="background:' + esc(c.color || '#64748b') + '"></i>' + esc(c.name) + (c.catalogo ? ' <em>(del catálogo)</em>' : esExtra(c) ? ' <em>(encendida en Territorio)</em>' : '') + '</label>' + (c.catalogo || CRUCE_IDS.indexOf(c.id) !== -1 ? '<button type="button" data-r="quitar" data-id="' + esc(c.id) + '" title="Quitar esta capa del análisis" style="border:0;background:none;color:#b91c1c;cursor:pointer;font-size:15px;line-height:1;margin-left:-10px">×</button>' : '');
     });
     h += '</div>';
+    var nh = Object.keys(hidLeer()).length; if (nh) h += '<p class="r-nota">Quitó ' + nh + ' capa(s) base del análisis. <a href="#" data-r="restaurar">Restaurar capas base</a></p>';
     if (w.length) h += '<p class="r-nota">Capas WMS encendidas (se muestran en el mapa y se listan en el informe, pero al ser imagen no se pueden medir): ' + w.map(function (c) { return '<b>' + esc(c.name) + '</b>'; }).join(', ') + '.</p>';
     h += '<p class="r-nota">Para sumar otra capa, enciéndala en Territorio o conecte un servicio ArcGIS/WMS y vuelva aquí: aparece sola en esta lista. Luego pulse «Calcular».</p></section>';
     return h;
@@ -385,6 +391,8 @@
       if (!S.terr || S.terr.caldas) { alert('Elige un municipio o una vereda para enviarlo al mapa.'); return; }
       if (window.__pgtAoi) { try { window.__pgtAoi(S.terr.full, S.terr.nombre); S.msg = 'Área enviada al mapa de Territorio.'; pintar(root); } catch (e) { S.msg = 'No se pudo enviar el área: ' + e.message; pintar(root); } }
     };
+    root.querySelectorAll('[data-r=quitar]').forEach(function (b) { b.onclick = function () { var id = b.getAttribute('data-id'); if (id.indexOf('cat:') === 0) { if (window.__pgtAnaQuitar) window.__pgtAnaQuitar(id.slice(4)); } else { var h = hidLeer(); h[id] = 1; hidGuardar(h); } S.res = null; S.cruce = null; pintar(root); }; });
+    root.querySelectorAll('[data-r=restaurar]').forEach(function (a) { a.onclick = function (e) { e.preventDefault(); hidGuardar({}); S.res = null; S.cruce = null; pintar(root); }; });
     root.querySelectorAll('[data-r=sel]').forEach(function (cb) { cb.onchange = function () { S.off[cb.getAttribute('data-id')] = !cb.checked; }; });
     if (q('geo')) q('geo').onclick = function () { bajarGeo(geoTodo(), 'resultados_' + slug(S.terr.nombre)); };
     root.querySelectorAll('[data-r=geo1]').forEach(function (b) { b.onclick = function () { var x = (S.res || []).filter(function (r) { return r.c.id === b.getAttribute('data-id'); })[0]; if (x) bajarGeo({ type: 'FeatureCollection', features: x.geo || [] }, slug(x.c.name) + '_' + slug(S.terr.nombre)); }; });
