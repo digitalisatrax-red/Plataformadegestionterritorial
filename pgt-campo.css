@@ -37,3 +37,13 @@
 .pc-note{color:#9b8b7e;font-size:11.5px;margin-top:8px}.pc-ruta{display:inline-block;margin-top:8px;font-weight:700;color:#15803d;font-size:12.5px}
 @media(max-width:860px){.pc-fil input{width:100%}.pc-bar{padding:8px 12px}}
 .pc-pop{width:290px;max-width:80vw}
+.pc-add{border-style:dashed;color:#15803d;--c:#15803d}.pc-add:hover{background:#ecfdf3}
+.pc-x{font-style:normal;margin-left:2px;font-size:16px;line-height:1;padding:0 3px;border-radius:50%}.pc-x:hover{background:#fee2e2;color:#b91c1c}
+.pc-lnk{border:0;background:none;color:#15803d;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;text-decoration:underline}
+.pc-dlg{position:absolute;inset:0;background:rgba(43,29,20,.45);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px}
+.pc-box{background:#fff;border-radius:14px;padding:22px;width:100%;max-width:440px;display:flex;flex-direction:column;gap:12px;max-height:94vh;overflow:auto}
+.pc-box h3{margin:0;font-size:17px;color:#2b1d14}.pc-box p{margin:0;font-size:12.5px;color:#6b5a4d;line-height:1.5}
+.pc-box label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:#6b5a4d}.pc-box label small{font-weight:400;color:#9b8b7e}
+.pc-box input:not([type=color]):not([type=file]){height:38px;padding:0 10px;border:1px solid #d9ccc0;border-radius:8px;font:inherit}
+.pc-box input[type=color]{width:60px;height:34px;padding:0;border:1px solid #d9ccc0;border-radius:6px}
+.pc-acc{display:flex;gap:10px;justify-content:flex-end}.pc-acc .pc-go{padding:0 18px}

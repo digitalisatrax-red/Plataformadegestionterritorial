@@ -7,8 +7,10 @@
     ambiental: { n: 'Ambiental', c: '#16a34a', t: 'ambiental' },
     social: { n: 'Social', c: '#2563eb', t: 'social' }
   };
-  var OCULTOS = { fid: 1, geom: 1, contacto: 1, nombre_referencia: 1, foto: 1, lat: 1, lon: 1 };
-  var S = { sync: '', cred: null, pts: [], err: '', cargando: false, quien: '', actualizado: 0, mod: { alerta: true, ambiental: true, social: true }, mun: '', dias: 90, mapa: null, capa: null, base: null, sel: null };
+  var PAL = ['#9333ea', '#0891b2', '#ca8a04', '#db2777', '#4b5563', '#ea580c', '#0d9488', '#7c3aed'];
+  function addMod(k, n, t, ext) { if (!MOD[k]) { MOD[k] = { n: n, c: PAL[Object.keys(MOD).length % PAL.length], t: t, dyn: true, ext: !!ext }; S.mod[k] = true; } return MOD[k]; }
+  var OCULTOS = { fid: 1, geom: 1, geometry: 1, contacto: 1, nombre_referencia: 1, foto: 1, lat: 1, lon: 1 };
+  var S = { ext: [], extPts: [], sync: '', cred: null, pts: [], err: '', cargando: false, quien: '', actualizado: 0, mod: { alerta: true, ambiental: true, social: true }, mun: '', dias: 90, mapa: null, capa: null, base: null, sel: null };
   var el = null, SQL = null, SQLp = null;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -45,13 +47,36 @@
     });
     return SQLp;
   }
-  function punto(b) {
-    if (!b || b.length < 21 || b[0] !== 0x47 || b[1] !== 0x50) return null;
-    var fl = b[3], env = [0, 32, 48, 48, 64][(fl >> 1) & 7] || 0, i = 8 + env, le = b[i] === 1, dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
-    var tp = dv.getUint32(i + 1, le) % 1000; if (tp !== 1) return null;
-    var x = dv.getFloat64(i + 5, le), y = dv.getFloat64(i + 13, le);
-    return isFinite(x) && isFinite(y) && (x || y) ? { lon: x, lat: y } : null;
+  /* WKB → geometría GeoJSON (puntos, líneas, polígonos y sus versiones múltiples) */
+  function wkb(dv, o) {
+    var le = dv.getUint8(o) === 1, t = dv.getUint32(o + 1, le); o += 5;
+    var tp = (t & 0xFFFF) % 1000, k1 = Math.floor((t & 0xFFFF) / 1000), dim = 2 + ((t & 0x80000000) || k1 === 1 || k1 === 3 ? 1 : 0) + ((t & 0x40000000) || k1 >= 2 ? 1 : 0);
+    if (t & 0x20000000) o += 4;
+    function pt() { var c = [dv.getFloat64(o, le), dv.getFloat64(o + 8, le)]; o += 8 * dim; return c; }
+    function ring() { var n = dv.getUint32(o, le); o += 4; var r = []; for (var k = 0; k < n; k++) r.push(pt()); return r; }
+    if (tp === 1) return { g: { type: 'Point', coordinates: pt() }, o: o };
+    if (tp === 2) return { g: { type: 'LineString', coordinates: ring() }, o: o };
+    if (tp === 3) { var n = dv.getUint32(o, le); o += 4; var rs = []; for (var k = 0; k < n; k++) rs.push(ring()); return { g: { type: 'Polygon', coordinates: rs }, o: o }; }
+    if (tp >= 4 && tp <= 6) {
+      var m = dv.getUint32(o, le); o += 4; var parts = [];
+      for (var q = 0; q < m; q++) { var r = wkb(dv, o); parts.push(r.g.coordinates); o = r.o; }
+      return { g: { type: ['MultiPoint', 'MultiLineString', 'MultiPolygon'][tp - 4], coordinates: parts }, o: o };
+    }
+    return null;
   }
+  function geom(b) {
+    try {
+      if (!b || b.length < 21 || b[0] !== 0x47 || b[1] !== 0x50) return null;
+      var fl = b[3], env = [0, 32, 48, 48, 64][(fl >> 1) & 7] || 0, dv = new DataView(b.buffer, b.byteOffset, b.byteLength), r = wkb(dv, 8 + env);
+      return r ? r.g : null;
+    } catch (e) { return null; }
+  }
+  function centro(g) {
+    var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    (function rec(a) { if (typeof a[0] === 'number') { if (a[0] < x0) x0 = a[0]; if (a[0] > x1) x1 = a[0]; if (a[1] < y0) y0 = a[1]; if (a[1] > y1) y1 = a[1]; } else a.forEach(rec); })(g.coordinates);
+    return x0 > x1 ? null : { lon: (x0 + x1) / 2, lat: (y0 + y1) / 2 };
+  }
+  function punto(b) { var g = geom(b); if (!g || g.type !== 'Point') return null; var c = g.coordinates; return isFinite(c[0]) && isFinite(c[1]) && (c[0] || c[1]) ? { lon: c[0], lat: c[1] } : null; }
   function tabla(db, t) {
     var out = [], r;
     try { r = db.exec('SELECT * FROM "' + t + '"'); } catch (e) { return out; }
@@ -63,7 +88,7 @@
   function numero(x) { var n = Number(x); return isFinite(n) && x !== null && x !== '' ? n : null; }
   function normalizar(db) {
     var pts = [];
-    Object.keys(MOD).forEach(function (k) {
+    ['alerta', 'ambiental', 'social'].forEach(function (k) {
       tabla(db, MOD[k].t).forEach(function (r) {
         var g = punto(r.geom), lat = g ? g.lat : numero(r.lat), lon = g ? g.lon : numero(r.lon);
         if (lat === null || lon === null || (lat === 0 && lon === 0)) return;
@@ -72,6 +97,21 @@
         pts.push({ mod: k, id: 'qf-' + MOD[k].t + '-' + r.fid, fid: r.fid, lat: lat, lon: lon, fecha: f ? f.getTime() : 0, municipio: r.municipio || '', vereda: r.vereda || '', sitio: r.sitio || '', reg: r.registrador || r.reportante || '', foto: r.foto || '', r: r });
       });
     });
+    /* Cualquier otra capa que se agregue al proyecto de QField aparece sola como una categoría nueva */
+    var ref = { municipios: 1, veredas: 1, ambiental: 1, social: 1, reportes_incendio: 1 };
+    try {
+      var cs = db.exec("SELECT table_name FROM gpkg_contents WHERE data_type='features'");
+      (cs.length ? cs[0].values : []).forEach(function (v) {
+        var t = v[0]; if (ref[t] || /^(gpkg_|rtree_|sqlite_)/.test(t)) return;
+        var filas = tabla(db, t); if (!filas.length || filas.length > 3000) return;
+        var k = 'x_' + t; if (!MOD[k]) addMod(k, tit(t.replace(/_/g, ' ')), t);
+        filas.forEach(function (r) {
+          var g = geom(r.geom), c = g && centro(g); if (!c) return;
+          var f = r.fecha_hora || r.fecha ? new Date(String(r.fecha_hora || r.fecha).replace(' ', 'T')) : null; if (f && isNaN(f)) f = null;
+          pts.push({ mod: k, id: 'qf-' + t + '-' + r.fid, fid: r.fid, lat: c.lat, lon: c.lon, geo: g, fecha: f ? f.getTime() : 0, municipio: r.municipio || '', vereda: r.vereda || '', sitio: r.sitio || r.nombre || '', reg: r.registrador || '', foto: r.foto || '', r: r });
+        });
+      });
+    } catch (e) {}
     return pts;
   }
   async function cargar() {
@@ -120,7 +160,8 @@
   /* ── Visor ──────────────────────────────────────────── */
   var ROT = { fecha_hora: 'Fecha y hora', registrador: 'Registró', reportante: 'Reportó', tipo_registro: 'Tipo de registro', estado_conservacion: 'Estado de conservación', especie_o_grupo: 'Especie o grupo', n_individuos: 'N.º de individuos', tipo_agua: 'Tipo de agua', calidad_agua: 'Calidad del agua', presion_principal: 'Presión principal', otras_presiones: 'Otras presiones', area_ha: 'Área (ha)', area_protegida: 'Área protegida', accion_recomendada: 'Acción recomendada', tipo_actor: 'Tipo de actor', n_personas: 'N.º de personas', actividad_economica: 'Actividad económica', acceso_agua: 'Acceso al agua', usa_fuego: 'Usa fuego', motivo_fuego: 'Motivo del fuego', conoce_protocolo: 'Conoce el protocolo', percepcion_riesgo: 'Percepción del riesgo', necesidad_principal: 'Necesidad principal', tipo_fuego: 'Tipo de fuego', causa_probable: 'Causa probable', afectacion: 'Afectación' };
   var ICO = { alerta: '<path d="M12 2c1 4-3 5-3 9a3 3 0 0 0 6 0c0-1-.4-1.800-1-2.500 3 1.500 5 4.500 5 7.500a7 7 0 0 1-14 0c0-6 5-8 7-14z"/>', ambiental: '<path d="M20 4C9 4 4 9 4 15c0 2 1 4 1 4s1-1 2-1c6 0 13-3 13-14zM4 21c2-6 6-9 11-11"/>', social: '<circle cx="9" cy="8" r="3.500"/><circle cx="17" cy="9" r="2.500"/><path d="M2 20c0-4 3-6 7-6s7 2 7 6zM16 14c3 0 6 1.500 6 5h-4"/>' };
-  function ico(k, sz) { return '<svg viewBox="0 0 24 24" width="' + (sz || 16) + '" height="' + (sz || 16) + '" fill="currentColor" aria-hidden="true">' + ICO[k] + '</svg>'; }
+  ICO.capa = '<path d="M12 3 2 8l10 5 10-5zM2 12l10 5 10-5M2 16l10 5 10-5" fill="none" stroke="currentColor" stroke-width="2"/>';
+  function ico(k, sz) { return '<svg viewBox="0 0 24 24" width="' + (sz || 16) + '" height="' + (sz || 16) + '" fill="currentColor" aria-hidden="true">' + (ICO[k] || ICO.capa) + '</svg>'; }
   function hace(t) {
     if (!t) return '';
     var m = Math.round((Date.now() - t) / 6e4); if (m < 1) return 'ahora'; if (m < 60) return 'hace ' + m + ' min';
@@ -130,12 +171,14 @@
     var r = p.r;
     if (p.mod === 'alerta') return (r.tipo_fuego ? 'Incendio · ' + r.tipo_fuego : 'Alerta de incendio');
     if (p.mod === 'ambiental') return r.tipo_registro ? 'Registro ambiental · ' + r.tipo_registro : 'Registro ambiental';
-    return r.tipo_actor ? 'Encuesta social · ' + r.tipo_actor : 'Encuesta social';
+    if (p.mod === 'social') return r.tipo_actor ? 'Encuesta social · ' + r.tipo_actor : 'Encuesta social';
+    var nom = r.nombre || r.name || r.NOMBRE || r.Name || r.titulo || r.tipo; return MOD[p.mod].n + (nom ? ' · ' + nom : '');
   }
-  function lugar(p) { return [p.sitio, p.vereda, tit(p.municipio)].filter(Boolean).join(' · ') || 'Sin ubicación descrita'; }
+  function lugar(p) { return [p.sitio, p.vereda, tit(p.municipio)].filter(Boolean).join(' · ') || (MOD[p.mod].dyn ? 'Capa: ' + MOD[p.mod].n : 'Sin ubicación descrita'); }
+  function todos() { return S.pts.concat(S.extPts || []); }
   function filtrados() {
     var lim = Date.now() - S.dias * 864e5, q = (S.q || '').toLowerCase();
-    return S.pts.filter(function (p) { return S.mod[p.mod] && (!S.mun || p.municipio === S.mun) && (!S.dias || !p.fecha || p.fecha >= lim) && (!q || (titulo(p) + ' ' + lugar(p) + ' ' + p.reg).toLowerCase().indexOf(q) >= 0); });
+    return todos().filter(function (p) { return S.mod[p.mod] && (!S.mun || p.municipio === S.mun) && (!S.dias || !p.fecha || p.fecha >= lim) && (!q || (titulo(p) + ' ' + lugar(p) + ' ' + p.reg).toLowerCase().indexOf(q) >= 0); });
   }
   function abrir() {
     if (el || !permitido()) return;
@@ -154,36 +197,39 @@
     if (!el) return;
     var c = el.querySelector('[data-r=cont]');
     try { if (S.mapa) { S.mapa.closePopup(); S.mapa.remove(); } } catch (e) {} S.mapa = null; S.capa = null;
-    if (!S.cred) {
+    if (!S.cred && !S.omitir) {
       c.innerHTML = '<div class="pc-login"><div class="pc-badges">' + ['alerta', 'ambiental', 'social'].map(function (k) { return '<span style="background:' + MOD[k].c + '">' + ico(k, 22) + '</span>'; }).join('') + '</div><h2>Conecte el proyecto de campo</h2>' +
         '<p>Escriba el usuario y la contraseña de QFieldCloud para traer los registros. No se guardan: solo se usan mientras esta ventana del navegador esté abierta.</p>' +
         '<p class="pc-tip">Atajo: si en la pestaña <b>Campo</b> ya pulsó «Verificar conexión», este visor se conecta solo.</p>' +
         '<label>Usuario y contraseña<input data-r="tk" type="password" autocomplete="off" placeholder="usuario:contraseña"></label>' +
         '<details><summary>Opciones avanzadas</summary><label>ID del proyecto<input data-r="pid" value="' + PID + '"></label></details>' +
-        '<button class="pc-go" data-r="go">Conectar y ver los puntos</button><div class="pc-err" data-r="er">' + esc(S.err) + '</div></div>';
+        '<button class="pc-go" data-r="go">Conectar y ver los puntos</button><div class="pc-err" data-r="er">' + esc(S.err) + '</div><button type="button" class="pc-lnk" data-r="om">Solo quiero ver mis propias capas (sin QField)</button></div>';
       var go = async function () {
         var b = c.querySelector('[data-r=go]'), pid = c.querySelector('[data-r=pid]').value.trim(), tk = c.querySelector('[data-r=tk]').value.trim(), er = c.querySelector('[data-r=er]');
         if (tk.length < 3) { er.textContent = 'Escriba usuario:contraseña (separados por dos puntos).'; return; }
         b.disabled = true; b.textContent = 'Cargando…'; S.cred = { projectId: pid, token: tk };
         try { await cargar(); await sincronizar(); pintar(); } catch (e) { S.cred = null; pintar(); }
       };
+      c.querySelector('[data-r=om]').onclick = function () { S.omitir = true; pintar(); };
       c.querySelector('[data-r=go]').onclick = go; c.querySelector('[data-r=tk]').onkeydown = function (e) { if (e.key === 'Enter') go(); };
       return;
     }
-    if (S.cargando && !S.pts.length) { c.innerHTML = '<div class="fg-vacio">Leyendo el proyecto de campo…</div>'; S.cargando.then(pintar, pintar); return; }
+    if (S.cred && S.cargando && !S.pts.length) { c.innerHTML = '<div class="fg-vacio">Leyendo el proyecto de campo…</div>'; S.cargando.then(pintar, pintar); return; }
     var muns = {}; S.pts.forEach(function (p) { if (p.municipio) muns[p.municipio] = 1; });
-    var cnt = {}; Object.keys(MOD).forEach(function (k) { cnt[k] = S.pts.filter(function (p) { return p.mod === k; }).length; });
+    var cnt = {}; Object.keys(MOD).forEach(function (k) { cnt[k] = todos().filter(function (p) { return p.mod === k; }).length; });
     c.innerHTML = '<div class="pc-bar"><div class="pc-chips">' +
-      Object.keys(MOD).map(function (k) { return '<button type="button" class="pc-chip' + (S.mod[k] ? ' on' : '') + '" data-m="' + k + '" style="--c:' + MOD[k].c + '">' + ico(k, 15) + '<span>' + MOD[k].n + '</span><b>' + cnt[k] + '</b></button>'; }).join('') + '</div>' +
+      Object.keys(MOD).filter(function (k) { return !MOD[k].dyn || cnt[k] || MOD[k].ext; }).map(function (k) { return '<button type="button" class="pc-chip' + (S.mod[k] ? ' on' : '') + '" data-m="' + k + '" style="--c:' + MOD[k].c + '">' + ico(k, 15) + '<span>' + MOD[k].n + '</span><b>' + cnt[k] + '</b>' + (MOD[k].ext ? '<i class="pc-x" data-del="' + k + '" title="Quitar capa">×</i>' : '') + '</button>'; }).join('') + '<button type="button" class="pc-chip pc-add" data-r="add" style="--c:#15803d">+ Añadir capa</button></div>' +
       '<div class="pc-fil"><input type="search" data-r="q" placeholder="Buscar vereda, sitio o persona…" value="' + esc(S.q || '') + '"><select data-r="mun"><option value="">Todos los municipios</option>' + Object.keys(muns).sort().map(function (m) { return '<option value="' + esc(m) + '"' + (m === S.mun ? ' selected' : '') + '>' + esc(tit(m)) + '</option>'; }).join('') + '</select>' +
       '<select data-r="dias">' + [[7, 'Últimos 7 días'], [30, 'Últimos 30 días'], [90, 'Últimos 90 días'], [365, 'Último año'], [0, 'Todo el tiempo']].map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === S.dias ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>' +
-      '<button type="button" class="pgi-btn" data-r="ref">↻ Actualizar</button></div></div><div class="pc-est" data-r="est"></div>' +
+      '<button type="button" class="pgi-btn" data-r="ref">' + (S.cred ? '↻ Actualizar' : 'Conectar QField') + '</button></div></div><div class="pc-est" data-r="est"></div>' +
       '<div class="fg-cuerpo"><div class="fg-mapa"><div data-r="map"></div><div class="pc-base"><button data-b="sat" class="on">Satélite</button><button data-b="map">Mapa</button></div></div><div class="fg-lado" data-r="lado"></div></div>';
+    c.querySelector('[data-r=add]').onclick = dialogo;
+    c.querySelectorAll('[data-del]').forEach(function (x) { x.onclick = function (e) { e.stopPropagation(); quitar(x.dataset.del); }; });
     c.querySelectorAll('[data-m]').forEach(function (i) { i.onclick = function () { S.mod[i.dataset.m] = !S.mod[i.dataset.m]; i.classList.toggle('on', S.mod[i.dataset.m]); datos(true); }; });
     c.querySelector('[data-r=q]').oninput = function () { S.q = this.value; datos(); };
     c.querySelector('[data-r=mun]').onchange = function () { S.mun = this.value; datos(true); };
     c.querySelector('[data-r=dias]').onchange = function () { S.dias = Number(this.value); datos(true); };
-    c.querySelector('[data-r=ref]').onclick = function () { var b = this; b.disabled = true; b.textContent = 'Actualizando…'; cargar().then(sincronizar).then(pintar, pintar); };
+    c.querySelector('[data-r=ref]').onclick = function () { var b = this; if (!S.cred) { S.omitir = false; pintar(); return; } b.disabled = true; b.textContent = 'Actualizando…'; cargar().then(sincronizar).then(pintar, pintar); };
     c.querySelectorAll('[data-b]').forEach(function (b) { b.onclick = function () { S.fondo = b.dataset.b; c.querySelectorAll('[data-b]').forEach(function (x) { x.classList.toggle('on', x === b); }); fondo(); }; });
     mapa(); datos(true);
   }
@@ -221,8 +267,8 @@
     if (S.mapa && L) {
       S.capa.clearLayers(); var pts = [];
       ps.forEach(function (p) {
-        var m = L.marker([p.lat, p.lon], { icon: pin(p) }).addTo(S.capa);
-        m.bindPopup(popup(p), { maxWidth: 330, minWidth: 250 }); m.on('popupopen', function (e) { var b = e.popup.getElement().querySelector('.pc-fotoc'); if (b) b.querySelector('button').onclick = function () { foto(b); }; }); p._m = m; pts.push([p.lat, p.lon]);
+        var m = p.geo && p.geo.type !== 'Point' && p.geo.type !== 'MultiPoint' ? L.geoJSON(p.geo, { style: { color: MOD[p.mod].c, weight: 3, fillOpacity: .25 } }).addTo(S.capa) : L.marker([p.lat, p.lon], { icon: pin(p) }).addTo(S.capa);
+        m.bindPopup(popup(p), { maxWidth: 330, minWidth: 250 }); m.on('popupopen', function (e) { var b = e.popup.getElement().querySelector('.pc-fotoc'); if (b) b.querySelector('button').onclick = function () { foto(b); }; }); p._m = m; pts.push([p.lat, p.lon]); if (!m.openPopup) m.openPopup = function () { m.eachLayer(function (l) { l.openPopup && l.openPopup([p.lat, p.lon]); }); };
       });
       if (ajustar && pts.length) S.mapa.fitBounds(pts, { padding: [50, 50], maxZoom: 13 });
     }
@@ -239,6 +285,77 @@
       lista.map(function (p, i) { return '<div class="pc-it" data-i="' + i + '" style="--c:' + MOD[p.mod].c + '"><span class="pc-ic">' + ico(p.mod, 18) + '</span><div class="pc-tx"><b>' + esc(titulo(p)) + '</b><span>' + esc(lugar(p)) + '</span><small>' + esc(hace(p.fecha)) + (p.reg ? ' · ' + esc(p.reg) : '') + '</small></div></div>'; }).join('');
     lado.querySelectorAll('.pc-it').forEach(function (d) { d.onclick = function () { var p = lista[Number(d.dataset.i)]; if (p && p._m && S.mapa) { S.mapa.setView([p.lat, p.lon], Math.max(S.mapa.getZoom(), 14)); p._m.openPopup(); } }; });
   }
+
+  /* ── Capas propias (archivo o enlace) ─────────────────── */
+  var LS = 'pgt.campo.capas';
+  function guardarCapas() { try { localStorage.setItem(LS, JSON.stringify(S.ext.filter(function (x) { return x.url; }).map(function (x) { return { k: x.k, n: x.n, c: x.c, url: x.url }; }))); } catch (e) {} }
+  function csv(txt) {
+    var ls = txt.replace(/^﻿/, '').split(/\r?\n/).filter(function (l) { return l.trim(); }); if (ls.length < 2) throw new Error('El CSV está vacío.');
+    var sep = (ls[0].match(/;/g) || []).length > (ls[0].match(/,/g) || []).length ? ';' : ',';
+    function cortar(l) { var o = [], c = '', q = false; for (var i = 0; i < l.length; i++) { var ch = l[i]; if (ch === '"') { if (q && l[i + 1] === '"') { c += '"'; i++; } else q = !q; } else if (ch === sep && !q) { o.push(c); c = ''; } else c += ch; } o.push(c); return o; }
+    var h = cortar(ls[0]).map(function (x) { return x.trim(); }), low = h.map(function (x) { return x.toLowerCase(); });
+    function col(ns) { for (var i = 0; i < ns.length; i++) { var k = low.indexOf(ns[i]); if (k >= 0) return k; } return -1; }
+    var iy = col(['lat', 'latitude', 'latitud', 'y']), ix = col(['lon', 'lng', 'long', 'longitude', 'longitud', 'x']);
+    if (iy < 0 || ix < 0) throw new Error('El CSV necesita columnas de latitud y longitud (lat/lon, latitud/longitud, x/y).');
+    var fs = [];
+    ls.slice(1).forEach(function (l) { var v = cortar(l), la = parseFloat(String(v[iy]).replace(',', '.')), lo = parseFloat(String(v[ix]).replace(',', '.')); if (!isFinite(la) || !isFinite(lo)) return; var pr = {}; h.forEach(function (n, k) { if (k !== iy && k !== ix) pr[n] = v[k]; }); fs.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [lo, la] }, properties: pr }); });
+    return { type: 'FeatureCollection', features: fs };
+  }
+  function aGeo(j) {
+    if (j.type === 'FeatureCollection') return j;
+    if (j.type === 'Feature') return { type: 'FeatureCollection', features: [j] };
+    if (j.coordinates) return { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: j, properties: {} }] };
+    throw new Error('El archivo no es un GeoJSON válido.');
+  }
+  function agregarCapa(k, nombre, color, fc, url) {
+    var ex = S.ext.filter(function (x) { return x.k === k; })[0];
+    if (!ex) { S.ext.push({ k: k, n: nombre, c: color, url: url || '' }); }
+    var m = addMod(k, nombre, k, true); if (color) m.c = color; S.mod[k] = true;
+    S.extPts = S.extPts.filter(function (p) { return p.mod !== k; });
+    var n = 0;
+    (fc.features || []).slice(0, 5000).forEach(function (f, i) {
+      var g = f.geometry; if (!g || !g.coordinates) return; var c = centro(g); if (!c || !isFinite(c.lat) || !isFinite(c.lon)) return;
+      var r = f.properties || {}, fe = r.fecha_hora || r.fecha || r.date; var t = fe ? new Date(fe).getTime() : 0;
+      S.extPts.push({ mod: k, id: k + '-' + i, fid: i, lat: c.lat, lon: c.lon, geo: g, fecha: isNaN(t) ? 0 : t, municipio: r.municipio || r.MUNICIPIO || '', vereda: r.vereda || '', sitio: r.sitio || r.nombre || r.NOMBRE || r.name || '', reg: '', foto: '', r: r }); n++;
+    });
+    if (!n) throw new Error('No se encontraron elementos con ubicación en esa capa.');
+    guardarCapas(); return n;
+  }
+  async function desdeUrl(url) {
+    var u = url.trim();
+    if (/\/(FeatureServer|MapServer)\/\d+\/?$/i.test(u)) u = u.replace(/\/$/, '') + '/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=3000';
+    var res = await fetch(u); if (!res.ok) throw new Error('El servidor respondió HTTP ' + res.status + '.');
+    var tx = await res.text(), j; try { j = JSON.parse(tx); } catch (e) { return csv(tx); }
+    if (j.error) throw new Error((j.error.message || 'El servicio devolvió un error') + '.');
+    return aGeo(j);
+  }
+  function quitar(k) { S.ext = S.ext.filter(function (x) { return x.k !== k; }); S.extPts = S.extPts.filter(function (p) { return p.mod !== k; }); delete MOD[k]; delete S.mod[k]; guardarCapas(); pintar(); }
+  function dialogo() {
+    var d = document.createElement('div'); d.className = 'pc-dlg';
+    d.innerHTML = '<div class="pc-box"><h3>Añadir una capa al visor</h3><p>Suba un archivo o pegue un enlace. Se dibuja sobre el mapa junto con los registros de campo.</p>' +
+      '<label>Nombre de la capa<input data-r="n" placeholder="Ej.: Nacimientos de agua"></label><label>Color<input data-r="c" type="color" value="#9333ea"></label>' +
+      '<label>Archivo <small>(GeoJSON o CSV con latitud y longitud)</small><input data-r="f" type="file" accept=".geojson,.json,.csv,.txt"></label>' +
+      '<label>… o enlace <small>(GeoJSON, CSV o capa de ArcGIS REST: …/FeatureServer/0)</small><input data-r="u" placeholder="https://…"></label>' +
+      '<div class="pc-err" data-r="e"></div><div class="pc-acc"><button type="button" class="pgi-btn" data-r="x">Cancelar</button><button type="button" class="pc-go" data-r="ok">Añadir capa</button></div></div>';
+    el.appendChild(d);
+    d.querySelector('[data-r=x]').onclick = function () { d.remove(); };
+    d.querySelector('[data-r=ok]').onclick = async function () {
+      var b = this, e = d.querySelector('[data-r=e]'), nom = d.querySelector('[data-r=n]').value.trim(), col = d.querySelector('[data-r=c]').value, f = d.querySelector('[data-r=f]').files[0], u = d.querySelector('[data-r=u]').value.trim();
+      if (!f && !u) { e.textContent = 'Elija un archivo o pegue un enlace.'; return; }
+      nom = nom || (f ? f.name.replace(/\.[^.]+$/, '') : 'Capa propia'); b.disabled = true; b.textContent = 'Cargando…'; e.textContent = '';
+      try {
+        var fc;
+        if (f) { var tx = await f.text(); try { fc = aGeo(JSON.parse(tx)); } catch (x) { if (x instanceof SyntaxError) fc = csv(tx); else throw x; } } else fc = await desdeUrl(u);
+        var k = 'e_' + nom.toLowerCase().replace(/[^a-z0-9]+/g, '_') + '_' + (S.ext.length + 1);
+        agregarCapa(k, nom, col, fc, f ? '' : u); d.remove(); pintar();
+      } catch (x) { e.textContent = 'No se pudo añadir la capa: ' + (x.message || x) + (u && !f ? ' (Si el enlace no permite accesos externos, descargue el archivo y súbalo.)' : ''); b.disabled = false; b.textContent = 'Añadir capa'; }
+    };
+  }
+  function restaurar() {
+    var l = []; try { l = JSON.parse(localStorage.getItem(LS) || '[]'); } catch (e) {}
+    l.forEach(function (x) { if (MOD[x.k] || !x.url) return; desdeUrl(x.url).then(function (fc) { agregarCapa(x.k, x.n, x.c, fc, x.url); if (el) pintar(); }, function () {}); });
+  }
+  restaurar();
 
   /* ── Botón ──────────────────────────────────────────── */
   function montar() {
