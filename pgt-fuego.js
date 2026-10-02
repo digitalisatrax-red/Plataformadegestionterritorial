@@ -15,7 +15,7 @@
     aica: { op: .6, nom: 'AICA', get: function () { return urlCapa('eep-aica'); } },
     ver: { op: .85, nom: 'Veredas', get: function () { return urlCapa('caldas-veredas'); } }
   };
-  var E = { firms: [], actualizado: '', tab: 'mapa', dias: 7, radio: 1, horas: 48, solo: 'todos', rep: [], det: [], csv: [], err: '', mapa: null, capas: {}, sel: null, sw: { mun: true, ideam: false, sinap: false, aica: false, ver: false }, fondo: 'sat', hist: undefined, tim: null, mun: '', ver: '', vAttrs: null, verGeo: {}, vista: 'alertas', nivel: 'todos' };
+  var E = { firms: [], actualizado: '', tab: 'mapa', dias: 7, radio: 1, horas: 48, solo: 'todos', rep: [], det: [], csv: [], err: '', mapa: null, capas: {}, sel: null, sw: { mun: true, ideam: false, sinap: false, aica: false, ver: false, lug: false }, fondo: 'satellite', hist: undefined, tim: null, mun: '', ver: '', vAttrs: null, verGeo: {}, vista: 'alertas', nivel: 'todos' };
   var el = null;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -100,8 +100,8 @@
         '<div class="fg-kpis" data-r="kpis"></div>' +
         '<div class="fg-cuerpo"><div class="fg-mapa"><div data-r="map"></div>' +
           '<details class="fg-capas"><summary>Capas y fondo</summary><div class="fg-capas-p">' +
-            '<label>Fondo<select data-k="fondo"><option value="osc">Oscuro</option><option value="sat">Imagen satelital</option><option value="osm">Calles</option><option value="claro">Claro</option></select></label>' +
-            '<label class="fg-chk"><input type="checkbox" data-k="sw:mun"> Municipios</label><label class="fg-chk"><input type="checkbox" data-k="sw:ver"> Veredas</label><label class="fg-chk"><input type="checkbox" data-k="sw:sinap"> Áreas SINAP</label><label class="fg-chk"><input type="checkbox" data-k="sw:aica"> AICA</label><label class="fg-chk"><input type="checkbox" data-k="sw:ideam"> Amenaza IDEAM</label>' +
+            '<label>Fondo<select data-k="fondo"><option value="satellite">Satélite</option><option value="osm">Calles</option><option value="light">Claro</option><option value="topographic">Topográfico</option></select></label>' +
+            '<label class="fg-chk"><input type="checkbox" data-k="sw:lug"> Nombres de lugares</label><label class="fg-chk"><input type="checkbox" data-k="sw:mun"> Municipios</label><label class="fg-chk"><input type="checkbox" data-k="sw:ver"> Veredas</label><label class="fg-chk"><input type="checkbox" data-k="sw:sinap"> Áreas SINAP</label><label class="fg-chk"><input type="checkbox" data-k="sw:aica"> AICA</label><label class="fg-chk"><input type="checkbox" data-k="sw:ideam"> Amenaza IDEAM</label>' +
           '</div></details>' +
           '<div class="fg-leyenda"><div><i style="background:#dc2626;border-radius:50%"></i>Reporte activo</div><div><i style="background:#f59e0b;border-radius:50%"></i>Controlado</div><div><i style="background:#6b7280;border-radius:50%"></i>Extinguido</div><div><i style="background:#7c3aed;transform:rotate(45deg)"></i>Punto de calor ≤ 24 h</div><div><i style="background:#c4b5fd;transform:rotate(45deg)"></i>Punto de calor anterior</div></div></div>' +
           '<div class="fg-linea" data-r="linea"></div><div class="fg-lado-w"><div class="fg-stabs"><button data-vs="alertas">Alertas</button><button data-vs="analisis">Análisis</button><button data-vs="protocolo">Protocolo</button></div><div class="fg-lado" data-r="lado"></div></div>' +
@@ -110,7 +110,7 @@
       c.querySelectorAll('[data-k]').forEach(function (i) {
         i.onchange = function () {
           var k = i.dataset.k;
-          if (k.indexOf('sw:') === 0) { var kk = k.slice(3); E.sw[kk] = i.checked; if (kk === 'mun') munCapa(); else din(kk); return; }
+          if (k.indexOf('sw:') === 0) { var kk = k.slice(3); E.sw[kk] = i.checked; if (kk === 'mun') munCapa(); else if (kk === 'lug') lugares(); else din(kk); return; }
           if (k === 'fondo') { E.fondo = i.value; fondo(); return; }
           if (k === 'mun') { E.mun = i.value; E.ver = ''; cargaTerr(); pintarDatos(); return; }
           if (k === 'ver') { E.ver = i.value; pintarDatos(); return; }
@@ -143,11 +143,19 @@
     osm: ['https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', '© OpenStreetMap'],
     claro: ['https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', '© OpenStreetMap, © CARTO']
   };
+  var LUG = 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
   function fondo() {
     var L = window.__pgtL; if (!E.mapa || !L) return;
-    if (E.capas.fondo) E.mapa.removeLayer(E.capas.fondo);
-    var f = FONDOS[E.fondo] || FONDOS.sat;
-    E.capas.fondo = L.tileLayer(f[0], { maxZoom: 18, attribution: f[1] }).addTo(E.mapa); E.capas.fondo.bringToBack();
+    if (E.capas.fondo) { try { E.capas.fondo.remove(); } catch (e) {} E.capas.fondo = null; }
+    E.mapa.__gcCentrado = true; /* el encuadre lo manejamos aquí */
+    if (window.__gcBase) E.capas.fondo = window.__gcBase(L, { id: E.fondo }, E.mapa);
+    else { var u = { satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', osm: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', light: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', topographic: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}' }[E.fondo]; E.capas.fondo = L.tileLayer(u, { maxZoom: 16, attribution: 'Esri' }).addTo(E.mapa); E.capas.fondo.bringToBack(); }
+    lugares();
+  }
+  function lugares() {
+    var L = window.__pgtL; if (!E.mapa || !L) return;
+    if (E.capas.lug) { E.mapa.removeLayer(E.capas.lug); E.capas.lug = null; }
+    if (E.sw.lug) E.capas.lug = L.tileLayer(LUG, { maxZoom: 16, opacity: .95, pane: 'overlayPane' }).addTo(E.mapa);
   }
   function iniciarMapa() {
     var L = window.__pgtL, cont = el.querySelector('[data-r=map]'); if (!L || !cont) { if (cont) cont.innerHTML = '<div class="fg-vacio">El mapa no está disponible todavía. Cierre esta ventana, abra Territorio y vuelva a intentarlo.</div>'; return; }
@@ -523,7 +531,8 @@
     if (!meta) { cont.innerHTML = '<div class="fg-vacio">Las imágenes del mapa histórico aún no están publicadas.</div>'; return; }
     if (E.hmapa) { try { E.hmapa.remove(); } catch (e) {} }
     var m = E.hmapa = L.map(cont).setView([5.28, -75.3], 9);
-    L.tileLayer(FONDOS.sat[0], { maxZoom: 18, attribution: FONDOS.sat[1] + ' · MapBiomas Fuego Colombia (CC BY 4.0)' }).addTo(m);
+    m.__gcCentrado = true; if (window.__gcBase) window.__gcBase(L, { id: 'satellite' }, m); else L.tileLayer(FONDOS.sat[0], { maxZoom: 16, attribution: FONDOS.sat[1] }).addTo(m);
+    m.attributionControl.addAttribution('MapBiomas Fuego Colombia (CC BY 4.0)');
     var cap = null, bounds = meta.bounds;
     var sel = box.querySelector('[data-r=hmod]'), sl = box.querySelector('[data-r=hanio]'), lab = box.querySelector('[data-r=hlab]'), leg = box.querySelector('[data-r=hleg]');
     function pinta() {
