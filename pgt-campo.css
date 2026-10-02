@@ -1,0 +1,13 @@
+.pgi-btn.pc-btn{border-color:#15803d;color:#166534}.pgi-btn.pc-btn:hover{background:#ecfdf3}
+.pc-root{z-index:100004}
+.pc-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;border:1px solid #fff;box-shadow:0 0 0 1px #cbbfb4}
+.pc-login{max-width:460px;margin:40px auto;background:#fff;border:1px solid #e5d9cf;border-radius:12px;padding:22px;display:flex;flex-direction:column;gap:12px}
+.pc-login h2{margin:0;color:#9a3412;font-size:18px}.pc-login p{margin:0;color:#7c6a5d;font-size:12.5px;line-height:1.5}
+.pc-login label{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:#7c6a5d}
+.pc-login input{height:36px;padding:0 10px;border:1px solid #e5d9cf;border-radius:6px;font:inherit;font-size:13px}
+.pc-go{height:38px;border:0;border-radius:8px;background:#15803d;color:#fff;font-weight:800;cursor:pointer}.pc-go:disabled{opacity:.6}
+.pc-err{color:#b91c1c;font-size:12px;font-weight:600;padding:4px 0}
+.pc-it{cursor:pointer}.pc-it:hover{background:#faf7f4}
+.pc-pop{font-size:12px;max-height:300px;overflow:auto}.pc-pop table{border-collapse:collapse;margin-top:6px;width:100%}
+.pc-pop td{padding:2px 6px 2px 0;vertical-align:top;border-bottom:1px solid #f0e8e0}.pc-pop td:first-child{color:#7c6a5d;text-transform:capitalize;white-space:nowrap}
+.pc-lug{color:#7c6a5d;margin-top:2px}.pc-note{color:#7c6a5d;font-size:11px;margin-top:6px}

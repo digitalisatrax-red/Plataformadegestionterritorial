@@ -32,6 +32,8 @@
       var r = await fetch(SB + '/rest/v1/reportes_incendio?select=*&fecha_hora=gte.' + encodeURIComponent(desde) + '&order=fecha_hora.desc&limit=2000', { headers: hdr() });
       if (!r.ok) throw new Error('reportes (HTTP ' + r.status + '). ¿Ya ejecutó supabase/incendios.sql?');
       E.rep = await r.json();
+      E.qfN = '';
+      if (window.__pgtCampo) { if (window.__pgtCampo.conectado()) { try { await window.__pgtCampo.cargar(); } catch (e) { E.qfN = 'No se pudieron leer las alertas de QField: ' + e.message; } E.rep = E.rep.concat(window.__pgtCampo.alertas(E.dias)); } else E.qfN = 'Las alertas reportadas en QField aparecen aquí cuando se conecta el proyecto (pestaña Campo → Verificar conexión, o «Operaciones de campo»).'; }
       var d = await fetch(SB + '/rest/v1/detecciones_calor?select=*&fecha_hora=gte.' + encodeURIComponent(new Date(Date.now() - (E.dias + 3) * 864e5).toISOString()) + '&order=fecha_hora.desc&limit=5000', { headers: hdr() });
       E.det = d.ok ? await d.json() : [];
     } catch (e) { E.err = e.message; }
@@ -413,6 +415,7 @@
     var h = '';
     Object.keys(E.fallas || {}).forEach(function (k) { h += '<div class="fg-aviso fg-av-' + k + '">La capa «' + esc(E.fallas[k]) + '» no respondió desde este navegador.</div>'; });
     if (E.err) h += '<div class="fg-aviso">' + esc(E.err) + '</div>';
+    if (E.qfN) h += '<div class="fg-aviso" style="background:#f0fdf4;border-color:#bbf7d0;color:#166534">' + esc(E.qfN) + '</div>';
     if (!sesion()) h += '<div class="fg-aviso">Sin sesión: solo se muestran reportes validados. Planeación puede ver y validar todos.</div>';
     if (E.desde && E.dias * 864e5 > Date.now() - E.desde + 864e5) h += '<div class="fg-aviso">El historial satelital disponible empieza el ' + new Date(E.desde).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' }) + ': NASA solo publica los últimos 7 días y aquí se acumulan cada 3 horas. Por eso «' + E.dias + ' días» aún muestra menos de ese periodo.</div>';
     if (E.vista === 'alertas') h += vistaAlertas(D);
@@ -443,7 +446,7 @@
     if (!lista.length) return h + '<div class="fg-vacio"><b>Sin alertas</b><br>No hay alertas con estos filtros. El satélite se revisa cada 3 horas.</div>';
     lista.slice(0, 40).forEach(function (a, i) {
       var r = a.r, extra = '';
-      if (a.tipo === 'rep') extra = (r.area_ha != null ? r.area_ha + ' ha · ' : '') + esc(r.origen || 'Reporte comunitario') + (a.c.c ? ' · satélite a ' + a.c.c.km.toFixed(1) + ' km' : '') + (r.validado ? '' : ' · sin validar');
+      if (a.tipo === 'rep') extra = (r.area_ha != null ? r.area_ha + ' ha · ' : '') + esc(r._qfield ? 'Reporte de campo (QField)' : (r.origen || 'Reporte comunitario')) + (a.c.c ? ' · satélite a ' + a.c.c.km.toFixed(1) + ' km' : '') + (r.validado ? '' : ' · sin validar');
       else extra = esc(a.d.fuente || 'CSV') + (a.d.frp ? ' · FRP ' + esc(a.d.frp) + ' MW' : '') + (a.d.confianza ? ' · confianza ' + esc(a.d.confianza) : '');
       h += '<div class="fg-al n-' + a.niv + '" data-al="' + i + '"><div class="fg-al-t"><span class="fg-niv">' + NIV[a.niv][0] + '</span><span class="fg-hace">' + hace(a.t) + '</span></div><h4>' + esc(a.tit) + '</h4><p>' + esc(a.mun || 'Municipio sin determinar') + (a.ver ? ' · ' + esc(a.ver) : '') + '</p><p class="fg-sm">' + extra + '</p>' +
         '<div class="fg-acc"><button data-ver="' + i + '">Ver en mapa</button><a href="https://www.google.com/maps?q=' + a.lat + ',' + a.lon + '" target="_blank" rel="noopener">Cómo llegar</a><button data-cp="' + i + '">Copiar coordenadas</button>' + (a.tipo === 'rep' && puedeValidar() && !r.validado ? '<button class="v" data-v="' + i + '">Validar</button>' : '') + '</div></div>';
@@ -542,6 +545,7 @@
     return '<b>' + esc(r.municipio || '') + (r.vereda ? ' · ' + esc(r.vereda) : '') + '</b><br>' + fmt(r.fecha_hora) + '<br>' + esc(r.estado) + (r.tipo_fuego ? ' · ' + esc(r.tipo_fuego) : '') + (r.cobertura ? '<br>Cobertura: ' + esc(r.cobertura) : '') + (r.area_ha != null ? '<br>' + r.area_ha + ' ha' : '') + (r.causa_probable ? '<br>Causa: ' + esc(r.causa_probable) : '') + (r.afectacion ? '<br>Afectación: ' + esc(r.afectacion) : '') + '<br><i>' + c.t + '</i>' + f;
   }
   async function validar(r) {
+    if (r._qfield) { r.validado = true; pintarDatos(); return; }
     try {
       var x = await fetch(SB + '/rest/v1/reportes_incendio?id=eq.' + encodeURIComponent(r.id), { method: 'PATCH', headers: Object.assign(hdr(), { Prefer: 'return=minimal' }), body: JSON.stringify({ validado: true }) });
       if (!x.ok) throw new Error('HTTP ' + x.status);

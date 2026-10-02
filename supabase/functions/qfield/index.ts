@@ -27,6 +27,15 @@ Deno.serve(async (req) => {
       return r.ok ? J({ uploaded: true, file: { name: file.name, size: file.size } }) : J({ error: `QFieldCloud no aceptó el archivo (HTTP ${r.status}).` }, r.status);
     }
     const b = await req.json();
+    if (accion === 'file') {
+      // Descarga un archivo del proyecto (p. ej. campo_caldas.gpkg o una foto) y lo entrega como binario.
+      const pid0 = String(b.projectId || '').trim(), tk1 = String(b.token || '').trim(), nombre = String(b.name || '').trim();
+      if (!pid0 || tk1.length < 3 || !nombre || nombre.includes('..')) return J({ error: 'Proyecto, credenciales o nombre de archivo no válidos.' }, 400);
+      const tk2 = await resolverToken(tk1);
+      const fr = await fetch(`${API}/files/${encodeURIComponent(pid0)}/${nombre.split('/').map(encodeURIComponent).join('/')}/`, { headers: { Authorization: `token ${tk2}` } });
+      if (!fr.ok) return J({ error: `QFieldCloud no entregó «${nombre}» (HTTP ${fr.status}).` }, fr.status);
+      return new Response(fr.body, { status: 200, headers: { ...CORS, 'content-type': fr.headers.get('content-type') || 'application/octet-stream', 'cache-control': 'no-store' } });
+    }
     const pid = String(b.projectId || '').trim(), tk0 = String(b.token || '').trim();
     if (!pid || tk0.length < 3) return J({ error: 'Proyecto o credenciales de QFieldCloud no válidos.' }, 400);
     const tk = await resolverToken(tk0);
