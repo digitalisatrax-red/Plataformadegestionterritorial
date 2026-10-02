@@ -114,6 +114,21 @@
     } catch (e) {}
     return pts;
   }
+  async function bajar(nombre) {
+    var res = await window.__pgtQfFetch('file', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ projectId: S.cred.projectId, token: S.cred.token, name: nombre }) });
+    if (!res.ok) { var m = ''; try { m = (await res.json()).error; } catch (e) {} var er = new Error(m || ('HTTP ' + res.status)); er.status = res.status; throw er; }
+    return new Uint8Array(await res.arrayBuffer());
+  }
+  function leerPC(db) {
+    var out = [];
+    tabla(db, 'reportes_pc').forEach(function (r) {
+      var k = ['alerta', 'ambiental', 'social'].indexOf(r.tipo_reporte) >= 0 ? r.tipo_reporte : 'alerta', g = punto(r.geom), lat = g ? g.lat : numero(r.lat), lon = g ? g.lon : numero(r.lon);
+      if (lat === null || lon === null) return;
+      var f = r.fecha_hora ? new Date(String(r.fecha_hora).replace(' ', 'T')) : null; if (f && isNaN(f)) f = null;
+      out.push({ mod: k, id: 'pc-' + r.fid, fid: r.fid, lat: lat, lon: lon, fecha: f ? f.getTime() : 0, municipio: r.municipio || '', vereda: r.vereda || '', sitio: r.sitio || '', reg: r.registrador || '', foto: '', r: r, pc: true });
+    });
+    return out;
+  }
   async function cargar() {
     if (!S.cred) throw new Error('Sin conexión');
     if (S.cargando) return S.cargando;
@@ -124,6 +139,7 @@
         if (!res.ok) { var m = ''; try { m = (await res.json()).error; } catch (e) {} if (res.status === 401 || res.status === 403) S.cred = null; throw new Error(m || 'No se pudo leer el proyecto (HTTP ' + res.status + ').'); }
         var buf = new Uint8Array(await res.arrayBuffer()), q = await motor(), db = new q.Database(buf);
         try { S.pts = normalizar(db); S.terr = territorio(db); } finally { db.close(); }
+        try { var b2 = await bajar('reportes_pc.gpkg'), d2 = new q.Database(b2); try { S.pts = S.pts.concat(leerPC(d2)); } finally { d2.close(); } } catch (e) { S.sinPC = true; }
         S.actualizado = Date.now();
       } catch (e) { S.err = e.message || String(e); throw e; }
       finally { S.cargando = false; }
@@ -311,6 +327,20 @@
     ambiental: { n: 'Registro ambiental', f: [['registrador', 'Quién registra', 'text'], ['tipo_registro', 'Tipo de registro', 'sel', ['Cobertura vegetal', 'Fauna', 'Flora', 'Recurso hídrico', 'Suelo', 'Ecosistema o área protegida', 'Amenaza o presión', 'Otro'], '', 1], ['cobertura', 'Cobertura vegetal', 'sel', COB], ['estado_conservacion', 'Estado de conservación', 'text'], ['especie_o_grupo', 'Especie o grupo', 'text'], ['n_individuos', 'N.º de individuos', 'num'], ['presion_principal', 'Presión principal', 'text'], ['area_ha', 'Área (ha)', 'num'], ['accion_recomendada', 'Acción recomendada', 'text'], ['sitio', 'Sitio o referencia', 'text'], ['observaciones', 'Observaciones', 'area']] },
     social: { n: 'Encuesta social', f: [['registrador', 'Quién registra', 'text'], ['consentimiento', 'La persona dio su consentimiento informado', 'chk', null, null, 1], ['tipo_actor', 'Tipo de actor', 'sel', ['Hogar rural', 'Productor agropecuario', 'Junta de Acción Comunal', 'Institución educativa', 'Bomberos / Defensa Civil', 'Autoridad local', 'Organización comunitaria', 'Otro'], '', 1], ['n_personas', 'N.º de personas', 'num'], ['actividad_economica', 'Actividad económica', 'text'], ['usa_fuego', 'Usa fuego en sus labores', 'text'], ['conoce_protocolo', 'Conoce el protocolo', 'text'], ['percepcion_riesgo', 'Percepción del riesgo', 'text'], ['necesidad_principal', 'Necesidad principal', 'text'], ['sitio', 'Sitio o referencia', 'text'], ['observaciones', 'Observaciones', 'area']] }
   };
+  function blobPunto(lon, lat) { var b = new Uint8Array(29), dv = new DataView(b.buffer); b[0] = 0x47; b[1] = 0x50; b[2] = 0; b[3] = 1; dv.setInt32(4, 4326, true); b[8] = 1; dv.setUint32(9, 1, true); dv.setFloat64(13, lon, true); dv.setFloat64(21, lat, true); return b; }
+  async function guardarPC(at, lon, lat) {
+    var q = await motor(), bytes;
+    try { bytes = await bajar('reportes_pc.gpkg'); } catch (e) { throw new Error('No se encontró la capa «Reportes desde PC» en el proyecto (reportes_pc.gpkg). ' + (e.message || '')); }
+    var db = new q.Database(bytes), out;
+    try {
+      var cols = db.exec('PRAGMA table_info(reportes_pc)')[0].values.map(function (v) { return v[1]; }), ks = Object.keys(at).filter(function (k) { return cols.indexOf(k) >= 0; });
+      db.run('INSERT INTO reportes_pc (geom,' + ks.map(function (k) { return '"' + k + '"'; }).join(',') + ') VALUES (?,' + ks.map(function () { return '?'; }).join(',') + ')', [blobPunto(lon, lat)].concat(ks.map(function (k) { return at[k]; })));
+      out = db.export();
+    } finally { db.close(); }
+    var fd = new FormData(); fd.append('projectId', S.cred.projectId); fd.append('token', S.cred.token); fd.append('file', new File([out], 'reportes_pc.gpkg', { type: 'application/geopackage+sqlite3' }));
+    var res = await window.__pgtQfFetch('upload', { method: 'POST', body: fd }), j = {}; try { j = await res.json(); } catch (x) {}
+    if (!res.ok || j.error) throw new Error(j.error || ('HTTP ' + res.status));
+  }
   function nuevo() {
     if (!S.cred) { S.omitir = false; pintar(); return; }
     var s0 = sesion(), quien = (s0 && (s0.nombre || s0.correo)) || '';
@@ -330,7 +360,7 @@
       return h;
     }
     function pintarForm() {
-      d.innerHTML = '<div class="pc-box pc-ancha"><h3>Nuevo reporte</h3><p>Se guarda en el proyecto de QFieldCloud y los teléfonos lo recibirán al sincronizar.</p>' +
+      d.innerHTML = '<div class="pc-box pc-ancha"><h3>Nuevo reporte</h3><p>Se guarda en la capa «Reportes desde PC» del proyecto en QFieldCloud; los teléfonos la ven al actualizar el proyecto.</p>' +
         '<div class="pc-tipos">' + Object.keys(FORM).map(function (k) { return '<button type="button" class="pc-chip' + (k === st.k ? ' on' : '') + '" data-k="' + k + '" style="--c:' + MOD[k].c + '">' + ico(k, 15) + '<span>' + FORM[k].n + '</span></button>'; }).join('') + '</div>' +
         '<div class="pc-loc"><b>Ubicación</b><div class="pc-ll"><input data-r="lat" placeholder="Latitud" value="' + (st.lat == null ? '' : st.lat.toFixed(6)) + '"><input data-r="lon" placeholder="Longitud" value="' + (st.lon == null ? '' : st.lon.toFixed(6)) + '"></div><div class="pc-acc" style="justify-content:flex-start"><button type="button" class="pgi-btn" data-r="mapa">Elegir en el mapa</button><button type="button" class="pgi-btn" data-r="gps">Usar mi ubicación</button></div></div>' +
         '<div class="pc-fgrid" data-r="campos">' + campos() + '</div><div class="pc-err" data-r="e"></div><div class="pc-acc"><button type="button" class="pgi-btn" data-r="x">Cancelar</button><button type="button" class="pc-go" data-r="ok">Guardar en QFieldCloud</button></div></div>';
@@ -365,7 +395,7 @@
         av.querySelector('button').onclick = function () { fin(); };
         S.mapa.on('click', al);
       };
-      d.querySelector('[data-r=x]').onclick = function () { if (st.mk && S.mapa) S.mapa.removeLayer(st.mk); d.remove(); };
+      d.querySelector('[data-r=x]').onclick = function () { try { if (st.mk && S.mapa) S.mapa.removeLayer(st.mk); } catch (e) {} d.remove(); };
       d.querySelector('[data-r=ok]').onclick = guardar;
       restaurar2();
     }
@@ -381,12 +411,10 @@
       if (falta.length) { e.textContent = 'Falta: ' + falta.join(', ') + '.'; return; }
       b.disabled = true; b.textContent = 'Guardando…';
       try {
-        var res = await window.__pgtQfFetch('delta', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ projectId: S.cred.projectId, token: S.cred.token, layer: st.k, geometry: [lo, la], attributes: at }) });
-        var j = {}; try { j = await res.json(); } catch (x) {}
-        if (!res.ok || j.error) throw new Error(j.error || ('HTTP ' + res.status));
-        if (!j.ok) throw new Error('QFieldCloud recibió el reporte pero no lo aplicó todavía (' + (j.estado || '?') + (j.detalle ? ': ' + j.detalle : '') + '). Revise el proyecto en QFieldCloud.');
-        if (st.mk && S.mapa) S.mapa.removeLayer(st.mk);
-        d.innerHTML = '<div class="pc-box"><h3>Reporte guardado</h3><p>Quedó registrado en el proyecto de QFieldCloud y los teléfonos lo recibirán al sincronizar.' + (st.k === 'alerta' ? ' La alerta también pasa a Alerta temprana.' : '') + '</p><div class="pc-acc"><button type="button" class="pc-go" data-r="c">Cerrar</button></div></div>';
+        at.tipo_reporte = st.k; at.lat = la; at.lon = lo; if (at.origen) delete at.origen;
+        await guardarPC(at, lo, la);
+        try { if (st.mk && S.mapa) S.mapa.removeLayer(st.mk); } catch (e) {}
+        d.innerHTML = '<div class="pc-box"><h3>Reporte guardado</h3><p>Quedó registrado en la capa «Reportes desde PC» del proyecto en QFieldCloud; los teléfonos lo verán al actualizar el proyecto.' + (st.k === 'alerta' ? ' La alerta también pasa a Alerta temprana.' : '') + '</p><div class="pc-acc"><button type="button" class="pc-go" data-r="c">Cerrar</button></div></div>';
         d.querySelector('[data-r=c]').onclick = function () { d.remove(); };
         S.actualizado = 0; cargar().then(sincronizar).then(function () { if (el) pintar(); }, function () {});
       } catch (x) { e.textContent = 'No se pudo guardar: ' + (x.message || x); b.disabled = false; b.textContent = 'Guardar en QFieldCloud'; }
