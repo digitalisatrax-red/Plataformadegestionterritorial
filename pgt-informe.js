@@ -120,12 +120,29 @@
       P.geometry = JSON.stringify(aEsri(opt.aoi)); P.geometryType = 'esriGeometryPolygon'; P.inSR = '4326'; P.spatialRel = 'esriSpatialRelIntersects';
     } else { P.where = '1=1'; }
     if (!P.geometry) P.where = '1=1';
-    var filas = [], off = 0, truncado = false;
+    var filas = [], off = 0, truncado = false, modo = 0;
+    /* El servicio de Corpocaldas a veces rechaza una consulta («Failed to execute query»): se reintenta de formas más simples */
+    async function pedir(Q0) {
+      var intentos = [
+        function (q) { return q; },
+        function (q) { var x = Object.assign({}, q); delete x.resultOffset; delete x.resultRecordCount; return x; },                       // sin paginación
+        function (q) { var x = Object.assign({}, q); delete x.resultOffset; delete x.resultRecordCount; delete x.geometryPrecision; x.outFields = '*'; return x; },  // todos los campos
+        function (q) { var x = Object.assign({}, q); delete x.resultOffset; delete x.resultRecordCount; delete x.geometryPrecision; delete x.outSR; x.outFields = '*'; x.returnGeometry = 'false'; return x; }
+      ], ult = null;
+      for (var k = modo; k < intentos.length; k++) {
+        try {
+          var r = await fetch(base(c) + '/query', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body: new URLSearchParams(intentos[k](Q0)) });
+          if (!r.ok) throw new Error('El servicio respondió HTTP ' + r.status + '.');
+          var j = await r.json(); if (j.error) throw new Error((j.error.message || 'Error consultando la capa.') + (j.error.details && j.error.details.length ? ' ' + j.error.details.join(' ') : ''));
+          modo = k; return j;
+        } catch (e) { ult = e; }
+      }
+      throw ult;
+    }
     for (;;) {
       var Q = Object.assign({}, P, { resultOffset: String(off), resultRecordCount: String(opt.max && opt.max < 1000 ? opt.max : 1000) });
-      var r = await fetch(base(c) + '/query', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body: new URLSearchParams(Q) });
-      if (!r.ok) throw new Error('El servicio respondió HTTP ' + r.status + '.');
-      var j = await r.json(); if (j.error) throw new Error(j.error.message || 'Error consultando la capa.');
+      var j = await pedir(Q);
+      if (modo > 0) j.exceededTransferLimit = false;     // sin paginación solo hay una página
       var fs = j.features || [];
       fs.forEach(function (f) {
         var a = Object.assign({}, f.attributes || {});
@@ -304,11 +321,13 @@
     var validas = estado.secciones.filter(function (s) { return s.capa && s.campos && s.campos.length; });
     if (!validas.length) { msg.textContent = 'Elige al menos un campo en alguna tabla.'; return; }
     btn.disabled = true; btn.textContent = 'Consultando…'; msg.textContent = '';
-    var datos = [];
+    var datos = [], fallidas = [];
     try {
       for (var i = 0; i < validas.length; i++) {
         var s = validas[i], c = capa(s.capa); msg.textContent = 'Consultando ' + c.name + '…';
-        var r = await consultar(c, { aoi: estado.alcance === 'aoi' ? aoiF.geometry : null, campos: s.campos, geom: true });
+        var r;
+        try { r = await consultar(c, { aoi: estado.alcance === 'aoi' ? aoiF.geometry : null, campos: s.campos, geom: true }); }
+        catch (e1) { fallidas.push(c.name + ' (' + e1.message + ')'); continue; }
         var cs = s.campos.map(function (n) { return r.campos.filter(function (f) { return f.name === n; })[0]; }).filter(Boolean);
         var ord = s.orden && r.campos.filter(function (f) { return f.name === s.orden; })[0];
         if (ord) r.filas.sort(function (a, b) {
@@ -318,7 +337,8 @@
         datos.push({ capa: c, campos: cs, alias: cs.map(function (f) { return f.alias; }), filas: r.filas, truncado: r.truncado });
       }
       estado.datos = { items: datos, fecha: new Date(), aoi: estado.alcance === 'aoi' ? (document.querySelector('.area-card strong, .aoi-card strong') || {}).textContent : 'Todo Caldas' };
-      msg.textContent = '';
+      if (!datos.length) throw new Error('Corpocaldas no respondió para ninguna de las tablas: ' + fallidas.join('; '));
+      msg.textContent = fallidas.length ? 'Se omitieron por error del servicio: ' + fallidas.join('; ') : '';
       mostrarVista();
       if (window.__pgtTablero) window.__pgtTablero.abrir(estado.datos, estado);
     } catch (e) { msg.textContent = 'No fue posible generar el reporte: ' + e.message; }

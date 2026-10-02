@@ -113,3 +113,8 @@
 .fg-dash{overflow:auto}.fg-cuerpo{min-height:380px}
 
 .fg-mapa>div[data-r=hmap]{position:absolute;inset:0}
+
+.fg-rombo{display:flex;align-items:center;justify-content:center}
+.fg-rombo span{display:block;transform:rotate(-45deg);font:700 10px/1 system-ui,sans-serif;color:#fff}
+.fg-rombo:not(.rec) span{color:#2e1065}
+.fg-num{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;margin-right:6px;border-radius:4px;background:#7c3aed;color:#fff;font:700 10px/1 system-ui,sans-serif;vertical-align:middle;padding:0 3px}

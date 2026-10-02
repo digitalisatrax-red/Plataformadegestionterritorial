@@ -100,6 +100,7 @@
     E.tim = setInterval(function () { if (E.tab === 'mapa') refrescar(); }, 60000);
   }
   function cerrar() { if (!el) return; clearInterval(E.tim); if (E.mapa) { E.mapa.remove(); E.mapa = null; E.capas = {}; } el.remove(); el = null; }
+  window.addEventListener('pgt-qf', function (e) { if (e.detail && e.detail.conectado && el) refrescar(); });
   async function refrescar() { await cargar(); if (el && E.tab === 'mapa') pintarDatos(); }
 
   function pintar() {
@@ -400,10 +401,20 @@
     /* Mapa */
     if (E.mapa && L) {
       E.capas.rep.clearLayers(); E.capas.det.clearLayers();
-      dets.forEach(function (d) {
+      /* El mapa dibuja EXACTAMENTE lo que lista la tabla: cada cuadro morado = una tarjeta numerada de «Punto de calor sin reporte».
+         Las detecciones que ya coinciden con un reporte comunitario van como punto gris pequeño (no cuentan como alerta). */
+      var lis = al.filter(function (a) { return E.nivel === 'todos' || a.niv === E.nivel; }), enLista = {};
+      lis.forEach(function (a, i) { if (a.tipo === 'det') { a.d._n = i + 1; enLista[a.d._n] = 1; } });
+      dets.forEach(function (d) { d._m = null; });
+      lis.forEach(function (a, i) {
+        if (a.tipo !== 'det') return; var d = a.d;
         var rec = (Date.now() - new Date(d.fecha_hora).getTime()) <= 864e5;
-        var sz = Math.round(Math.min(26, Math.max(11, 9 + Math.sqrt(Number(d.frp) || 1) * 2.6))); var ic = L.divIcon({ className: 'fg-rombo' + (rec ? ' rec' : ''), iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2] });
+        var sz = 20; var ic = L.divIcon({ className: 'fg-rombo' + (rec ? ' rec' : ''), html: '<span>' + (i + 1) + '</span>', iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2] });
         d._m = L.marker([d.lat, d.lon], { icon: ic, zIndexOffset: rec ? 200 : 0 }).bindPopup(popupDet(d)); d._m.addTo(E.capas.det);
+      });
+      dets.forEach(function (d) {
+        if (d._m || D.sinRep.indexOf(d) >= 0) return;
+        d._m = L.circleMarker([d.lat, d.lon], { radius: 4, color: '#fff', weight: 1, fillColor: '#9ca3af', fillOpacity: .9 }).bindPopup(popupDet(d) + '<div style="margin-top:4px;color:#6b7280;font-size:11px">Ya coincide con un reporte comunitario.</div>'); d._m.addTo(E.capas.det);
       });
       reps.forEach(function (r) {
         var m = L.circleMarker([r.lat, r.lon], { radius: Math.min(20, 8 + Math.sqrt(Number(r.area_ha) || 0) * 3), color: '#fff', weight: 2.5, fillColor: color(r), fillOpacity: .95 });
@@ -415,7 +426,7 @@
     /* Indicadores */
     var crit = al.filter(function (a) { return a.niv === 'crit' || a.niv === 'alta'; }).length;
     var act = reps.filter(function (r) { return r.estado === 'Activo'; }).length;
-    var d24 = dets.filter(function (d) { return Date.now() - new Date(d.fecha_hora).getTime() <= 864e5; }).length;
+    var d24 = D.sinRep.filter(function (d) { return Date.now() - new Date(d.fecha_hora).getTime() <= 864e5; }).length;
     var conf = reps.filter(function (r) { return estadoCruce(r).k === 'ok'; }).length, val = reps.filter(function (r) { return r.validado; }).length;
     var md = mediana(D.lat);
     el.querySelector('[data-r=kpis]').innerHTML =
@@ -456,14 +467,14 @@
     var al = D.al, h = '<div class="fg-nivs">' + [['todos', 'Todas'], ['crit', 'Críticas'], ['alta', 'Altas'], ['media', 'Medias'], ['baja', 'Bajas']].map(function (n) { var k = n[0], c = k === 'todos' ? al.length : al.filter(function (a) { return a.niv === k; }).length; return '<button data-n="' + k + '" class="' + (E.nivel === k ? 'on' : '') + '">' + n[1] + ' <b>' + c + '</b></button>'; }).join('') + '</div>';
     var lista = al.filter(function (a) { return E.nivel === 'todos' || a.niv === E.nivel; });
     if (!lista.length) return h + '<div class="fg-vacio"><b>Sin alertas</b><br>No hay alertas con estos filtros. El satélite se revisa cada 3 horas.</div>';
-    lista.slice(0, 40).forEach(function (a, i) {
+    lista.slice(0, 120).forEach(function (a, i) {
       var r = a.r, extra = '';
       if (a.tipo === 'rep') extra = (r.area_ha != null ? r.area_ha + ' ha · ' : '') + esc(r._qfield ? 'Reporte de campo (QField)' : (r.origen || 'Reporte comunitario')) + (a.c.c ? ' · satélite a ' + a.c.c.km.toFixed(1) + ' km' : '') + (r.validado ? '' : ' · sin validar');
       else extra = esc(a.d.fuente || 'CSV') + (a.d.frp ? ' · FRP ' + esc(a.d.frp) + ' MW' : '') + (a.d.confianza ? ' · confianza ' + esc(a.d.confianza) : '');
-      h += '<div class="fg-al n-' + a.niv + '" data-al="' + i + '"><div class="fg-al-t"><span class="fg-niv">' + NIV[a.niv][0] + '</span><span class="fg-hace">' + hace(a.t) + '</span></div><h4>' + esc(a.tit) + '</h4><p>' + esc(a.mun || 'Municipio sin determinar') + (a.ver ? ' · ' + esc(a.ver) : '') + '</p><p class="fg-sm">' + extra + '</p>' +
+      h += '<div class="fg-al n-' + a.niv + '" data-al="' + i + '"><div class="fg-al-t"><span class="fg-niv">' + NIV[a.niv][0] + '</span><span class="fg-hace">' + hace(a.t) + '</span></div><h4>' + (a.tipo === 'det' ? '<span class="fg-num">' + (i + 1) + '</span>' : '') + esc(a.tit) + '</h4><p>' + esc(a.mun || 'Municipio sin determinar') + (a.ver ? ' · ' + esc(a.ver) : '') + '</p><p class="fg-sm">' + extra + '</p>' +
         '<div class="fg-acc"><button data-ver="' + i + '">Ver en mapa</button><a href="https://www.google.com/maps?q=' + a.lat + ',' + a.lon + '" target="_blank" rel="noopener">Cómo llegar</a><button data-cp="' + i + '">Copiar coordenadas</button>' + (a.tipo === 'rep' && puedeValidar() && !r.validado ? '<button class="v" data-v="' + i + '">Validar</button>' : '') + '</div></div>';
     });
-    if (lista.length > 40) h += '<div class="fg-vacio">Se muestran las 40 más prioritarias de ' + lista.length + '.</div>';
+    if (lista.length > 120) h += '<div class="fg-vacio">Se muestran las 120 más prioritarias de ' + lista.length + '.</div>';
     D.lista = lista; return h;
   }
   function barras(filas, colores, max, lv) {

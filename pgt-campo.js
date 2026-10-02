@@ -19,6 +19,12 @@
   function fmt(t) { try { return new Date(t).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }); } catch (e) { return t; } }
   function tit(s) { return String(s || '').toLowerCase().replace(/(^|\s)\S/g, function (c) { return c.toUpperCase(); }); }
 
+  /* La conexión se recuerda solo en esta pestaña (sessionStorage): así Alerta temprana recibe lo de QField aunque se recargue la página */
+  function fijarCred(c) {
+    S.cred = c;
+    try { if (c) sessionStorage.setItem('pgt.qf', JSON.stringify(c)); else sessionStorage.removeItem('pgt.qf'); } catch (e) {}
+  }
+  try { var g0 = JSON.parse(sessionStorage.getItem('pgt.qf') || 'null'); if (g0 && g0.projectId && g0.token && sessionStorage.getItem('pgt.sesion')) S.cred = g0; } catch (e) {}
   /* ── Credenciales: solo en memoria, se capturan al «Verificar conexión» de la pestaña Campo ── */
   if (window.__pgtQfFetch) {
     var f0 = window.__pgtQfFetch;
@@ -27,7 +33,7 @@
       if (accion === 'status') {
         var b = null; try { b = typeof (o && o.body) === 'string' ? JSON.parse(o.body) : null; } catch (e) {}
         if (b && b.projectId && b.token) p.then(function (r) { return r.clone().json(); }).then(function (j) {
-          if (j && j.connected) { S.cred = { projectId: b.projectId, token: b.token }; S.quien = (j.project && j.project.name) || ''; segundoPlano(); }
+          if (j && j.connected) { fijarCred({ projectId: b.projectId, token: b.token }); S.quien = (j.project && j.project.name) || ''; segundoPlano(); }
         }).catch(function () {});
       }
       return p;
@@ -136,11 +142,12 @@
       S.err = '';
       try {
         var res = await window.__pgtQfFetch('file', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ projectId: S.cred.projectId, token: S.cred.token, name: 'campo_caldas.gpkg' }) });
-        if (!res.ok) { var m = ''; try { m = (await res.json()).error; } catch (e) {} if (res.status === 401 || res.status === 403) S.cred = null; throw new Error(m || 'No se pudo leer el proyecto (HTTP ' + res.status + ').'); }
+        if (!res.ok) { var m = ''; try { m = (await res.json()).error; } catch (e) {} if (res.status === 401 || res.status === 403) fijarCred(null); throw new Error(m || 'No se pudo leer el proyecto (HTTP ' + res.status + ').'); }
         var buf = new Uint8Array(await res.arrayBuffer()), q = await motor(), db = new q.Database(buf);
         try { S.pts = normalizar(db); S.terr = territorio(db); } finally { db.close(); }
         try { var b2 = await bajar('reportes_pc.gpkg'), d2 = new q.Database(b2); try { S.pts = S.pts.concat(leerPC(d2)); } finally { d2.close(); } } catch (e) { S.sinPC = true; }
         S.actualizado = Date.now();
+        setTimeout(function () { try { window.dispatchEvent(new CustomEvent('pgt-qf', { detail: { conectado: true } })); } catch (e) {} }, 0);
       } catch (e) { S.err = e.message || String(e); throw e; }
       finally { S.cargando = false; }
     })();
@@ -215,7 +222,7 @@
     try { if (S.mapa) { S.mapa.closePopup(); S.mapa.remove(); } } catch (e) {} S.mapa = null; S.capa = null;
     if (!S.cred && !S.omitir) {
       c.innerHTML = '<div class="pc-login"><div class="pc-badges">' + ['alerta', 'ambiental', 'social'].map(function (k) { return '<span style="background:' + MOD[k].c + '">' + ico(k, 22) + '</span>'; }).join('') + '</div><h2>Conecte el proyecto de campo</h2>' +
-        '<p>Escriba el usuario y la contraseña de QFieldCloud para traer los registros. No se guardan: solo se usan mientras esta ventana del navegador esté abierta.</p>' +
+        '<p>Escriba el usuario y la contraseña de QFieldCloud para traer los registros. Se recuerdan solo en esta pestaña del navegador (se borran al cerrarla o al cerrar sesión), para que Alerta temprana también reciba lo de QField.</p>' +
         '<p class="pc-tip">Atajo: si en la pestaña <b>Campo</b> ya pulsó «Verificar conexión», este visor se conecta solo.</p>' +
         '<label>Usuario y contraseña<input data-r="tk" type="password" autocomplete="off" placeholder="usuario:contraseña"></label>' +
         '<details><summary>Opciones avanzadas</summary><label>ID del proyecto<input data-r="pid" value="' + PID + '"></label></details>' +
@@ -223,8 +230,8 @@
       var go = async function () {
         var b = c.querySelector('[data-r=go]'), pid = c.querySelector('[data-r=pid]').value.trim(), tk = c.querySelector('[data-r=tk]').value.trim(), er = c.querySelector('[data-r=er]');
         if (tk.length < 3) { er.textContent = 'Escriba usuario:contraseña (separados por dos puntos).'; return; }
-        b.disabled = true; b.textContent = 'Cargando…'; S.cred = { projectId: pid, token: tk };
-        try { await cargar(); await sincronizar(); pintar(); } catch (e) { S.cred = null; pintar(); }
+        b.disabled = true; b.textContent = 'Cargando…'; fijarCred({ projectId: pid, token: tk });
+        try { await cargar(); await sincronizar(); pintar(); } catch (e) { fijarCred(null); pintar(); }
       };
       c.querySelector('[data-r=om]').onclick = function () { S.omitir = true; pintar(); };
       c.querySelector('[data-r=go]').onclick = go; c.querySelector('[data-r=tk]').onkeydown = function (e) { if (e.key === 'Enter') go(); };

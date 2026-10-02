@@ -20,7 +20,14 @@
 
   function cargarTurf() {
     if (window.turf) return Promise.resolve();
-    if (!turfP) turfP = new Promise(function (ok, no) { var s = document.createElement('script'); s.src = 'vendor/turf.min.js'; s.onload = ok; s.onerror = function () { turfP = null; no(new Error('No se pudo cargar la librería de cálculo espacial.')); }; document.head.appendChild(s); });
+    if (!turfP) turfP = new Promise(function (ok, no) {
+      var fuentes = ['vendor/turf.min.js?v=1', 'https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js', 'https://unpkg.com/@turf/turf@6.5.0/turf.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js'], i = 0;
+      (function otra() {
+        if (window.turf) return ok();
+        if (i >= fuentes.length) { turfP = null; return no(new Error('No se pudo cargar la librería de cálculo espacial. Suba vendor/turf.min.js al repositorio.')); }
+        var sc = document.createElement('script'); sc.src = fuentes[i++]; sc.onload = function () { window.turf ? ok() : otra(); }; sc.onerror = otra; document.head.appendChild(sc);
+      })();
+    });
     return turfP;
   }
   function meta(c) { var I = window.__pgtInforme; return I && I.campos ? I.campos(c) : Promise.resolve({ campos: [], geom: '' }); }
