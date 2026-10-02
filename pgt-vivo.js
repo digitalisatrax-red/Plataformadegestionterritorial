@@ -111,7 +111,7 @@
   function mapa() {
     var L = window.__pgtL || window.L, d = el.querySelector('#pvMap'); if (!L || !d) return;
     S.mapa = L.map(d, { zoomControl: true }).setView([5.3, -75.5], 9);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 18, attribution: '© OpenStreetMap, CARTO' }).addTo(S.mapa);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, attribution: '© OpenStreetMap, CARTO' }).addTo(S.mapa);
     var dot = function (c, t) { return L.divIcon({ className: '', html: '<span class="pv-pin" style="background:' + c + '">' + t + '</span>', iconSize: [26, 26], iconAnchor: [13, 13] }); };
     var pts = [];
     S.rep.forEach(function (r) { if (r.lat == null || valid(r) === 'rechazado') return; pts.push([r.lat, r.lon]); L.marker([r.lat, r.lon], { icon: dot(est(r) === 'activo' ? '#c62828' : est(r) === 'controlado' ? '#d97706' : '#2e7d32', '🔥') }).bindPopup('<b>' + esc(r.municipio || '') + '</b> ' + esc(r.vereda || '') + '<br>' + tag(est(r)) + ' ' + tag(valid(r)) + '<br>' + fmt(r.fecha_hora) + '<br>' + esc(r.cobertura || '') + (r.area_ha ? ' · ' + r.area_ha + ' ha' : '') + '<br><small>Reportó: ' + esc(r.reportante || '') + '</small>').addTo(S.mapa); });
