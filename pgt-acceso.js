@@ -140,7 +140,7 @@
       });
     });
     document.querySelectorAll('button').forEach(function (b) {
-      if (norm(b.textContent) === 'USAR LÍMITE MUNICIPAL') b.remove();
+      if (norm(b.textContent) === 'USAR LIMITE MUNICIPAL') b.remove();
     });
   }
   retirarCapasCaducadas();
