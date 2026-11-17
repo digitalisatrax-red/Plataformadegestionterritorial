@@ -92,30 +92,11 @@
   }
 
   /* ── Selección por vereda (pestaña Municipio) ───────── */
-  var BASE = 'https://swappweb.corpocaldas.gov.co/waserver/rest/services/CartografiaBase/MapServer/10/query';
-  var veredas = null;
-  function norm(t) { return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().trim(); }
-  async function cargarVeredas() {
-    if (veredas) return veredas;
-    var out = [], off = 0;
-    for (;;) {
-      var q = new URLSearchParams({ where: '1=1', outFields: 'ID_VEREDA,NOMBRE,MUNICIPIO', returnGeometry: 'false', orderByFields: 'NOMBRE', resultOffset: String(off), resultRecordCount: '1000', f: 'json' });
-      var r = await fetch(BASE + '?' + q); if (!r.ok) throw new Error('El servicio de veredas respondió HTTP ' + r.status + '.');
-      var j = await r.json(); if (j.error) throw new Error(j.error.message || 'Error consultando veredas.');
-      var fs = j.features || []; out = out.concat(fs.map(function (f) { return f.attributes; }));
-      if (!j.exceededTransferLimit || !fs.length) break; off += fs.length;
-    }
-    veredas = out; return out;
-  }
-  async function geometriaVereda(id) {
-    var donde = typeof id === 'number' ? 'ID_VEREDA=' + id : "ID_VEREDA='" + String(id).replace(/'/g, "''") + "'";
-    var body = new URLSearchParams({ where: donde, outFields: 'ID_VEREDA,NOMBRE,MUNICIPIO', returnGeometry: 'true', outSR: '4326', geometryPrecision: '6', f: 'geojson' });
-    var r = await fetch(BASE, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body: body });
-    if (!r.ok) throw new Error('El servicio de veredas respondió HTTP ' + r.status + '.');
-    var j = await r.json(); if (j.error) throw new Error(j.error.message || 'Error consultando la vereda.');
-    if (!j.features || !j.features[0]) throw new Error('No se encontró la geometría de la vereda.');
-    return j.features[0];
-  }
+  var BASE = 'https://ags.esri.co/arcgis/rest/services/DatosAbiertos/VEREDAS_2016/MapServer/0/query';
+  var COD_DPTO = '17'; var veredas = null;
+  function norm(t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim(); } function alias(a) { return { ID_VEREDA: a.CODIGO_VER, NOMBRE: a.NOMBRE_VER, MUNICIPIO: a.NOMB_MPIO }; }
+  async function cargarVeredas(){if(veredas)return veredas;var out=[],vistos=Object.create(null),off=0;for(;;){var q=new URLSearchParams({where:"COD_DPTO='17'",outFields:'CODIGO_VER,NOMBRE_VER,NOMB_MPIO',returnGeometry:'false',orderByFields:'NOMBRE_VER',resultOffset:String(off),resultRecordCount:'1000',f:'json'});var r=await fetch(BASE+'?'+q);if(!r.ok)throw new Error('El servicio de veredas respondió HTTP '+r.status+'.');var j=await r.json();if(j.error)throw new Error(j.error.message||'Error consultando veredas.');var fs=j.features||[];fs.forEach(function(f){var v=alias(f.attributes||{}),id=String(v.ID_VEREDA==null?'':v.ID_VEREDA).trim();if(!id||!String(v.NOMBRE||'').trim()||!String(v.MUNICIPIO||'').trim()||vistos[id])return;vistos[id]=true;out.push(v)});if(!fs.length)break;off+=fs.length;if(!j.exceededTransferLimit&&fs.length<1000)break}veredas=out;return out}
+  async function geometriaVereda(id){var donde="CODIGO_VER='"+String(id).replace(/'/g,"''")+"'";var body=new URLSearchParams({where:donde,outFields:'CODIGO_VER,NOMBRE_VER,NOMB_MPIO',returnGeometry:'true',outSR:'4326',geometryPrecision:'6',f:'geojson'});var r=await fetch(BASE,{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body});if(!r.ok)throw new Error('El servicio de veredas respondió HTTP '+r.status+'.');var j=await r.json();if(j.error)throw new Error(j.error.message||'Error consultando la vereda.');if(!j.features||!j.features[0])throw new Error('No se encontró la geometría de la vereda.');var f=j.features[0],p=f.properties||{};f.properties=Object.assign({},p,alias(p));return f}
   function montarVereda() {
     var contenido = document.querySelector('.scope-content');
     var bloque = document.querySelector('.pgt-vereda');
