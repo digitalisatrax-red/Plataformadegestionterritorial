@@ -129,6 +129,21 @@
     };
   }
 
-  new MutationObserver(function () { montarVereda(); pintarSesion(); }).observe(document.documentElement, { childList: true, subtree: true });
+  function retirarCapasCaducadas() {
+    var rutas = ['/CartografiaBase/MapServer/9', '/CartografiaBase/MapServer/10', '/EEPJulio2026/MapServer/1', '/EEPJulio2026/MapServer/224', '/AGUA/MapServer/41', '/AGUA/MapServer/42'];
+    rutas.forEach(function (ruta) {
+      document.querySelectorAll('.layer-row').forEach(function (fila) {
+        if (!fila.querySelector('a[href*="' + ruta + '"]')) return;
+        var chk = fila.querySelector('input[type="checkbox"]');
+        if (chk && chk.checked) chk.click();
+        fila.remove();
+      });
+    });
+    document.querySelectorAll('button').forEach(function (b) {
+      if (norm(b.textContent) === 'USAR LÍMITE MUNICIPAL') b.remove();
+    });
+  }
+  retirarCapasCaducadas();
+  new MutationObserver(function () { montarVereda(); pintarSesion(); retirarCapasCaducadas(); }).observe(document.documentElement, { childList: true, subtree: true });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') cerrarModal(); });
 })();
