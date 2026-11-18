@@ -130,7 +130,7 @@
   }
 
   function retirarCapasCaducadas() {
-    var rutas = ['/CartografiaBase/MapServer/9', '/CartografiaBase/MapServer/10', '/EEPJulio2026/MapServer/1', '/EEPJulio2026/MapServer/224', '/AGUA/MapServer/41', '/AGUA/MapServer/42'];
+    var rutas = ['/CartografiaBase/MapServer/9', '/CartografiaBase/MapServer/10', '/AGUA/MapServer/41', '/AGUA/MapServer/42'];
     rutas.forEach(function (ruta) {
       document.querySelectorAll('.layer-row').forEach(function (fila) {
         if (!fila.querySelector('a[href*="' + ruta + '"]')) return;

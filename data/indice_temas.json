@@ -4,7 +4,7 @@
   "servicio": "AGUA",
   "capas": 36,
   "locales": 13,
-  "en_vivo": 23,
+  "en_vivo": 22,
   "peso_local_mb": 21.88
  },
  {
@@ -73,19 +73,11 @@
  },
  {
   "tema": "Estructura Ecológica Principal",
-  "servicio": "EEPJulio2026",
-  "capas": 180,
-  "locales": 139,
-  "en_vivo": 41,
-  "peso_local_mb": 112.74
- },
- {
-  "tema": "Estructura Ecológica Complementaria",
-  "servicio": "EEPJulio2026",
-  "capas": 2,
+  "servicio": "EEPNoviembre2026",
+  "capas": 157,
   "locales": 0,
-  "en_vivo": 2,
-  "peso_local_mb": 0
+  "en_vivo": 157,
+  "peso_local_mb": 0.0
  },
  {
   "tema": "EOT Aranzazu",
@@ -128,28 +120,12 @@
   "peso_local_mb": 17.88
  },
  {
-  "tema": "PBOT Palestina",
-  "servicio": "EE_POT_2da_generacion2026",
-  "capas": 46,
-  "locales": 44,
-  "en_vivo": 2,
-  "peso_local_mb": 21.91
- },
- {
   "tema": "EOT Risaralda",
   "servicio": "EE_POT_2da_generacion2026",
   "capas": 14,
   "locales": 10,
   "en_vivo": 4,
   "peso_local_mb": 2.75
- },
- {
-  "tema": "PBOT Samaná",
-  "servicio": "EE_POT_2da_generacion2026",
-  "capas": 44,
-  "locales": 37,
-  "en_vivo": 7,
-  "peso_local_mb": 16.45
  },
  {
   "tema": "EOT Salamina",
@@ -166,6 +142,38 @@
   "locales": 15,
   "en_vivo": 2,
   "peso_local_mb": 10.17
+ },
+ {
+  "tema": "PBOT Palestina",
+  "servicio": "EE_POT_2da_generacion2026",
+  "capas": 46,
+  "locales": 44,
+  "en_vivo": 2,
+  "peso_local_mb": 21.91
+ },
+ {
+  "tema": "PBOT Samaná",
+  "servicio": "EE_POT_2da_generacion2026",
+  "capas": 44,
+  "locales": 37,
+  "en_vivo": 7,
+  "peso_local_mb": 16.45
+ },
+ {
+  "tema": "Estructura Ecológica Complementaria",
+  "servicio": "EstructuraEcologica",
+  "capas": 2,
+  "locales": 0,
+  "en_vivo": 2,
+  "peso_local_mb": 0.0
+ },
+ {
+  "tema": "Estructura Ecológica Principal",
+  "servicio": "EstructuraEcologica",
+  "capas": 22,
+  "locales": 0,
+  "en_vivo": 22,
+  "peso_local_mb": 0.0
  },
  {
   "tema": "Capas editables",

@@ -6,10 +6,10 @@ Fuente: copia local `ArcGIS_Corpocaldas_Completo/_raiz` (servicios ArcGIS de Cor
 
 | Decisión | Detalle |
 |---|---|
-| Servicios incluidos | 12 de 13 carpetas con capas. Se excluye `EEPCaldas2026Marzo` (versión anterior de `EEPJulio2026`). |
-| Capas catalogadas | 637 capas de datos (se omiten las capas «grupo», que solo agrupan). |
-| Capas en el repositorio (`estado: local`) | 476 capas de 5 MB o menos en origen, ≈ 315 MB antes de reducir coordenadas. |
-| Capas en vivo (`estado: en_vivo`) | 160 capas pesadas (mayores de 5 MB) o ráster; la plataforma las lee del servicio de Corpocaldas con la `url` del catálogo. |
+| Servicios incluidos | 12 servicios de datos; EEP usa `EEPNoviembre2026` (157 capas verificadas en REST). |
+| Capas catalogadas | 636 capas de datos (se omiten las capas «grupo», que solo agrupan). |
+| Capas en el repositorio (`estado: local`) | 337 capas locales; aproximadamente 202 MB segun el catalogo, antes de reducir coordenadas. |
+| Capas en vivo (`estado: en_vivo`) | 298 capas que la plataforma consulta en el servicio de Corpocaldas mediante la `url` del catalogo. |
 | Capas vacías (`estado: vacia`) | 1 capa sin registros. |
 | Límites de GitHub | Archivo ≤ 100 MB, repositorio recomendado ≤ 1 GB, sitio de Pages ≤ 1 GB. |
 
@@ -24,7 +24,7 @@ herramientas/preparar_datos.py
 docs/ORGANIZACION_DATOS.md
 ```
 
-Los temas salen de los grupos del propio servicio. En los servicios del POT 2.ª generación el primer nivel es el municipio (EOT/PBOT), y en la estructura ecológica de julio de 2026 es «Estructura Ecológica Principal».
+Los temas salen de los grupos del propio servicio. En los servicios del POT 2a generacion el primer nivel es el municipio (EOT/PBOT); la EEP vigente es `EEPNoviembre2026`.
 
 ## Cómo se prepara `data/`
 
@@ -39,4 +39,4 @@ Los temas salen de los grupos del propio servicio. En los servicios del POT 2.ª
 
 - Qué capas se activan por defecto en cada apartado de la plataforma.
 - Si algunas capas pesadas (p. ej. Municipios, Veredas, Microcuencas) se simplifican y se suben, en lugar de leerlas en vivo.
-- Posibles duplicados entre `EEPJulio2026` y `EE_POT_2da_generacion2026` (hay capas con el mismo nombre en ambos).
+- Posibles duplicados entre `EEPNoviembre2026` y `EE_POT_2da_generacion2026` (hay capas con el mismo nombre en ambos).
