@@ -1,5 +1,5 @@
 // Service worker: app shell sin conexión + caché de teselas del mapa
-const SHELL = "incendios-shell-v6";
+const SHELL = "incendios-shell-v7";
 const TILES = "incendios-tiles-v1";
 const CDN = [
   "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css",
