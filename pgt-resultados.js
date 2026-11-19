@@ -28,7 +28,7 @@
     var hid = hidLeer();
     return all.filter(function (c) {
       if (c.id === BASE_MUN || c.id === BASE_VER) return false;
-      if (c.kind === 'wms' || !c.url) return false;
+      if (c.kind === 'wms' || !c.url || c.queryable === false) return false;
       if (hid[c.id]) return false;
       return CRUCE_IDS.indexOf(c.id) !== -1 || (vis[c.id] != null);
     }).concat(anaCat()).sort(function (a, b) { return CRUCE_IDS.indexOf(a.id) === -1 ? 1 : CRUCE_IDS.indexOf(b.id) === -1 ? -1 : 0; });
@@ -170,11 +170,11 @@
   async function cargarListas() {
     if (S.lista) return;
     var cm = capa(BASE_MUN), cv = capa(BASE_VER); if (!cm || !cv) throw new Error('No están disponibles las capas de municipios y veredas.');
-    var nm = await campoNombre(cm);
+    var nm = /\/FeatureServer$/.test(cm.url || '') ? 'nombre' : await campoNombre(cm);
     var ms = await traer(cm, { fields: [nm], geom: false });
     S.lista = ms.map(function (f) { return attr(f, nm); }).filter(Boolean).sort(function (a, b) { return String(a).localeCompare(String(b), 'es'); });
-    var vs = await traer(cv, { fields: ['ID_VEREDA', 'NOMBRE', 'MUNICIPIO'], geom: false });
-    S.veredas = vs.map(function (f) { return f.attributes; });
+    var vs = await traer(cv, { fields: ['objectid', 'nombre', 'municipio'], geom: false });
+    S.veredas = vs.map(function (f) { return { ID_VEREDA: attr(f, 'objectid'), NOMBRE: attr(f, 'nombre'), MUNICIPIO: attr(f, 'municipio') }; });
   }
   function veredasDe(mun) {
     var m = norm(mun), l = (S.veredas || []).filter(function (v) { return norm(v.MUNICIPIO) === m; });
@@ -182,14 +182,14 @@
     return l.map(function (v) { return { id: v.ID_VEREDA, nombre: v.NOMBRE, etq: cuenta[v.NOMBRE] > 1 ? v.NOMBRE + ' (' + v.ID_VEREDA + ')' : v.NOMBRE }; }).sort(function (a, b) { return a.etq.localeCompare(b.etq, 'es'); });
   }
   async function territorioMun(mun) {
-    var cm = capa(BASE_MUN), nm = await campoNombre(cm);
+    var cm = capa(BASE_MUN), nm = /\/FeatureServer$/.test(cm.url || '') ? 'nombre' : await campoNombre(cm);
     var fs = await traer(cm, { where: nm + "='" + String(mun).replace(/'/g, "''") + "'", fields: [nm] });
     var rings = []; fs.forEach(function (f) { if (f.geometry && f.geometry.rings) rings = rings.concat(f.geometry.rings); });
     return crearTerritorio(rings, 'Municipio de ' + mun);
   }
   async function territorioVer(v, mun) {
     var cv = capa(BASE_VER);
-    var fs = await traer(cv, { where: 'ID_VEREDA=' + (isFinite(Number(v.id)) ? Number(v.id) : "'" + String(v.id).replace(/'/g, "''") + "'"), fields: ['ID_VEREDA', 'NOMBRE'] });
+    var fs = await traer(cv, { where: 'objectid=' + Number(v.id), fields: ['objectid', 'nombre'] });
     var rings = []; fs.forEach(function (f) { if (f.geometry && f.geometry.rings) rings = rings.concat(f.geometry.rings); });
     return crearTerritorio(rings, 'Vereda ' + v.nombre + ' (' + mun + ')');
   }
@@ -365,7 +365,7 @@
       '<button type="button" data-r="calc"' + (S.busy ? ' disabled' : '') + '>Calcular</button></div></header>';
     var cuerpo, panel = panelCapas(); S.visSig = visSig();
     if (S.busy && !S.res) cuerpo = '<section class="r-vacio"><h2>' + esc(S.msg || 'Calculando…') + '</h2><p>Se están cruzando las capas con el territorio. Esto puede tardar de unos segundos a un par de minutos.</p><button type="button" data-r="cancel">Cancelar</button></section>';
-    else if (!S.res) cuerpo = '<section class="r-vacio"><h2>' + (S.msg ? esc(S.msg) : 'Elige el territorio y pulsa «Calcular»') + '</h2><p>Los niveles están ligados: al elegir un municipio se habilitan sus veredas. Solo se evalúan las 9 capas de Ciudadanía.</p></section>';
+    else if (!S.res) cuerpo = '<section class="r-vacio"><h2>' + (S.msg ? esc(S.msg) : 'Elige el territorio y pulsa «Calcular»') + '</h2><p>Los niveles están ligados: al elegir un municipio se habilitan sus veredas. Se calculan todas las capas marcadas en ?Capas del reporte?; activa más capas vectoriales en Territorio o agrégalas desde el catálogo.</p></section>';
     else {
       cuerpo = (S.msg ? '<div class="r-aviso">' + esc(S.msg) + '</div>' : '') + kpis() + seccionMapa() +
         '<section class="r-sec"><div class="r-kick">Capas en el territorio</div><h2>Resumen por capa</h2>' + tablaCapas() + '<div class="r-fuente">Fuente: servicios ArcGIS REST de CORPOCALDAS (capas de Ciudadanía), consulta del ' + new Date().toLocaleDateString('es-CO') + '. Cálculo en el navegador sobre geometrías simplificadas (≈ 30 m); error esperado menor al 1 % en área.</div></section>' +
